@@ -97,7 +97,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .backup-btn{flex:1;padding:11px;border-radius:12px;background:#161D17;border:1px solid #283029;color:#8B968C;font-size:13px;font-weight:600}
 .header-card{border-radius:20px;border:1px solid #283029;padding:16px;transition:background .5s}
 .topbar{position:sticky;top:0;z-index:40;background:#0E120F;padding:7px 0 8px;margin-bottom:10px;border-bottom:1px solid #1A221B}
-.datebar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 2px}
+.datebar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 40px 0 2px}
 .db-ring{position:relative;width:40px;height:40px;flex-shrink:0}
 .db-ring svg{position:absolute;inset:0}
 .db-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800}
@@ -372,7 +372,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -430,12 +430,9 @@ const PRAYER_PTS=2;
 const ALL5_BONUS=5;
 const PHONE_PTS=(CATEGORIES.find(c=>c.id==="regime")?.items.find(i=>i.id==="phone")?.pts)||4;
 function dayMoney(day,k){
+  // Телефон считается как обычный обязательный пункт в СВОЙ день (см. общий цикл ниже).
+  // Никакой завязки на days[k+1] и штрафов задним числом — это плодило баги LWW-синхронизации.
   let m=0;
-  if(k){
-    const nx=days[addDays(k,1)];
-    if(nx&&nx.items&&nx.items.phone)m+=PHONE_PTS;
-    else if(nx&&day&&k<todayKey()&&k>=PENALTY_FROM)m-=PHONE_PTS;
-  }
   if(!day)return r2(m);
   if(day.slip&&day.bounced)m+=2;else if(!day.slip&&dayTouched(day))m+=1;
   const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
@@ -444,7 +441,6 @@ function dayMoney(day,k){
   const wd=k?weekdayOf(k):null;
   for(const cat of CATEGORIES)for(const it of cat.items){
     if(!it.pts)continue;
-    if(it.id==="phone")continue;
     if(day.items?.[it.id])m+=it.pts;
     else if(closed&&it.pen&&isDue(it,wd))m-=it.pts;
   }
@@ -459,9 +455,7 @@ function fmtNum(n){const v=r2(n);return Number.isInteger(v)?String(v):String(v);
 function fmtPts(n){const v=r2(n);return (v>0?"+":"")+fmtNum(v);}
 function totalSpent(days){let s=0;for(const k in days){for(const x of (days[k].spends||[]))s+=Number(x.n)||0;}return s;}
 function calcBalance(days){
-  const ks=new Set(Object.keys(days));
-  for(const k in days){if(days[k]&&days[k].items&&days[k].items.phone)ks.add(addDays(k,-1));}
-  const keys=[...ks].sort();let total=0,run=0;for(const k of keys){total+=dayMoney(days[k],k);if(dayComplete(days[k])){run++;if(run%7===0)total+=5;}else run=0;}return Math.max(0,r2(total-totalSpent(days)));}
+  const keys=Object.keys(days).sort();let total=0,run=0;for(const k of keys){total+=dayMoney(days[k],k);if(dayComplete(days[k])){run++;if(run%7===0)total+=5;}else run=0;}return Math.max(0,r2(total-totalSpent(days)));}
 function addSpend(){const d=getDay();const now=nowHM();const L=[...(d.spends||[]),{t:now,rt:now,n:0,what:""}];setDay({spends:L});}
 function setSpend(i,f,v){const d=getDay();const L=[...(d.spends||[])];if(!L[i])return;L[i]={...L[i],[f]:f==="n"?clampNum(Math.round(num(v,0)),0,100000):v};setDay({spends:L});}
 function delSpend(i){const d=getDay();const L=[...(d.spends||[])];L.splice(i,1);setDay({spends:L});}
@@ -496,21 +490,25 @@ function buildExport(days){
   const CT=meta.customTasks||[];
   const blocks=keys.map(k=>{
     const d=days[k]||{},r=computeRing(d,k),wd=weekdayOf(k);
+    const bad=!!d.badLogging;
     const pn=PRAYERS.filter(([id])=>d.prayers?.[id]).length;
     const lsec=loggedSections(d);
-    const prayed=pn?PRAYERS.filter(([id])=>d.prayers?.[id]).map(a=>{const at=d.prayerTimes?.[a[0]],rt=d.prayerRecTimes?.[a[0]];return a[1]+(at?" "+at+(rt&&rt!==at?" [отметил "+rt+"]":""):(rt?" [отмечено "+rt+", время намаза НЕ указано]":""));}).join(", "):(lsec>=4?"ни один не отмечен — при том, что день заполнялся":"НЕТ ДАННЫХ: день почти не заполнялся, вывод о намазе делать НЕЛЬЗЯ");
+    const prayed=pn?PRAYERS.filter(([id])=>d.prayers?.[id]).map(a=>{if(bad)return a[1]+": совершено";const at=d.prayerTimes?.[a[0]],rt=d.prayerRecTimes?.[a[0]];return a[1]+(at?" "+at+(rt&&rt!==at?" [отметил "+rt+"]":""):(rt?" [отмечено "+rt+", время намаза НЕ указано]":""));}).join(", "):(lsec>=4?"ни один не отмечен — при том, что день заполнялся":"НЕТ ДАННЫХ: день почти не заполнялся, вывод о намазе делать НЕЛЬЗЯ");
     const wt=waterTarget(d,k);const wz=waterZone(d.water||0,wt);
     const sleep=(d.sleepDown||d.sleepUp)?"ночь на "+k.split("-")[2].replace(/^0/,"")+"-е: "+(d.sleepDown||"?")+"–"+(d.sleepUp||"?"):"—";
     const phoneR=(d.phoneOut||d.phoneBack)?" · телефон вне комнаты "+(d.phoneOut||"?")+"–"+(d.phoneBack||"?"):"";
     const slip=!dayTouched(d)?"—":(d.slip?(d.bounced?"был, отбился":"был → каскад"):"нет");
     const doneByCat={};
-    for(const c of CATEGORIES){if(c.id==="din")continue;for(const it of c.items){if(d.items?.[it.id]){const o=it.opts?it.opts.map(g=>optLabelOf(it.id,g.k,d.opts?.[it.id]?.[g.k])).filter(Boolean).join("/"):"";const q=d.quality?.[it.id]?" ["+OL[d.quality[it.id]]+"]":"";const at=d.itemTimes?.[it.id],rt=d.itemRecTimes?.[it.id];const tm=at?(" "+at+(rt&&rt!==at?" [отметил "+rt+"]":"")):(rt?" [отмечено "+rt+", время выполнения НЕ указано]":"");(doneByCat[c.name]=doneByCat[c.name]||[]).push(itLabel(it.id)+tm+(o?" ("+o+")":"")+q);}}}
+    for(const c of CATEGORIES){if(c.id==="din")continue;for(const it of c.items){if(d.items?.[it.id]){const o=it.opts?it.opts.map(g=>optLabelOf(it.id,g.k,d.opts?.[it.id]?.[g.k])).filter(Boolean).join("/"):"";const q=d.quality?.[it.id]?" ["+OL[d.quality[it.id]]+"]":"";const at=d.itemTimes?.[it.id],rt=d.itemRecTimes?.[it.id];const tm=bad?"":(at?(" "+at+(rt&&rt!==at?" [отметил "+rt+"]":"")):(rt?" [отмечено "+rt+", время выполнения НЕ указано]":""));(doneByCat[c.name]=doneByCat[c.name]||[]).push(itLabel(it.id)+tm+(o?" ("+o+")":"")+q);}}}
     const esc=x=>String(x).replace(/</g,"&lt;");
     const sd=CT.filter(t=>t.term!=="long"&&d.items?.[t.id]).map(t=>esc(t.label));
     const tmS=t=>t?" ("+t+")":"";const meas=[d.weight&&"вес "+d.weight+"кг"+tmS(d.weightTime||d.measTime),d.pulse&&"пульс "+d.pulse+tmS(d.pulseTime||d.measTime),(d.bpSys||d.bpDia)&&"АД "+(d.bpSys||"?")+"/"+(d.bpDia||"?")+tmS(d.bpTime||d.measTime),d.temp&&"t "+d.temp+"°"+tmS(d.tempTime||d.measTime)].filter(Boolean).join(" · ");
     const mk={crown:"ИДЕАЛ 👑",mid:"СРЕДНЕ",fail:"ПРОВАЛ"}[d.mark]||"—";
     const mkTm=d.mark&&d.markTime?" ("+d.markTime+")":"";
-    let s="▸ "+k+" ("+DOW[wd]+") — самооценка: "+mk+mkTm+"\n";
+    let head="";
+    if(!dayTouched(d))head+="⚠️ ДЕНЬ ПОЛНОСТЬЮ ПРОПУЩЕН (ДАННЫЕ ОТСУТСТВУЮТ)\n";
+    if(bad)head+="⚠️ ВНИМАНИЕ: ДЕНЬ ЗАПОЛНЯЛСЯ НАСПЕХ. ВРЕМЕНА ОТМЕТОК НЕ ДОСТОВЕРНЫ\n";
+    let s=head+"▸ "+k+" ("+DOW[wd]+") — самооценка: "+mk+mkTm+"\n";
     if(d.mark==="fail"&&d.markTime)s+="  Отметка: пользователь в "+d.markTime+" отметил этот день как ПРОВАЛ.\n";
     if(d.mark==="crown"&&d.markTime)s+="  Отметка: пользователь в "+d.markTime+" отметил этот день как ИДЕАЛЬНЫЙ.\n";
     s+="  Обязательное "+r.obPct+"% · Желательное "+r.desPct+"% · Намаз "+(pn?pn+"/5":"—")+" ("+prayed+")\n";
@@ -538,7 +536,7 @@ function buildExport(days){
     else if(dayTouched(d))s+="  Еда: не отмечено (не значит «не ел»)\n";
     if(d.spends&&d.spends.length){s+="  Потрачено: "+d.spends.map(x=>(x.t||"")+" −"+(x.n||0)+(x.what?" ("+String(x.what).replace(/</g,"&lt;")+")":"")).join(" · ")+"\n";}
     s+="  Заполнено разделов: "+loggedSections(d)+" из 10"+(loggedSections(d)<=2?" — ПОЧТИ НЕ ВЁЛСЯ, отсутствие отметок ≠ отсутствие действий":"")+"\n";
-    if(d.log&&d.log.length){
+    if(d.log&&d.log.length&&!bad){
       const ts=d.log.map(x=>x.t).filter(Boolean).sort();
       if(ts.length){
         const toMin=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));
@@ -776,7 +774,6 @@ function setDay(patch){
 function setMark(v){const d=getDay();const nv=(d.mark===v&&v!=="")?"":v;setDay({mark:nv,markTime:nv?nowHM():""});if(nv==="crown"){vibNice();toast("✨ Отличный день");}else vib(4);}
 function currentMode(){if(meta.view==="mobile")return "mobile";if(meta.view==="desktop")return "desktop";return window.innerWidth>=900?"desktop":"mobile";}
 function setView(v){meta.view=v;saveMeta();render();}
-function viewToggleHTML(){const m=meta.view;const o=(v,l)=>`<button class="vt-btn${m===v?" on":""}" onclick="setView('${v}')">${l}</button>`;return `<div class="vt-row">${o("auto","Авто")}${o("mobile","📱")}${o("desktop","🖥")}</div>`;}
 const PT_METHODS=[[3,"MWL"],[13,"Турция"],[5,"Египет"],[4,"Мекка"],[2,"ISNA"]];
 const PT_MAP={fajr:"Fajr",dhuhr:"Dhuhr",asr:"Asr",maghrib:"Maghrib",isha:"Isha"};
 let weatherPending={},weatherFailed={},weatherTried={};
@@ -848,7 +845,8 @@ function qualityHTML(it,day){const q=day.quality?.[it.id];return `<div class="q-
 function setQuality(id,v){const d=getDay();const cur=d.quality?.[id];setDay({quality:{...d.quality,[id]:cur===v?undefined:v}});}
 function optsHTML(it,day){if(!it.opts)return "";const oo=day.opts?.[it.id]||{};return it.opts.map(g=>{const btns=g.o.map(([v,l])=>`<button class="q-btn${oo[g.k]===v?" active":""}" onclick="setOpt('${it.id}','${g.k}','${v}')">${l}</button>`).join("");return `<div class="q-row">${btns}</div>`;}).join("");}
 function setOpt(id,k,v){const d=getDay();const opts={...(d.opts||{})};const cur=opts[id]?.[k];opts[id]={...(opts[id]||{}),[k]:cur===v?undefined:v};setDay({opts});}
-function markHTML(day){const opts=[["crown","👑 Идеальный","#3DDC84"],["fail","🔴 Провал","#E0795B"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="mark-row">${b}${clr}</div>`;}
+function toggleBadLogging(){const d=getDay();setDay({badLogging:!d.badLogging});vib(6);}
+function markHTML(day){const opts=[["crown","👑 Идеальный","#3DDC84"],["fail","🔴 Провал","#E0795B"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#CBA45C;color:#CBA45C;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Заполняю задним числом — не фиксировать точное время отметок">🕘 Наспех</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="mark-row">${b}${clr}</div><div class="mark-row" style="margin-top:6px">${badBtn}</div>`;}
 function lifeHTML(){
   const target=40;
   const ageYears=(Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000);
@@ -922,12 +920,18 @@ function measurementsHTML(day){
   return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Замеры</div><button class="task-add" onclick="addMeas()">+</button></div><div style="font-size:11px;color:#5C655C;margin:2px 0 6px">Жми «+» для добавления строки. Мерил дважды — жми «+» ещё раз.</div>${L.length?rows:`<div class="muted-note" style="padding:4px 0">Пока нет замеров</div>`}</div>`;
 }
 function supRow(day,id,label,step,unit,sub,delBtn){const v=(day.sups||{})[id]||0;return `<div style="margin-top:11px"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="min-width:0"><span class="row-label${v>0?" on":""}" style="font-size:14px;display:block">${label}</span>${sub?`<span style="font-size:10.5px;color:#5C655C">${sub}</span>`:""}</span><div style="display:flex;align-items:center;gap:7px;flex-shrink:0"><button class="step-btn" onclick="changeSup('${id}',-${step})">−</button><span style="min-width:72px;text-align:center;font-weight:700;font-size:14px;color:${v>0?"#41C07E":"#5C655C"}">${v} ${unit}</span><button class="step-btn" onclick="changeSup('${id}',${step})">+</button>${delBtn?`<button class="task-del${confirmDelId===("sup_"+id)?" armed":""}" style="flex:0 0 44px;height:34px" onclick="delSup('${id}')">${confirmDelId===("sup_"+id)?"точно?":"✕"}</button>`:""}</div></div>${supTimesHTML(day,id,unit)}<div class="field-row" style="margin-top:5px"><div class="field-item"><input type="number" inputmode="decimal" value="${(day.supsLog||[]).some(x=>x.id===id&&x.t)?"":(v||"")}" placeholder="итог за день" onchange="setSupTotal('${id}',this.value,${step})"></div></div></div>`;}
-function supsHTML(day){
+// Главный экран: только ежедневный трекинг доз (+/-, лог времени). Без формы и без удаления.
+function supsLoggingHTML(day){
   let rows=SUPS.map(([id,label,step,unit])=>supRow(day,id,label,step,unit,"",false)).join("");
-  rows+=(meta.userSups||[]).map(u=>supRow(day,u.id,u.name,Number(u.step)||1,u.unit||"мг",[u.brand,u.time&&("приём "+u.time),u.comp].filter(Boolean).join(" · "),true)).join("");
+  rows+=(meta.userSups||[]).map(u=>supRow(day,u.id,u.name,Number(u.step)||1,u.unit||"мг",[u.brand,u.time&&("приём "+u.time),u.comp].filter(Boolean).join(" · "),false)).join("");
+  return `<div class="meas-card"><div class="side-title" style="display:block;margin:0 0 2px">БАДы — доза за день</div><div style="font-size:11px;color:#5C655C;margin-bottom:2px">Ноль = не принимал. Добавить / удалить БАД — в ⚙ настройках.</div>${rows}</div>`;}
+// Настройки (Таб 2): только форма добавления и удаление кастомных БАДов из базы.
+function supsConfigHTML(){
+  const list=meta.userSups||[];
+  const rows=list.length?list.map(u=>`<div class="mrow"><span class="mlog-v" style="flex:1">${String(u.name).replace(/</g,"&lt;")}${u.brand?` <span style="color:#5C655C">· ${String(u.brand).replace(/</g,"&lt;")}</span>`:""} <span style="color:#5C655C">(${Number(u.step)||1}${u.unit||"мг"})</span></span><button class="task-del${confirmDelId===("sup_"+u.id)?" armed":""}" style="flex:0 0 auto;height:34px" onclick="delSup('${u.id}')">${confirmDelId===("sup_"+u.id)?"точно?":"✕"}</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Своих БАДов нет. Базовые (магний, теанин, цинк) удалить нельзя.</div>`;
   let form="";
   if(supFormOpen){const dv=k=>String(supDraft[k]||"").replace(/"/g,"&quot;");form=`<div style="border:1px solid #2f6b45;border-radius:12px;padding:10px;margin-top:10px;display:flex;flex-direction:column;gap:8px"><div class="field-row"><div class="field-item"><div class="field-label">Название *</div><input id="sup-name" value="${dv("name")}" placeholder="Омега-3" oninput="supDraft.name=this.value"></div><div class="field-item"><div class="field-label">Бренд</div><input value="${dv("brand")}" placeholder="Now Foods" oninput="supDraft.brand=this.value"></div></div><div class="field-row"><div class="field-item"><div class="field-label">Шаг дозы *</div><input type="number" inputmode="numeric" value="${dv("step")}" placeholder="500" oninput="supDraft.step=this.value"></div><div class="field-item"><div class="field-label">Единица</div><input value="${dv("unit")}" placeholder="мг" oninput="supDraft.unit=this.value"></div><div class="field-item"><div class="field-label">Время приёма</div><input type="time" value="${dv("time")}" onchange="supDraft.time=this.value"></div></div><div><div class="field-label">Состав / заметка</div><input value="${dv("comp")}" placeholder="EPA 360 / DHA 240" oninput="supDraft.comp=this.value"></div><div style="display:flex;gap:8px"><button class="backup-btn" style="border-color:#2f6b45;color:#41C07E" onclick="saveSup()">Сохранить БАД</button><button class="backup-btn" onclick="supFormOpen=false;render()">Отмена</button></div></div>`;}
-  return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">БАДы — доза за день</div><button class="task-add" onclick="toggleSupForm()">+</button></div><div style="font-size:11px;color:#5C655C;margin-top:2px">Ноль = не принимал. «+» справа — добавить свой БАД.</div>${rows}${form}</div>`;}
+  return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Свои БАДы — добавить / удалить</div><button class="task-add" onclick="toggleSupForm()">+</button></div>${rows}${form}</div>`;}
 function toggleSupForm(){supFormOpen=!supFormOpen;render();setTimeout(()=>{const i=document.getElementById("sup-name");if(i)i.focus();},60);}
 function saveSup(){const n=(supDraft.name||"").trim();const st=Number(supDraft.step);if(!n||!(st>0)){toast("Нужно название и шаг дозы (число > 0)");return;}meta.userSups=[...(meta.userSups||[]),{id:"s_"+Date.now().toString(36),name:n,brand:(supDraft.brand||"").trim(),step:st,unit:(supDraft.unit||"мг").trim()||"мг",time:supDraft.time||"",comp:(supDraft.comp||"").trim()}];supFormOpen=false;supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""};saveMeta();vib(12);render();}
 function askDel(id){if(confirmDelId===id){confirmDelId="";return true;}confirmDelId=id;vib(8);render();setTimeout(()=>{if(confirmDelId===id){confirmDelId="";render();}},3500);return false;}
@@ -964,7 +968,8 @@ function supTimesHTML(day,id,unit){
   return `<div class="mlog">${rows}</div>`;
 }
 function lastWeight(k){const ks=Object.keys(days).filter(d=>d<=k).sort();for(let i=ks.length-1;i>=0;i--){const w=Number(days[ks[i]]?.weight);if(w)return w;}return 63;}
-function waterTarget(day,k){const w=Number(day.weight)||lastWeight(k)||63;let ml=w*32;const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];const n=act.filter(id=>day.items?.[id]).length;ml+=n*300;const m=Number((k||todayKey()).split("-")[1]);if(m>=6&&m<=8)ml+=500;else if(m===5||m===9)ml+=250;return Math.max(1500,Math.round(ml/250)*250);}
+function dayAvgTemp(k){const wx=getWeather(k);if(!wx||!Array.isArray(wx.t))return null;const ts=wx.t.filter(x=>x!=null&&x!=="").map(Number).filter(Number.isFinite);if(!ts.length)return null;return ts.reduce((a,x)=>a+x,0)/ts.length;}
+function waterTarget(day,k){const w=Number(day.weight)||lastWeight(k)||63;let ml=w*32;const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];const n=act.filter(id=>day.items?.[id]).length;ml+=n*300;const m=Number((k||todayKey()).split("-")[1]);if(m>=6&&m<=8)ml+=500;else if(m===5||m===9)ml+=250;const avg=dayAvgTemp(k);if(avg!=null&&avg>25)ml+=500;return Math.max(1500,Math.round(ml/250)*250);}
 function waterZone(ml,target){if(!ml)return["не отмечено","#5C655C"];const p=target?ml/target:0;if(p<0.5)return["мало","#E0795B"];if(p<0.8)return["маловато","#CBA45C"];if(p<=1.1)return["в норме","#41C07E"];if(p<=1.4)return["многовато","#CBA45C"];return["перебор","#E0795B"];}
 function waterHTML(day){const ml=day.water||0;const target=waterTarget(day,sel);const z=waterZone(ml,target);const disp=ml>0?`${(ml/1000).toFixed(1)} / ${(target/1000).toFixed(1)} л · ${z[0]}`:"не отмечено";const w=Number(day.weight)||lastWeight(sel)||63;const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];const n=act.filter(id=>day.items?.[id]).length;const m=Number(sel.split("-")[1]);const seas=(m>=6&&m<=8)?"лето":(m===5||m===9)?"межсезонье":"зима";const L=day.waterLog||[];const logged=waterSum(day);const timeline=L.length?`<div class="mlog">${L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.t||""}" onchange="setWaterTime(${i},this.value)"><span class="mlog-v">+${x.ml>=1000?(x.ml/1000).toFixed(1)+"л":x.ml+"мл"}${(x.rt&&x.rt!==x.t)?` <span style="color:#CBA45C;font-size:11px">отметил ${x.rt}</span>`:""}</span><button class="mlog-x" onclick="delWater(${i})">✕</button></div>`).join("")}</div>`:"";const lump=(ml>logged)?`<div style="font-size:11px;color:#CBA45C;margin-top:2px">${((ml-logged)/1000).toFixed(1)} л вписано итогом, без времени</div>`:"";return `<div class="row" style="flex-direction:column;align-items:stretch;gap:11px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="row-label">Вода за день</span><span style="font-size:16px;font-weight:700;color:${z[1]}">${disp}</span></div><div style="display:flex;gap:8px"><button class="wbtn" onclick="changeWater(-250)">−250</button><button class="wbtn" onclick="changeWater(250)">+250</button><button class="wbtn" onclick="changeWater(500)">+0.5л</button><button class="wbtn" onclick="changeWater(1000)">+1л</button></div>${timeline}${lump}<div class="field-row" style="align-items:flex-end"><div class="field-item"><div class="field-label">Итог за день, л</div><input type="number" step="0.1" inputmode="decimal" value="${ml>0?(ml/1000).toFixed(1):""}" placeholder="напр. 2.5" onchange="setWaterTotal(this.value)"></div></div><div style="font-size:11px;color:#5C655C">Цель ${(target/1000).toFixed(1)} л: вес ${w}кг${n?` · +${n} нагрузк.`:""} · ${seas}.</div></div>`;}
 function toggleHTML(label,f,val,danger){return `<div class="toggle-wrap"><span style="font-size:14.5px;color:${val?"#E8ECE6":"#8B968C"}">${label}</span><div class="toggle-track${val?" on":""}${danger?" danger":""}" onclick="toggleField('${f}')"><div class="toggle-thumb"></div></div></div>`;}
@@ -977,15 +982,32 @@ function toast(msg){const el=document.createElement("div");el.className="toast";
 function confetti(){const cols=["#41C07E","#CBA45C","#E9C46A","#79A98D","#E0955B"];for(let i=0;i<28;i++){const e=document.createElement("div");e.className="cf";e.style.left=(Math.random()*100)+"vw";e.style.background=cols[i%cols.length];e.style.animationDuration=(0.9+Math.random()*1.0)+"s";e.style.animationDelay=(Math.random()*0.25)+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),2300);}vib([30,40,60]);}
 function dayColor(k){const d=days[k];const MC={crown:"#3DDC84",mid:"#CBA45C",fail:"#E0795B"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([28,40,32],[65,192,126],hp/100):"#161D17";}
 function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#5C655C;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
-function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро · +${PHONE_PTS} идут на ${pv.txt}</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
+function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
 function stripHTML(){const t=todayKey();let h="";for(let i=13;i>=0;i--){const k=addDays(t,-i);const d=days[k];const crown=d&&d.mark==="crown";h+=`<button class="dcell${k===sel?" sel":""}" style="background:${dayColor(k)}" onclick="selDay('${k}')" title="${k}">${crown?"👑":""}</button>`;}return h;}
+function catRowHTML(it,day,wd){
+  let s=rowHTML(it,day,!isDue(it,wd));
+  if(day.items?.[it.id])s+=timeEditHTML(it.id,day);
+  if(it.q&&day.items?.[it.id])s+=qualityHTML(it,day);
+  if(it.opts&&day.items?.[it.id])s+=optsHTML(it,day);
+  if(it.id==="phone"&&day.items?.[it.id])s+=phoneRangeHTML(day);
+  return s;
+}
 function catItemsHTML(cat,day,wd){
   let inner="";
   if(cat.id==="din")inner+=namazHTML(day);
-  if(cat.id==="health")inner+=measurementsHTML(day);
+  if(cat.id==="health")inner+=supsLoggingHTML(day)+measurementsHTML(day);
+  // Ритуалы: жёсткое визуальное деление на утро/вечер (без скрытия по времени).
+  if(cat.id==="regime"){
+    const groups=[["☀️ Утренние ритуалы",["bed","warmwater","teeth"]],["🌙 Вечерние ритуалы",["phone"]]];
+    for(const [title,ids] of groups){
+      inner+=`<div class="sub-label">${title}</div>`;
+      for(const id of ids){const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
+    }
+    return inner;
+  }
   const vis=cat.items.filter(it=>isDue(it,wd)||it.sched);
   if(vis.length===0)inner+=`<div class="muted-note">Сегодня по графику ничего</div>`;
-  vis.forEach(it=>{inner+=rowHTML(it,day,!isDue(it,wd));if(day.items?.[it.id])inner+=timeEditHTML(it.id,day);if(it.q&&day.items?.[it.id])inner+=qualityHTML(it,day);if(it.opts&&day.items?.[it.id])inner+=optsHTML(it,day);if(it.id==="phone"&&day.items?.[it.id])inner+=phoneRangeHTML(day);});
+  vis.forEach(it=>{inner+=catRowHTML(it,day,wd);});
   if(cat.id==="body")inner+=waterHTML(day);
   if(cat.id==="sunnah")inner+=`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`;
   return inner;
@@ -1098,14 +1120,14 @@ function render(){
     ${gearHTML()}
     <div class="hud">
       <div class="hud-row"><span class="hud-day">${dayLabel(sel).txt} · ${dayLabel(sel).dow}</span><span class="hud-bal">${bal}<span class="hud-unit">б</span>${earned!==0?`<span class="hud-earn">${fmtPts(earned)}</span>`:""}</span></div>
-      <div class="hud-row hud-sub"><span><b style="color:#41C07E">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span><span>🕌<b style="color:${streak>0?"#CBA45C":"#5C655C"}">${streak}</b><span style="color:#5C655C">намаз</span> · 🛡<b style="color:${clean>0?"#41C07E":"#5C655C"}">${clean}</b><span style="color:#5C655C">без срывов</span> · <b class="hud-life">${lifePct}%</b><span style="color:#5C655C">жизни</span></span></div>
+      <div class="hud-row hud-sub"><span><b style="color:#41C07E">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span><span>🕌 <b style="color:${streak>0?"#CBA45C":"#5C655C"}">${streak}</b> <span style="color:#5C655C">намаз</span> · 🛡 <b style="color:${clean>0?"#41C07E":"#5C655C"}">${clean}</b> <span style="color:#5C655C">без срывов</span> · <b class="hud-life">${lifePct}%</b> <span style="color:#5C655C">жизни</span></span></div>
     </div>
     ${lifeHTML()}
     <div class="grid">
       <div class="col-main">
         ${tasksHTML(day)}
-        ${markHTML(day)}
         <div class="cats-wrap">${cats}</div>
+        ${markHTML(day)}
       </div>
       <div class="col-side">
         <div class="side-title">Закрытие дня</div>
@@ -1199,7 +1221,7 @@ function settingsTab1HTML(day){
 }
 function settingsTab2HTML(day){
   return `
-    ${supsHTML(day)}
+    ${supsConfigHTML()}
     ${taskManageHTML()}
     <div class="side-title" style="display:block;margin:14px 0 2px">🌡 Погода — ручной ввод (${dayLabel(sel).txt})</div>
     ${wxManualHTML(sel)}`;
@@ -1243,7 +1265,7 @@ function diagHTML(){
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];render();}
-function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else vib(4);}
+function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=d.badLogging?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
   if(longTask){
@@ -1260,11 +1282,11 @@ function toggleItem(id){
   const nItems={...d.items,[id]:on};
   const nTimes={...(d.itemTimes||{})};
   const nRec={...(d.itemRecTimes||{})};
-  if(on){nRec[id]=nowHM();}else{delete nTimes[id];delete nRec[id];}
+  if(on){nRec[id]=d.badLogging?"":nowHM();}else{delete nTimes[id];delete nRec[id];}
   const after=cat?catCompletion(cat,{...d,items:nItems},wd):null;
   const milestone=before&&after&&after.total>0&&after.done===after.total&&before.done<before.total;
   if(milestone)justCompletedCat=cat.id;
-  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts&&id!=="phone")popPoints(it.pts);if(id==="phone")toast("+"+PHONE_PTS+" зачислены на "+dayLabel(addDays(sel,-1)).txt);}
+  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);}
   setDay({items:nItems,itemTimes:nTimes,itemRecTimes:nRec});
   if(milestone)vibNice();else vib(4);
 }
