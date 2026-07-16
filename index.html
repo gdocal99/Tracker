@@ -372,7 +372,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -497,7 +497,17 @@ function buildExport(days){
     const wt=waterTarget(d,k);const wz=waterZone(d.water||0,wt);
     const sleep=(d.sleepDown||d.sleepUp)?"ночь на "+k.split("-")[2].replace(/^0/,"")+"-е: "+(d.sleepDown||"?")+"–"+(d.sleepUp||"?"):"—";
     const phoneR=(d.phoneOut||d.phoneBack)?" · телефон вне комнаты "+(d.phoneOut||"?")+"–"+(d.phoneBack||"?"):"";
-    const slip=!dayTouched(d)?"—":(d.slip?(d.bounced?"был, отбился":"был → каскад"):"нет");
+    let slip;
+    if(!dayTouched(d))slip="—";
+    else if(!d.slip)slip="нет";
+    else if(d.slipType==="planned")slip="плановый вечерний срыв (осознанный шаг)"+(d.bounced?", отбился":"");
+    else{
+      const TYP={fantasy:"Фантазии",porn:"Порно",both:"Порно + Фантазии"};
+      const FIRST={porn_first:"первым возникло: порно",fantasy_first:"первым возникло: фантазии"};
+      let det=TYP[d.slipType]||"";
+      if(d.slipType==="both"&&FIRST[d.slipFirst])det+=", "+FIRST[d.slipFirst];
+      slip=(d.bounced?"был, отбился":"был → каскад")+(det?" ("+det+")":"");
+    }
     const doneByCat={};
     for(const c of CATEGORIES){if(c.id==="din")continue;for(const it of c.items){if(d.items?.[it.id]){const o=it.opts?it.opts.map(g=>optLabelOf(it.id,g.k,d.opts?.[it.id]?.[g.k])).filter(Boolean).join("/"):"";const q=d.quality?.[it.id]?" ["+OL[d.quality[it.id]]+"]":"";const at=d.itemTimes?.[it.id],rt=d.itemRecTimes?.[it.id];const tm=bad?"":(at?(" "+at+(rt&&rt!==at?" [отметил "+rt+"]":"")):(rt?" [отмечено "+rt+", время выполнения НЕ указано]":""));(doneByCat[c.name]=doneByCat[c.name]||[]).push(itLabel(it.id)+tm+(o?" ("+o+")":"")+q);}}}
     const esc=x=>String(x).replace(/</g,"&lt;");
@@ -513,9 +523,9 @@ function buildExport(days){
     if(d.mark==="crown"&&d.markTime)s+="  Отметка: пользователь в "+d.markTime+" отметил этот день как ИДЕАЛЬНЫЙ.\n";
     s+="  Обязательное "+r.obPct+"% · Желательное "+r.desPct+"% · Намаз "+(pn?pn+"/5":"—")+" ("+prayed+")\n";
     if(d.sliderTime)s+="  Самооценка (энергия/фокус/иман) выставлена в "+d.sliderTime+"\n";
-    s+="  Сон "+sleep+phoneR+" · Энергия "+(d.energy!==""&&d.energy!=null?d.energy+"/10":"—")+" · Рассеянность "+(d.drift!==""&&d.drift!=null?d.drift+"/10":"—")+"\n";
+    s+="  Сон "+sleep+phoneR+" · Энергия "+(d.energy!==""&&d.energy!=null?norm5(d.energy)+"/5":"—")+" · Рассеянность "+(d.drift!==""&&d.drift!=null?norm5(d.drift)+"/5":"—")+"\n";
     const wx=weatherTxt(k);if(wx)s+="  Погода: "+wx+"\n";
-    const sl3=[["Фокус","focus"],["Иман","spirit"],["Самоконтроль","control"]].filter(([,f])=>d[f]!==""&&d[f]!=null).map(([n,f])=>n+" "+d[f]+"/10");
+    const sl3=[["Фокус","focus"],["Иман","spirit"],["Самоконтроль","control"]].filter(([,f])=>d[f]!==""&&d[f]!=null).map(([n,f])=>n+" "+norm5(d[f])+"/5");
     if(sl3.length)s+="  "+sl3.join(" · ")+"\n";
     const waterTxt=d.water?((d.water/1000).toFixed(1)+"/"+(wt/1000).toFixed(1)+" л ("+wz[0]+")"):"—";
     s+="  Вода "+waterTxt+" · Стул "+(d.poop||"—")+" · Срыв "+slip+" · Баллы "+fmtPts(dayMoney(d,k))+(d.income?" · реал ₴"+d.income:"")+"\n";
@@ -851,7 +861,7 @@ function lifeHTML(){
   const target=40;
   const ageYears=(Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000);
   const pct=Math.max(0,Math.min(100,ageYears/target*100));
-  return `<div class="life-card"><div class="life-head"><span class="life-title">Жизнь</span><span class="life-nums">${ageYears.toFixed(3)} / ${target} лет</span></div><div class="life-track"><div class="life-fill" style="width:${pct}%"></div></div><div class="life-cap"><b style="color:#CBA45C;font-family:ui-monospace,Menlo,monospace">${pct.toFixed(3)}%</b> прожито · каждый день важен</div></div>`;
+  return `<div class="life-card"><div class="life-head"><span class="life-title">Жизнь</span><span class="life-nums">${ageYears.toFixed(1)} / ${target} лет</span></div><div class="life-track"><div class="life-fill" style="width:${pct}%"></div></div><div class="life-cap"><b style="color:#CBA45C;font-family:ui-monospace,Menlo,monospace">${pct.toFixed(1)}%</b> прожито · каждый день важен</div></div>`;
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#0E120F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 
@@ -973,7 +983,24 @@ function waterTarget(day,k){const w=Number(day.weight)||lastWeight(k)||63;let ml
 function waterZone(ml,target){if(!ml)return["не отмечено","#5C655C"];const p=target?ml/target:0;if(p<0.5)return["мало","#E0795B"];if(p<0.8)return["маловато","#CBA45C"];if(p<=1.1)return["в норме","#41C07E"];if(p<=1.4)return["многовато","#CBA45C"];return["перебор","#E0795B"];}
 function waterHTML(day){const ml=day.water||0;const target=waterTarget(day,sel);const z=waterZone(ml,target);const disp=ml>0?`${(ml/1000).toFixed(1)} / ${(target/1000).toFixed(1)} л · ${z[0]}`:"не отмечено";const w=Number(day.weight)||lastWeight(sel)||63;const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];const n=act.filter(id=>day.items?.[id]).length;const m=Number(sel.split("-")[1]);const seas=(m>=6&&m<=8)?"лето":(m===5||m===9)?"межсезонье":"зима";const L=day.waterLog||[];const logged=waterSum(day);const timeline=L.length?`<div class="mlog">${L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.t||""}" onchange="setWaterTime(${i},this.value)"><span class="mlog-v">+${x.ml>=1000?(x.ml/1000).toFixed(1)+"л":x.ml+"мл"}${(x.rt&&x.rt!==x.t)?` <span style="color:#CBA45C;font-size:11px">отметил ${x.rt}</span>`:""}</span><button class="mlog-x" onclick="delWater(${i})">✕</button></div>`).join("")}</div>`:"";const lump=(ml>logged)?`<div style="font-size:11px;color:#CBA45C;margin-top:2px">${((ml-logged)/1000).toFixed(1)} л вписано итогом, без времени</div>`:"";return `<div class="row" style="flex-direction:column;align-items:stretch;gap:11px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="row-label">Вода за день</span><span style="font-size:16px;font-weight:700;color:${z[1]}">${disp}</span></div><div style="display:flex;gap:8px"><button class="wbtn" onclick="changeWater(-250)">−250</button><button class="wbtn" onclick="changeWater(250)">+250</button><button class="wbtn" onclick="changeWater(500)">+0.5л</button><button class="wbtn" onclick="changeWater(1000)">+1л</button></div>${timeline}${lump}<div class="field-row" style="align-items:flex-end"><div class="field-item"><div class="field-label">Итог за день, л</div><input type="number" step="0.1" inputmode="decimal" value="${ml>0?(ml/1000).toFixed(1):""}" placeholder="напр. 2.5" onchange="setWaterTotal(this.value)"></div></div><div style="font-size:11px;color:#5C655C">Цель ${(target/1000).toFixed(1)} л: вес ${w}кг${n?` · +${n} нагрузк.`:""} · ${seas}.</div></div>`;}
 function toggleHTML(label,f,val,danger){return `<div class="toggle-wrap"><span style="font-size:14.5px;color:${val?"#E8ECE6":"#8B968C"}">${label}</span><div class="toggle-track${val?" on":""}${danger?" danger":""}" onclick="toggleField('${f}')"><div class="toggle-thumb"></div></div></div>`;}
-function sliderHTML(label,f,val,max,step,suffix){max=max||10;step=step||1;suffix=suffix||"";const touched=val!==""&&val!=null;const pos=touched?val:Math.round(max/2);const disp=touched?(val+suffix):"не отмечено";const clr=touched?`<button style="border:none;background:none;color:#5C655C;font-size:13px;padding:0 3px" onclick="setField('${f}','')">✕</button>`:"";return `<div class="slider-row${touched?"":" unset"}"><div class="slider-header"><span style="font-size:14.5px;color:#8B968C">${label}</span><span style="display:flex;align-items:center;gap:5px"><span class="slider-val${touched?"":" muted"}">${disp}</span>${clr}</span></div><input type="range" min="0" max="${max}" step="${step}" value="${pos}" oninput="setField('${f}',Number(this.value))"></div>`;}
+// СДВГ-опросник срыва: только кнопки, без текстовых полей.
+const SLIP_TYPES=[["fantasy","Фантазии"],["porn","Порно"],["both","Порно + Фантазии"],["planned","Плановый"]];
+const SLIP_FIRSTS=[["fantasy_first","Сначала фантазии"],["porn_first","Сначала порно"]];
+function slipDetailHTML(day){
+  const tbtns=SLIP_TYPES.map(([v,l])=>`<button class="q-btn${day.slipType===v?" active":""}" onclick="setSlipType('${v}')">${l}</button>`).join("");
+  let firstBlock="";
+  if(day.slipType==="both"){
+    const fbtns=SLIP_FIRSTS.map(([v,l])=>`<button class="q-btn${day.slipFirst===v?" active":""}" onclick="setSlipFirst('${v}')">${l}</button>`).join("");
+    firstBlock=`<div class="field-label" style="margin-top:8px">Что возникло первым?</div><div class="q-row" style="flex-wrap:wrap;margin-left:0">${fbtns}</div>`;
+  }
+  return `<div class="slip-indent"><div class="field-label">Тип срыва</div><div class="q-row" style="flex-wrap:wrap;margin-left:0">${tbtns}</div>${firstBlock}<div style="margin-top:8px"><div class="field-label">Время</div><input type="time" value="${day.slipTime||""}" onchange="setField('slipTime',this.value)" style="width:110px"></div>${toggleHTML("Отбился в тот же день (+2)","bounced",day.bounced)}</div>`;
+}
+function setSlipType(v){const d=getDay();const nv=d.slipType===v?"":v;const patch={slipType:nv};if(nv!=="both")patch.slipFirst="";setDay(patch);vib(4);}
+function setSlipFirst(v){const d=getDay();setDay({slipFirst:d.slipFirst===v?"":v});vib(4);}
+// Шкала 1–5 со шагом 1. Старые данные (1–10) при отображении делятся на 2.
+const SLIDER_HINTS={energy:"1 (Труп) · 3 (Норм) · 5 (Заряжен)",focus:"1 (Каша) · 3 (Собран) · 5 (Поток)",spirit:"1 (Яма) · 3 (Ровно) · 5 (Подъём)",drift:"1 (Собран) · 3 (Отвлекаюсь) · 5 (В облаках)",control:"1 (Импульсивен) · 3 (Держусь) · 5 (Железо)"};
+function norm5(v){if(v===""||v==null)return v;let n=Number(v);if(!Number.isFinite(n))return "";if(n>5)n=Math.round(n/2);return Math.min(5,Math.max(1,n));}
+function sliderHTML(label,f,val,max,step,suffix){suffix=suffix||"";const v=norm5(val);const touched=v!==""&&v!=null;const pos=touched?v:3;const disp=touched?(v+suffix):"не отмечено";const clr=touched?`<button style="border:none;background:none;color:#5C655C;font-size:13px;padding:0 3px" onclick="setField('${f}','')">✕</button>`:"";const hint=SLIDER_HINTS[f]?`<div style="font-size:10.5px;color:#5C655C;margin-top:3px">${SLIDER_HINTS[f]}</div>`:"";return `<div class="slider-row${touched?"":" unset"}"><div class="slider-header"><span style="font-size:14.5px;color:#8B968C">${label}</span><span style="display:flex;align-items:center;gap:5px"><span class="slider-val${touched?"":" muted"}">${disp}</span>${clr}</span></div><input type="range" min="1" max="5" step="1" value="${pos}" oninput="setField('${f}',Number(this.value))">${hint}</div>`;}
 
 function vib(ms){try{if(navigator.vibrate)navigator.vibrate(ms||10);}catch(e){}}
 function vibNice(){vib([22,26,38]);}
@@ -998,7 +1025,7 @@ function catItemsHTML(cat,day,wd){
   if(cat.id==="health")inner+=supsLoggingHTML(day)+measurementsHTML(day);
   // Ритуалы: жёсткое визуальное деление на утро/вечер (без скрытия по времени).
   if(cat.id==="regime"){
-    const groups=[["☀️ Утренние ритуалы",["bed","warmwater","teeth"]],["🌙 Вечерние ритуалы",["phone"]]];
+    const groups=[["☀️ Утренний блок",["bed","warmwater","teeth"]],["🌙 Вечерний блок",["phone"]]];
     for(const [title,ids] of groups){
       inner+=`<div class="sub-label">${title}</div>`;
       for(const id of ids){const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
@@ -1021,7 +1048,7 @@ function render(){
   const r=computeRing(day,sel),t=r.obPct/100;
   const bal=calcBalance(days),streak=calcStreak(days,sel),earned=dayMoney(day,sel);
   const clean=cleanStreak(days,sel);
-  const lifePct=(((Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000))/40*100).toFixed(3);
+  const lifePct=(((Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000))/40*100).toFixed(1);
   const ringGlow=r.obPct>=90?"glow-hi":r.obPct>=50?"glow-mid":r.obPct>0?"glow-lo":"";
   const sl=dayLabel(sel),isToday=sel>=todayKey();
 
@@ -1075,7 +1102,7 @@ function render(){
 
   let details="";
   if(dOpen){
-    const slipI=day.slip?`<div class="slip-indent"><div><div class="field-label">Время</div><input type="time" value="${day.slipTime||""}" onchange="setField('slipTime',this.value)" style="width:110px"></div><div><div class="field-label">Триггер / причина</div><textarea class="field-ta" style="min-height:120px" placeholder="что запустило срыв" onchange="setField('slipTrigger',this.value)">${(day.slipTrigger||"").replace(/</g,"&lt;")}</textarea></div>${toggleHTML("Отбился в тот же день (+2)","bounced",day.bounced)}</div>`:"";
+    const slipI=day.slip?slipDetailHTML(day):"";
     details=`<div class="details-inner">
       ${logHTML(day)}
       ${mealsHTML(day)}
