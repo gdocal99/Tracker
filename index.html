@@ -241,6 +241,21 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#5C655C;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
+.dash{background:#12180F;border:1px solid #232B24;border-radius:20px;padding:15px 16px 14px;margin:2px 0 12px}
+.dash-top{display:flex;align-items:center;gap:12px}
+.dash-date{flex:1;display:flex;align-items:center;justify-content:center;gap:2px}
+.dash-bal{flex:0 0 auto;text-align:right}
+.dash-bal-n{font-size:22px;font-weight:800;color:#41C07E;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.dash-spark{display:flex;align-items:center;gap:8px;margin-top:13px}
+.spk-row{display:inline-flex;align-items:flex-end;gap:2px;line-height:1}
+.spk{font-size:19px;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.spk-empty{color:#333d35}
+.spk-label{font-size:10px;color:#5C655C;letter-spacing:.5px;flex:0 0 auto}
+.dash-perc{font-size:11px;color:#8B968C;margin-left:auto;flex:0 0 auto;white-space:nowrap}
+.dash-life{display:flex;align-items:center;gap:9px;margin-top:13px}
+.dash-life-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8B968C;flex:0 0 auto}
+.dash-life-pct{font-size:11px;color:#CBA45C;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
+.dash-sub{margin-top:10px;font-size:11.5px;color:#8B968C}
 .life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#41C07E;color:#41C07E;background:rgba(65,192,126,.12)}
 @media (prefers-reduced-motion:reduce){
@@ -274,7 +289,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.45.0";
+const VERSION="0.46.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{}};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -309,9 +324,11 @@ const CATEGORIES=[
  {id:"regime",name:"Ритуалы: утро и вечер",items:[
    {id:"phone",label:"🌙 Телефон на кухне ночью (+4)",type:"ob",pts:4,pen:1},
    {id:"groin",label:"🛡 Защита паха",type:"ob",pts:1,pen:1},
+   {id:"teeth",label:"🌙 Зубы (перед сном)",type:"ob",pts:1,pen:1},
+   {id:"expander",label:"🌙 Экспандер (хват)",type:"ob",pts:1,pen:1},
    {id:"bed",label:"☀️ Заправить кровать",type:"ob",pts:0.5},
-   {id:"teeth",label:"☀️ Зубы + массаж",type:"ob",pts:1,pen:1},
    {id:"warmwater",label:"☀️ Тёплая вода",type:"ob",pts:1,pen:1},
+   {id:"facemassage",label:"☀️ Массаж лица (лимфодренаж)",type:"ob",pts:1},
  ]},
  {id:"work",name:"Работа",items:[
    {id:"crypto",label:"Криптопроект (+3)",type:"ob",q:true,pts:3},
@@ -321,13 +338,12 @@ const CATEGORIES=[
  {id:"body",name:"Тело",items:[
    {id:"workout",label:"ММА / тренировка (+5)",type:"ob",sched:[1,3,5],pts:5,pen:1},
    {id:"cold",label:"Холодные процедуры (+3)",type:"ob",pts:3,opts:[{k:"type",o:[["shower","душ"],["bath","ванна"]]}]},
-   {id:"teeth",label:"Зубы + массаж",type:"ob",pen:1,pts:1},
    {id:"neck",label:"Шея",type:"ob",pen:1,pts:1},
    {id:"stretch",label:"Растяжка",type:"des",pts:1},
    {id:"jumprope",label:"Скакалка",type:"ob",pen:1,pts:2},
    {id:"abs",label:"Пресс",type:"des",pts:2},
    {id:"swim",label:"Плавание",type:"des",pts:3},
-   {id:"expander",label:"Экспандер (хват)",type:"ob",pen:1,pts:1},
+   {id:"massage_pro",label:"Массаж (сеанс у специалиста)",type:"des",pts:1,opts:[{k:"zone",o:[["face","лицо"],["back","спина"],["neck","шея"],["full","общий"],["legs","ноги"]]}]},
    {id:"fastwalk",label:"Быстрая ходьба (+2)",type:"des",pts:2},
  ]},
  {id:"health",name:"Здоровье",items:[
@@ -351,6 +367,8 @@ const CATEGORIES=[
    {id:"phoneclean",label:"Протереть экран телефона",type:"ob",pen:1,pts:1,sched:[3,0]},
  ]},
  {id:"selfctrl",name:"Самоконтроль",items:[
+   {id:"checkin_day",label:"⏰ Дневной чекин (12:00)",type:"ob",pts:1},
+   {id:"checkin_eve",label:"⏰ Вечерний чекин (22:30)",type:"ob",pts:1},
    {id:"sweets",label:"Сладкое",type:"fact",opts:[{k:"amt",o:[["little","мало"],["much","много"]]},{k:"ctx",o:[["reward","в награду"],["slipc","срыв"]]}]},
    {id:"games",label:"Видеоигры",type:"fact",opts:[{k:"amt",o:[["little","мало"],["much","много"]]},{k:"ctx",o:[["reward","в награду"],["slipc","срыв"]]}]},
    {id:"hairpull",label:"Трихотилломания (тянул/теребил волосы)",type:"fact",opts:[{k:"amt",o:[["little","редко"],["much","часто"]]}]},
@@ -878,6 +896,34 @@ function lifeHTML(){
   const pct=Math.max(0,Math.min(100,ageYears/target*100));
   return `<div class="life-card"><div class="life-head"><span class="life-title">Жизнь</span><span class="life-nums">${ageYears.toFixed(1)} / ${target} лет</span></div><div class="life-track"><div class="life-fill" style="width:${pct}%"></div></div><div class="life-cap"><b style="color:#CBA45C;font-family:ui-monospace,Menlo,monospace">${pct.toFixed(1)}%</b> прожито · каждый день важен</div></div>`;
 }
+// Текстовый мини-график продуктивности (obPct) за последние 7 дней. Пустые дни — ░ (заполни меня).
+const SPARK_CHARS="▁▂▃▄▅▆▇█";
+function sparkHTML(){
+  const t=todayKey();let out="";
+  for(let i=6;i>=0;i--){
+    const k=addDays(t,-i);const d=days[k];
+    const pct=d?computeRing(d,k).obPct:0;
+    if(pct<=0){out+=`<span class="spk spk-empty">░</span>`;continue;}
+    const idx=Math.min(7,Math.max(0,Math.ceil(pct/100*8)-1));
+    const col=pct>=80?"#41C07E":pct>=40?"#CBA45C":"#7E8A80";
+    out+=`<span class="spk" style="color:${col}" title="${k}: ${pct}%">${SPARK_CHARS[idx]}</span>`;
+  }
+  return out;
+}
+// Единый дашборд: кольцо, дата, баланс, спарклайн, тонкая линия жизни и серии — одной карточкой.
+function dashHTML(r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
+  const C=2*Math.PI*16;
+  return `<div class="dash">
+    <div class="dash-top">
+      <div class="db-ring ${ringGlow}" style="width:50px;height:50px"><svg viewBox="0 0 40 40" width="50" height="50"><circle cx="20" cy="20" r="16" fill="none" stroke="#243029" stroke-width="4"/><circle cx="20" cy="20" r="16" fill="none" stroke="#41C07E" stroke-width="4" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-r.obPct/100)}" transform="rotate(-90 20 20)" style="transition:stroke-dashoffset .4s"/></svg><div class="db-pct" style="font-size:13px">${r.obPct}</div></div>
+      <div class="dash-date"><button class="nav-btn" onclick="navDay(-1)">‹</button><div style="text-align:center"><div class="datebar-dow">${sl.dow}</div><div class="datebar-txt">${sl.txt}</div></div><button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button></div>
+      <div class="dash-bal"><div class="dash-bal-n">${bal}<span class="hud-unit">б</span></div>${earned!==0?`<div class="hud-earn">${fmtPts(earned)}</div>`:""}</div>
+    </div>
+    <div class="dash-spark"><span class="spk-label">7 дн</span><span class="spk-row">${sparkHTML()}</span><span class="dash-perc"><b style="color:#41C07E">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span></div>
+    <div class="dash-life"><span class="dash-life-lbl">Жизнь</span><div class="life-track" style="flex:1"><div class="life-fill" style="width:${lifePct}%"></div></div><span class="dash-life-pct">${lifePct}%</span></div>
+    <div class="dash-sub"><span>🕌 <b style="color:${streak>0?"#CBA45C":"#5C655C"}">${streak}</b> <span style="color:#5C655C">намаз</span> · 🛡 <b style="color:${clean>0?"#41C07E":"#5C655C"}">${clean}</b> <span style="color:#5C655C">без срывов</span></span></div>
+  </div>`;
+}
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#0E120F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 
 function rowHTML(it,day,offSched){
@@ -1067,7 +1113,7 @@ function catItemsHTML(cat,day,wd){
   if(cat.id==="health")inner+=supsLoggingHTML(day)+measurementsHTML(day);
   // Ритуалы: визуальное деление на утро/вечер карточками-подблоками (без скрытия по времени).
   if(cat.id==="regime"){
-    const groups=[["morning","☀️","Утро",["bed","warmwater","teeth"]],["evening","🌙","Вечер",["phone","groin"]]];
+    const groups=[["morning","☀️","Утро",["bed","warmwater","facemassage"]],["evening","🌙","Вечер",["phone","groin","teeth","expander"]]];
     for(const [cls,icon,title,ids] of groups){
       inner+=`<div class="daypart ${cls}"><span class="daypart-ic">${icon}</span><span>${title}</span></div>`;
       for(const id of ids){const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
@@ -1175,24 +1221,10 @@ function render(){
   const appEl=document.getElementById("app");
   appEl.className="mode-"+mode;
   appEl.innerHTML=`
-    <div class="topbar">
-      <div class="datebar">
-        <div class="db-ring ${ringGlow}"><svg viewBox="0 0 40 40" width="40" height="40"><circle cx="20" cy="20" r="16" fill="none" stroke="#243029" stroke-width="4"/><circle cx="20" cy="20" r="16" fill="none" stroke="#41C07E" stroke-width="4" stroke-linecap="round" stroke-dasharray="${2*Math.PI*16}" stroke-dashoffset="${2*Math.PI*16*(1-r.obPct/100)}" transform="rotate(-90 20 20)" style="transition:stroke-dashoffset .4s"/></svg><div class="db-pct">${r.obPct}</div></div>
-        <button class="nav-btn" onclick="navDay(-1)">‹</button>
-        <div class="datebar-c"><span class="datebar-dow">${sl.dow}</span><span class="datebar-txt">${sl.txt}</span></div>
-        <button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button>
-        <div class="db-bal">₴${bal}</div>
-      </div>
-      <div class="dstrip">${stripHTML()}</div>
-    </div>
+    ${gearHTML()}
+    ${dashHTML(r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow)}
     ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${importErrHTML()}${lockHTML()}${topBanner}
     ${pendingImportHTML()}
-    ${gearHTML()}
-    <div class="hud">
-      <div class="hud-row"><span class="hud-day">${dayLabel(sel).txt} · ${dayLabel(sel).dow}</span><span class="hud-bal">${bal}<span class="hud-unit">б</span>${earned!==0?`<span class="hud-earn">${fmtPts(earned)}</span>`:""}</span></div>
-      <div class="hud-row hud-sub"><span><b style="color:#41C07E">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span><span>🕌 <b style="color:${streak>0?"#CBA45C":"#5C655C"}">${streak}</b> <span style="color:#5C655C">намаз</span> · 🛡 <b style="color:${clean>0?"#41C07E":"#5C655C"}">${clean}</b> <span style="color:#5C655C">без срывов</span> · <b class="hud-life">${lifePct}%</b> <span style="color:#5C655C">жизни</span></span></div>
-    </div>
-    ${lifeHTML()}
     <div class="grid">
       <div class="col-main">
         ${tasksHTML(day)}
