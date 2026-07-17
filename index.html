@@ -279,7 +279,45 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 <script>
 const HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // дефолтный хеш для "1234"
 if(sessionStorage.getItem("b3_auth")==="true"){const s=document.createElement("style");s.innerHTML="#lock-screen{display:none!important}";document.head.appendChild(s);}
-async function checkPass(){const inp=document.getElementById("pass-input").value;const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(inp));const hex=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");if(hex===HASH){const ls=document.getElementById("lock-screen");if(ls)ls.remove();sessionStorage.setItem("b3_auth","true");}else{document.getElementById("lock-err").style.display="block";if(typeof vib==="function")vib(12);}}
+// Чистый JS SHA-256 (запасной, если crypto.subtle недоступен — напр. file:// или старый браузер).
+function sha256hexJS(ascii){
+  function rr(v,a){return (v>>>a)|(v<<(32-a));}
+  var maxWord=Math.pow(2,32),result="",words=[],asciiBitLength=ascii.length*8;
+  var hash=sha256hexJS.h=sha256hexJS.h||[],k=sha256hexJS.k=sha256hexJS.k||[],primeCounter=k.length,isComposite={};
+  for(var candidate=2;primeCounter<64;candidate++){
+    if(!isComposite[candidate]){
+      for(var i2=0;i2<313;i2+=candidate)isComposite[i2]=candidate;
+      hash[primeCounter]=(Math.pow(candidate,.5)*maxWord)|0;
+      k[primeCounter++]=(Math.pow(candidate,1/3)*maxWord)|0;
+    }
+  }
+  ascii+="\x80";
+  while(ascii.length%64-56)ascii+="\x00";
+  for(var i=0;i<ascii.length;i++){var j=ascii.charCodeAt(i);if(j>>8)return "";words[i>>2]|=j<<((3-i)%4)*8;}
+  words[words.length]=(asciiBitLength/maxWord)|0;words[words.length]=asciiBitLength;
+  for(var j=0;j<words.length;){
+    var w=words.slice(j,j+=16),oldHash=hash;hash=hash.slice(0,8);
+    for(var i=0;i<64;i++){
+      var w15=w[i-15],w2=w[i-2],a=hash[0],e=hash[4];
+      var temp1=hash[7]+(rr(e,6)^rr(e,11)^rr(e,25))+((e&hash[5])^((~e)&hash[6]))+k[i]+(w[i]=i<16?w[i]:(w[i-16]+(rr(w15,7)^rr(w15,18)^(w15>>>3))+w[i-7]+(rr(w2,17)^rr(w2,19)^(w2>>>10)))|0);
+      var temp2=(rr(a,2)^rr(a,13)^rr(a,22))+((a&hash[1])^(a&hash[2])^(hash[1]&hash[2]));
+      hash=[(temp1+temp2)|0].concat(hash);hash[4]=(hash[4]+temp1)|0;
+    }
+    for(var i=0;i<8;i++)hash[i]=(hash[i]+oldHash[i])|0;
+  }
+  for(var i=0;i<8;i++)for(var j=3;j+1;j--){var b=(hash[i]>>(j*8))&255;result+=((b<16)?0:"")+b.toString(16);}
+  return result;
+}
+async function sha256hex(str){
+  try{if(window.crypto&&crypto.subtle){const buf=await crypto.subtle.digest("SHA-256",new TextEncoder().encode(str));return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,"0")).join("");}}catch(e){}
+  return sha256hexJS(str);
+}
+async function checkPass(){
+  const inp=(document.getElementById("pass-input").value||"").trim();
+  let hex="";try{hex=await sha256hex(inp);}catch(e){hex="";}
+  if(hex===HASH){const ls=document.getElementById("lock-screen");if(ls)ls.remove();try{sessionStorage.setItem("b3_auth","true");}catch(e){}}
+  else{document.getElementById("lock-err").style.display="block";if(typeof vib==="function")vib(12);}
+}
 
 const KEY="journal_block3";
 const ERR_KEY="journal_block3_errors";
@@ -296,7 +334,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.47.0";
+const VERSION="0.47.1";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{}};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
