@@ -57,7 +57,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .hud-earn{font-size:11.5px;color:#CBA45C;margin-left:6px;font-weight:700}
 .hud-sub{font-size:11.5px;color:#8B968C;margin-top:2px}
 .hud-life{color:#CBA45C;font-family:ui-monospace,Menlo,monospace}
-.gear{position:absolute;top:10px;right:12px;z-index:50;width:34px;height:34px;border-radius:10px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:15px}
+.gear{position:absolute;top:12px;right:14px;z-index:50;width:42px;height:42px;border-radius:12px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:19px}
 .gear-bad{border-color:#E0795B;color:#E0795B}
 .gear-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#E0795B}
 .log-card{background:#12180F;border:1px solid #232B24;border-radius:14px;margin:10px 0 4px;overflow:hidden}
@@ -244,25 +244,34 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#5C655C;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:#12180F;border:1px solid #232B24;border-radius:20px;padding:15px 16px 14px;margin:2px 0 12px}
-.dash-top{display:flex;align-items:center;gap:12px}
-.dash-date{flex:1;display:flex;align-items:center;justify-content:center;gap:2px}
+.dash{background:#12180F;border:1px solid #2a332b;border-radius:22px;padding:18px 18px 15px;margin:2px 0 14px}
+.dash-top{display:flex;align-items:center;gap:14px;padding-right:44px}
+.dash-date{flex:1;display:flex;align-items:center;justify-content:center;gap:6px}
+.dash-dow{font-size:13px;letter-spacing:1.5px;color:#8B968C;text-transform:uppercase}
+.dash-date-txt{font-size:23px;font-weight:800;color:#E8ECE6;line-height:1.1}
 .dash-bal{flex:0 0 auto;text-align:right}
-.dash-bal-n{font-size:22px;font-weight:800;color:#41C07E;font-family:ui-monospace,Menlo,monospace;line-height:1}
-.dash-spark{display:flex;align-items:center;gap:8px;margin-top:13px}
+.dash-bal-n{font-size:27px;font-weight:800;color:#41C07E;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.dash-bal-u{font-size:13px;color:#5C655C;margin-left:2px}
+.dash-earn{font-size:13px;color:#CBA45C;font-weight:700;margin-top:3px}
+.dash-namaz{display:flex;gap:6px;margin-top:16px}
+.npz{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px;border-radius:13px;border:1px solid #283029;background:#161D17;color:#8B968C;transition:all .15s}
+.npz-n{font-size:12.5px;font-weight:700}
+.npz-t{font-size:12px;font-family:ui-monospace,Menlo,monospace;color:#5C655C}
+.npz.on{border-color:#41C07E;background:rgba(65,192,126,.14);color:#41C07E}
+.npz.on .npz-t{color:#41C07E}
+.npz.next{border-color:#E0955B;box-shadow:inset 0 0 0 1px rgba(224,149,91,.55)}
+.npz.next .npz-t{color:#E0955B}
+.dash-spark{display:flex;align-items:center;gap:10px;margin-top:16px}
 .spk-row{display:inline-flex;align-items:flex-end;gap:2px;line-height:1}
-.spk{font-size:19px;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.spk{font-size:22px;font-family:ui-monospace,Menlo,monospace;line-height:1}
 .spk-empty{color:#333d35}
-.spk-label{font-size:10px;color:#5C655C;letter-spacing:.5px;flex:0 0 auto}
-.dash-perc{font-size:11px;color:#8B968C;margin-left:auto;flex:0 0 auto;white-space:nowrap}
-.dash-life{display:flex;align-items:center;gap:9px;margin-top:13px}
-.dash-life-lbl{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:#8B968C;flex:0 0 auto}
-.dash-life-pct{font-size:11px;color:#CBA45C;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
-.dash-sub{margin-top:10px;font-size:11.5px;color:#8B968C}
-.dash-namaz{display:flex;align-items:center;gap:5px;margin-top:12px}
-.pz{width:30px;height:26px;border-radius:8px;border:1px solid #283029;background:#161D17;color:#5C655C;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0;transition:all .15s}
-.pz.on{border-color:#41C07E;background:rgba(65,192,126,.14);color:#41C07E}
-.dash-nz-lbl{font-size:11px;color:#5C655C;margin-left:auto;font-family:ui-monospace,Menlo,monospace}
+.spk-label{font-size:11px;color:#5C655C;letter-spacing:.5px;flex:0 0 auto}
+.dash-perc{font-size:13px;color:#8B968C;margin-left:auto;flex:0 0 auto;white-space:nowrap}
+.dash-foot{display:flex;align-items:center;gap:14px;margin-top:15px;flex-wrap:wrap}
+.dash-life{display:flex;align-items:center;gap:8px;flex:1 1 150px;min-width:150px}
+.dash-life-lbl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5C655C;flex:0 0 auto}
+.dash-life-pct{font-size:11.5px;color:#CBA45C;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
+.dash-streaks{display:flex;gap:14px;font-size:13px;color:#8B968C;flex:0 0 auto}
 .life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#41C07E;color:#41C07E;background:rgba(65,192,126,.12)}
 @media (prefers-reduced-motion:reduce){
@@ -334,7 +343,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.48.0";
+const VERSION="0.49.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{}};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -421,7 +430,6 @@ const CATEGORIES=[
    {id:"games",label:"Видеоигры",type:"fact",opts:[{k:"amt",o:[["little","мало"],["much","много"]]},{k:"ctx",o:[["reward","в награду"],["slipc","срыв"]]}]},
    {id:"hairpull",label:"Трихотилломания (тянул/теребил волосы)",type:"fact",opts:[{k:"amt",o:[["little","редко"],["much","часто"]]}]},
    {id:"swear",label:"Мат / сквернословие",type:"fact",opts:[{k:"amt",o:[["little","редко"],["much","часто"]]},{k:"ctx",o:[["reward","в сердцах"],["slipc","при людях"]]}]},
-   {id:"procrast",label:"Прокрастинация — отметь вечером, сколько сегодня сидел без дела",type:"fact",opts:[{k:"amt",o:[["little","до часа"],["mid","1–3 ч"],["much","больше 3 ч"]]},{k:"place",o:[["athome","дома"],["atwork","на работе"]]}]},
  ]},
  {id:"social",name:"Социализация",items:[
    {id:"outing",label:"Выход в люди / людное место",type:"des",pts:1},
@@ -449,7 +457,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -603,7 +611,7 @@ function buildExport(days){
     const mkTm=d.mark&&d.markTime?" ("+d.markTime+")":"";
     let head="";
     if(!dayTouched(d))head+="⚠️ ДЕНЬ ПОЛНОСТЬЮ ПРОПУЩЕН (ДАННЫЕ ОТСУТСТВУЮТ)\n";
-    if(bad)head+="⚠️ ВНИМАНИЕ: ДЕНЬ ЗАПОЛНЯЛСЯ НАСПЕХ. ВРЕМЕНА ОТМЕТОК НЕ ДОСТОВЕРНЫ\n";
+    if(bad)head+="⚠️ ДАННЫЕ ДНЯ НЕТОЧНЫ (внесены приблизительно / задним числом). Брать в анализ с осторожностью, времена не достоверны.\n";
     let s=head+"▸ "+k+" ("+DOW[wd]+") — самооценка: "+mk+mkTm+(d.lastUpdated?" · изменён "+fmtTs(d.lastUpdated):"")+"\n";
     if(d.mark==="fail"&&d.markTime)s+="  Отметка: пользователь в "+d.markTime+" отметил этот день как ПРОВАЛ.\n";
     if(d.mark==="crown"&&d.markTime)s+="  Отметка: пользователь в "+d.markTime+" отметил этот день как ИДЕАЛЬНЫЙ.\n";
@@ -629,6 +637,7 @@ function buildExport(days){
     if(d.supsLog&&d.supsLog.length){s+="  БАДы по времени: "+d.supsLog.filter(x=>x.n>0).map(x=>(x.t?x.t:"итогом")+" "+supLabel(x.id)+" +"+x.n).join(" · ")+"\n";}
     if(d.measLog&&d.measLog.length){s+="  Замеры по времени: "+d.measLog.map(x=>x.t+" "+(MEAS_RU[x.type]||x.type)+" "+String(x.v).replace(/</g,"&lt;")+(MEAS_UNIT[x.type]||"")).join(" · ")+"\n";}
     if(d.workLog&&d.workLog.length)s+="  Работа: "+d.workLog.map(x=>(x.from||"?")+"–"+(x.to||"?")).join(", ")+" (всего "+workTotalH(d.workLog).toFixed(1)+" ч)\n";
+    if(d.procLog&&d.procLog.length){const PL={little:"немного",mid:"средне",much:"сильно"};s+="  Прокрастинация: "+d.procLog.map(x=>(bad?"":(x.t?x.t+" ":""))+(PL[x.level]||x.level||"?")+(x.note?" ("+String(x.note).replace(/</g,"&lt;")+")":"")).join(" · ")+"\n";}
     if(d.meals&&d.meals.length)s+="  Еда: "+d.meals.map(x=>(x.t||"?")+(x.what?" "+String(x.what).replace(/</g,"&lt;"):"")).join(" · ")+"\n";
     else if(dayTouched(d))s+="  Еда: не отмечено (не значит «не ел»)\n";
     if(d.spends&&d.spends.length){s+="  Потрачено: "+d.spends.map(x=>(x.t||"")+" −"+(x.n||0)+(x.what?" ("+String(x.what).replace(/</g,"&lt;")+")":"")).join(" · ")+"\n";}
@@ -942,7 +951,7 @@ function setQuality(id,v){const d=getDay();const cur=d.quality?.[id];setDay({qua
 function optsHTML(it,day){if(!it.opts)return "";const oo=day.opts?.[it.id]||{};return it.opts.map(g=>{const btns=g.o.map(([v,l])=>`<button class="q-btn${oo[g.k]===v?" active":""}" onclick="setOpt('${it.id}','${g.k}','${v}')">${l}</button>`).join("");return `<div class="q-row">${btns}</div>`;}).join("");}
 function setOpt(id,k,v){const d=getDay();const opts={...(d.opts||{})};const cur=opts[id]?.[k];opts[id]={...(opts[id]||{}),[k]:cur===v?undefined:v};setDay({opts});}
 function toggleBadLogging(){const d=getDay();setDay({badLogging:!d.badLogging});vib(6);}
-function markHTML(day){const opts=[["crown","👑 Идеальный","#3DDC84"],["fail","🔴 Провал","#E0795B"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#CBA45C;color:#CBA45C;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Заполняю задним числом — не фиксировать точное время отметок">🕘 Наспех</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="mark-row">${b}${badBtn}${clr}</div>`;}
+function markHTML(day){const opts=[["crown","👑 Идеальный","#3DDC84"],["fail","🔴 Провал","#E0795B"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#CBA45C;color:#CBA45C;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом — в анализе считать неточными, времена не фиксируются">≈ Неточно</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="mark-row">${b}${badBtn}${clr}</div>`;}
 function lifeHTML(){
   const target=40;
   const ageYears=(Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000);
@@ -965,19 +974,21 @@ function sparkHTML(){
 }
 // Единый дашборд: кольцо, дата, баланс, спарклайн, тонкая линия жизни и серии — одной карточкой.
 function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
-  const C=2*Math.PI*16;
-  const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
-  const pills=PRAYERS.map(([id,l])=>`<button class="pz${day.prayers?.[id]?" on":""}" onclick="togglePrayer('${id}')" title="${l}">${l.slice(0,1)}</button>`).join("");
+  const C=2*Math.PI*18;
+  const pt=ptFor(sel),nx=nextPrayerId(pt);
+  const pills=PRAYERS.map(([id,nm])=>{const on=!!day.prayers?.[id];const tm=pt[PT_MAP[id]]||"";const isNext=id===nx;return `<button class="npz${on?" on":""}${isNext?" next":""}" onclick="togglePrayer('${id}')"><span class="npz-n">${nm}</span><span class="npz-t">${on?"✓":(tm||"—")}</span></button>`;}).join("");
   return `<div class="dash">
     <div class="dash-top">
-      <div class="db-ring ${ringGlow}" style="width:50px;height:50px"><svg viewBox="0 0 40 40" width="50" height="50"><circle cx="20" cy="20" r="16" fill="none" stroke="#243029" stroke-width="4"/><circle cx="20" cy="20" r="16" fill="none" stroke="#41C07E" stroke-width="4" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-r.obPct/100)}" transform="rotate(-90 20 20)" style="transition:stroke-dashoffset .4s"/></svg><div class="db-pct" style="font-size:13px">${r.obPct}</div></div>
-      <div class="dash-date"><button class="nav-btn" onclick="navDay(-1)">‹</button><div style="text-align:center"><div class="datebar-dow">${sl.dow}</div><div class="datebar-txt">${sl.txt}</div></div><button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button></div>
-      <div class="dash-bal"><div class="dash-bal-n">${bal}<span class="hud-unit">б</span></div>${earned!==0?`<div class="hud-earn">${fmtPts(earned)}</div>`:""}</div>
+      <div class="db-ring ${ringGlow}" style="width:58px;height:58px"><svg viewBox="0 0 44 44" width="58" height="58"><circle cx="22" cy="22" r="18" fill="none" stroke="#243029" stroke-width="4.5"/><circle cx="22" cy="22" r="18" fill="none" stroke="#41C07E" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-r.obPct/100)}" transform="rotate(-90 22 22)" style="transition:stroke-dashoffset .4s"/></svg><div class="db-pct" style="font-size:16px">${r.obPct}</div></div>
+      <div class="dash-date"><button class="nav-btn" onclick="navDay(-1)">‹</button><div style="text-align:center"><div class="dash-dow">${sl.dow}</div><div class="dash-date-txt">${sl.txt}</div></div><button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button></div>
+      <div class="dash-bal"><div class="dash-bal-n">${bal}<span class="dash-bal-u">б</span></div>${earned!==0?`<div class="dash-earn">${fmtPts(earned)}</div>`:""}</div>
     </div>
-    <div class="dash-spark"><span class="spk-label">7 дн</span><span class="spk-row">${sparkHTML()}</span><span class="dash-perc"><b style="color:#41C07E">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span></div>
-    <div class="dash-namaz">🕌${pills}<span class="dash-nz-lbl">${pn}/5</span></div>
-    <div class="dash-life"><span class="dash-life-lbl">Жизнь</span><div class="life-track" style="flex:1"><div class="life-fill" style="width:${lifePct}%"></div></div><span class="dash-life-pct">${lifePct}%</span></div>
-    <div class="dash-sub"><span>🕌 серия <b style="color:${streak>0?"#CBA45C":"#5C655C"}">${streak}</b> · 🛡 без срывов <b style="color:${clean>0?"#41C07E":"#5C655C"}">${clean}</b></span></div>
+    <div class="dash-namaz">${pills}</div>
+    <div class="dash-spark"><span class="spk-label">неделя</span><span class="spk-row">${sparkHTML()}</span><span class="dash-perc"><b style="color:#41C07E">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span></div>
+    <div class="dash-foot">
+      <div class="dash-life"><span class="dash-life-lbl">жизнь</span><div class="life-track" style="flex:1;height:5px"><div class="life-fill" style="width:${lifePct}%"></div></div><span class="dash-life-pct">${lifePct}%</span></div>
+      <div class="dash-streaks"><span>🕌 серия <b style="color:${streak>0?"#CBA45C":"#5C655C"}">${streak}</b></span><span>🛡 без срывов <b style="color:${clean>0?"#41C07E":"#5C655C"}">${clean}</b></span></div>
+    </div>
   </div>`;
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#0E120F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
@@ -1129,6 +1140,12 @@ const CHARGE_EX=[["abs","Пресс"],["pushups","Отжимания"],["squats"
 function chargeDone(day){const c=day.charge||{};return CHARGE_EX.some(([k])=>Number(c[k])>=20);}
 function setCharge(ex,v){const d=getDay();const c={...(d.charge||{})};c[ex]=clampNum(Math.round(num(v,0)),0,100000);const done=CHARGE_EX.some(([k])=>Number(c[k])>=20);setDay({charge:c,items:{...(d.items||{}),charge:done}});}
 function chargeHTML(day){const c=day.charge||{};const done=chargeDone(day);const rows=CHARGE_EX.map(([k,l])=>{const v=Number(c[k])||0;const ok=v>=20;return `<div class="mrow"><span class="mlog-v" style="flex:1;color:${ok?"#41C07E":"#8B968C"}">${l}</span><input class="mval" style="flex:0 0 96px;text-align:center" type="number" inputmode="numeric" value="${v||""}" placeholder="повт." onchange="setCharge('${k}',this.value)"><span class="munit" style="min-width:18px;text-align:center">${ok?"✓":""}</span></div>`;}).join("");return `<div class="meas-card" style="margin-top:7px;border-color:${done?"#2f6b45":"#232B24"}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span class="row-label${done?" on":""}" style="font-size:14px">🤸 Зарядка</span><span style="font-size:11px;color:${done?"#41C07E":"#5C655C"}">${done?"засчитано ✓":"хотя бы одно × 20"}</span></div>${rows}</div>`;}
+// Прокрастинация: несколько записей за день (сила / время / комментарий) — механика как у замеров.
+const PROC_LEVELS=[["little","немного"],["mid","средне"],["much","сильно"]];
+function addProc(){const d=getDay();setDay({procLog:[...(d.procLog||[]),{level:"mid",t:nowHM(),note:""}]});}
+function setProc(i,f,v){const d=getDay();const L=[...(d.procLog||[])];if(!L[i])return;L[i]={...L[i],[f]:v};setDay({procLog:L});}
+function delProc(i){const d=getDay();const L=[...(d.procLog||[])];L.splice(i,1);setDay({procLog:L});}
+function procHTML(day){const L=day.procLog||[];const rows=L.length?L.map((x,i)=>{const opts=PROC_LEVELS.map(([v,l])=>`<option value="${v}"${x.level===v?" selected":""}>${l}</option>`).join("");return `<div class="mrow"><select class="msel" style="flex:0 0 90px" onchange="setProc(${i},'level',this.value)">${opts}</select><input class="mtime" type="time" value="${x.t||""}" onchange="setProc(${i},'t',this.value)"><input class="mval" type="text" value="${String(x.note||"").replace(/"/g,"&quot;")}" placeholder="на что / комментарий" onchange="setProc(${i},'note',this.value)"><button class="mlog-x" onclick="delProc(${i})">✕</button></div>`;}).join(""):`<div class="muted-note" style="padding:4px 0">Прокрастинации не было — или добавь запись, если залипал.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🌀 Прокрастинация</div><button class="task-add" onclick="addProc()">+</button></div><div style="font-size:11px;color:#5C655C;margin:2px 0 4px">Сколько раз залипал без дела — сила, время, на что. Можно несколько записей.</div>${rows}</div>`;}
 // СДВГ-опросник срыва: только кнопки, без текстовых полей.
 const SLIP_TYPES=[["fantasy","Фантазии"],["porn","Порно"],["both","Порно + Фантазии"],["planned","Плановый"]];
 const SLIP_FIRSTS=[["fantasy_first","Сначала фантазии"],["porn_first","Сначала порно"]];
@@ -1269,12 +1286,12 @@ function render(){
       <div class="dcard">
         <div class="dcard-h">🧠 Ментальное состояние</div>
         ${toggleHTML("Срыв","slip",day.slip,true)}${slipI}
-        ${sliderHTML("Летал в мыслях","drift",day.drift)}
         ${sliderHTML("Энергия","energy",day.energy)}
         ${sliderHTML("Фокус / собранность","focus",day.focus)}
         ${sliderHTML("Состояние (иман)","spirit",day.spirit)}
         ${sliderHTML("Самоконтроль над импульсами","control",day.control)}
         ${toggleHTML("Перед сном тянуло «ещё что-то»","urge",day.urge)}
+        ${procHTML(day)}
       </div>
       <div class="dcard">
         <div class="dcard-h">✍️ Рефлексия (дневник)</div>
@@ -1438,7 +1455,7 @@ function diagHTML(){
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];render();}
-function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=d.badLogging?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else vib(4);}
+function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
   if(longTask){
@@ -1455,7 +1472,7 @@ function toggleItem(id){
   const nItems={...d.items,[id]:on};
   const nTimes={...(d.itemTimes||{})};
   const nRec={...(d.itemRecTimes||{})};
-  if(on){nRec[id]=d.badLogging?"":nowHM();}else{delete nTimes[id];delete nRec[id];}
+  if(on){nRec[id]=(d.badLogging||sel!==todayKey())?"":nowHM();}else{delete nTimes[id];delete nRec[id];}
   const after=cat?catCompletion(cat,{...d,items:nItems},wd):null;
   const milestone=before&&after&&after.total>0&&after.done===after.total&&before.done<before.total;
   if(milestone)justCompletedCat=cat.id;
