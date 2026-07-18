@@ -343,9 +343,9 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.50.0";
+const VERSION="0.51.0";
 const META_KEY="journal_block3_meta";
-let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{}};
+let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
 if(!meta.supPeriods||typeof meta.supPeriods!=="object")meta.supPeriods={};
 function saveMeta(){const r=safeWriteMeta();if(!r)logError("saveMeta","не удалось сохранить настройки");return r;}
@@ -575,7 +575,7 @@ function buildExport(days){
   if(!keys.length)return "Журнал пуст.";
   const OL={own:"своё место",all:"весь стол",self:"сам",asked:"попросили",good:"качественно",meh:"так себе",little:"мало",mid:"средне",much:"много",reward:"в награду",slipc:"срыв",shower:"душ",bath:"ванна",short:"менее часа",long:"час и больше",athome:"дома",atwork:"на работе"};
   const clean=s=>String(s).split(" ·")[0].replace(/\s*\(\+\d+\)/,"");
-  const itLabel=id=>{for(const c of CATEGORIES)for(const it of c.items)if(it.id===id)return clean(it.label);return id;};
+  const itLabel=id=>{for(const c of CATEGORIES)for(const it of c.items)if(it.id===id)return clean(dispLabel(it));return id;};
   const CT=meta.customTasks||[];
   const blocks=keys.map(k=>{
     const d=days[k]||{},r=computeRing(d,k),wd=weekdayOf(k);
@@ -993,6 +993,8 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#08090B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 
+// Динамическая подпись: чекины показывают выбранные пользователем времена.
+function dispLabel(it){if(it.id==="checkin_day")return "⏰ Дневной чекин ("+(meta.checkinDay||"12:00")+")";if(it.id==="checkin_eve")return "⏰ Вечерний чекин ("+(meta.checkinEve||"22:30")+")";return it.label;}
 function rowHTML(it,day,offSched){
   if(it.id==="istinja_b"&&!(Number(day.poop)>0)){return `<button class="row" style="opacity:.45" onclick="toast('Сначала укажи «Стул (раз)» в Поведении внизу')"><span style="display:flex;align-items:center;gap:8px"><span class="tag tag-fact">после стула</span><span class="row-label">${it.label}</span></span><span class="check-box"></span></button>`;}
   const on=!!day.items?.[it.id];
@@ -1005,7 +1007,7 @@ function rowHTML(it,day,offSched){
   const ttime=on?(act
     ?`<span class="pt-time tchip lag" onclick="event.stopPropagation();editItemTime('${it.id}')">${act} ✓</span>`
     :`<span class="pt-time tchip" onclick="event.stopPropagation();editItemTime('${it.id}')">${rec||"--:--"} ✎?</span>`):"";
-  return `<button class="row${on?" on":""}" onclick="toggleItem('${it.id}')"><span style="display:flex;align-items:center;gap:8px">${tag}<span class="row-label${on?" on":""}">${it.label}</span>${ttime}</span><span class="check-box${on?" on":""}${justOn?" just":""}" style="${on?`background:${col};border-color:${col}`:""}">${on?checkSVG():""}</span></button>`;
+  return `<button class="row${on?" on":""}" onclick="toggleItem('${it.id}')"><span style="display:flex;align-items:center;gap:8px">${tag}<span class="row-label${on?" on":""}">${dispLabel(it)}</span>${ttime}</span><span class="check-box${on?" on":""}${justOn?" just":""}" style="${on?`background:${col};border-color:${col}`:""}">${on?checkSVG():""}</span></button>`;
 }
 const PT_LAT=48.585,PT_LNG=22.283;
 function uaTZ(y,m,d){const last=(yy,mm)=>{const dt=new Date(yy,mm+1,0);return new Date(yy,mm,dt.getDate()-dt.getDay()).getTime();};const t=new Date(y,m-1,d).getTime();return (t>=last(y,2)&&t<last(y,9))?3:2;}
@@ -1409,8 +1411,13 @@ function settingsTab1HTML(day){
     </div>
     <div style="margin-top:14px">${spendHTML(day)}</div>`;
 }
+function setCheckinTime(which,v){if(which==="day")meta.checkinDay=v||"12:00";else meta.checkinEve=v||"22:30";saveMeta();render();}
+function checkinsConfigHTML(){
+  return `<div class="meas-card" style="margin-top:10px"><div class="side-title" style="display:block;margin:0 0 6px">⏰ Времена чекинов</div><div style="font-size:11px;color:#5C655C;margin-bottom:6px">Когда ты обычно заходишь заполнить трекер. Эти времена показываются на пунктах «Дневной / Вечерний чекин» в «Самоконтроле».</div><div class="field-row"><div class="field-item"><div class="field-label">Дневной</div><input type="time" value="${meta.checkinDay||"12:00"}" onchange="setCheckinTime('day',this.value)"></div><div class="field-item"><div class="field-label">Вечерний</div><input type="time" value="${meta.checkinEve||"22:30"}" onchange="setCheckinTime('eve',this.value)"></div></div></div>`;
+}
 function settingsTab2HTML(day){
   return `
+    ${checkinsConfigHTML()}
     ${supsConfigHTML()}
     ${taskManageHTML()}
     <div class="side-title" style="display:block;margin:14px 0 2px">🌡 Погода — ручной ввод (${dayLabel(sel).txt})</div>
@@ -1525,7 +1532,7 @@ function copyViaTextarea(text,onOk,onFail){
 }
 function doCopy(){const btn=document.getElementById("copy-btn");copyToClipboard(exportText,()=>{btn.textContent="Скопировано ✓";vib(15);},()=>{btn.textContent="Вручную скопируй в окне";});}
 // В бэкап кладём и meta-данные (цели/задачи, кастомные БАДы, курсы) — иначе они бы не сохранялись.
-function backupMeta(){return {customTasks:meta.customTasks||[],userSups:meta.userSups||[],supPeriods:meta.supPeriods||{}};}
+function backupMeta(){return {customTasks:meta.customTasks||[],userSups:meta.userSups||[],supPeriods:meta.supPeriods||{},checkinDay:meta.checkinDay||"12:00",checkinEve:meta.checkinEve||"22:30"};}
 function copyBackup(){const payload=JSON.stringify({_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()});copyToClipboard(payload,()=>{meta.lastBackup=Date.now();saveMeta();vib(15);toast("📋 Скопировано");render();},()=>{toast("Буфер не сработал — скопируй вручную");});}function saveBackup(auto){const payload={_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()};const text=JSON.stringify(payload);const fname=`block3-backup-${todayKey()}${auto?"-auto":""}.json`;meta.lastBackup=Date.now();saveMeta();if(!auto&&navigator.canShare){try{const file=new File([text],fname,{type:"application/json"});if(navigator.canShare({files:[file]})){navigator.share({files:[file],title:fname}).catch(()=>{}).finally(()=>render());return;}}catch(e){}}try{const blob=new Blob([text],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=fname;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);}catch(e){}if(!auto)render();}
 
 function togglePaste(){pasteOpen=!pasteOpen;pasteText="";render();}
@@ -1560,6 +1567,8 @@ function mergeMetaIn(im,replace){
     else{const have=new Set((meta.userSups||[]).map(u=>u.id));meta.userSups=[...(meta.userSups||[]),...im.userSups.filter(u=>u&&u.id&&!have.has(u.id))];}
   }
   if(im.supPeriods&&typeof im.supPeriods==="object"){meta.supPeriods=replace?{...im.supPeriods}:{...im.supPeriods,...(meta.supPeriods||{})};}
+  if(im.checkinDay)meta.checkinDay=im.checkinDay;
+  if(im.checkinEve)meta.checkinEve=im.checkinEve;
   saveMeta();
 }
 function applyImport(mode){if(!pendingImport)return;
