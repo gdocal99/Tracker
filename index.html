@@ -6,49 +6,49 @@
 <title>BLOCK 3 — Трекер</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:#0E120F;color:#E8ECE6;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+body{background:#08090B;color:#E8ECE6;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
 #app{max-width:440px;margin:0 auto;padding:18px 16px 70px}
 button{cursor:pointer;font-family:inherit;transition:transform .09s ease}
 .row:active,.prayer-btn:active,.cat-header:active,.mark-btn:active,.wbtn:active,.task-check:active,.q-btn:active,.state-btn:active,.backup-btn:active,.export-btn:active,.nav-btn:active,.task-add:active,.vt-btn:active,.task-del:active{transform:scale(.96)}
 .prayer-btn.on{box-shadow:0 0 10px rgba(65,192,126,.22)}
 @keyframes crownPulse{0%,100%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}50%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.42),0 0 9px rgba(61,220,132,.6)}}
 .hist-cell.crown-cell{animation:crownPulse 2.4s ease-in-out infinite}
-input,textarea{font-family:inherit;color:#E8ECE6;background:#19211A;border:1px solid #283029;border-radius:10px;padding:9px 10px;font-size:14px;outline:none;width:100%}
+input,textarea{font-family:inherit;color:#E8ECE6;background:#16171D;border:1px solid #262A32;border-radius:10px;padding:9px 10px;font-size:14px;outline:none;width:100%}
 textarea{resize:none}
 input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;padding:0}
 .section-label{font-size:11px;letter-spacing:1.5px;color:#5C655C;text-transform:uppercase;margin:20px 0 9px 2px}
-.row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#161D17;border:1px solid #283029;margin-top:7px;width:100%;text-align:left}
+.row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#131419;border:1px solid #262A32;margin-top:7px;width:100%;text-align:left}
 .row-label{font-size:14.5px;color:#8B968C;transition:color .15s}
 .row-label.on{color:#E8ECE6}
 .check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid #3A453E;background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
-.prayer-btn{flex:1;padding:11px 2px;border-radius:12px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:12.5px;font-weight:600;transition:all .15s}
+.prayer-btn{flex:1;padding:11px 2px;border-radius:12px;border:1px solid #262A32;background:#131419;color:#8B968C;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#41C07E;background:rgba(65,192,126,.14);color:#41C07E}
 .prayers-row{display:flex;gap:6px;margin-top:7px}
-.step-btn{width:34px;height:34px;border-radius:10px;border:1px solid #283029;background:#19211A;color:#E8ECE6;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-btn{width:34px;height:34px;border-radius:10px;border:1px solid #262A32;background:#16171D;color:#E8ECE6;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .water-count{font-size:15px;font-weight:700;min-width:118px;text-align:center}
-.wbtn{flex:1;padding:9px 0;border-radius:10px;border:1px solid #283029;background:#19211A;color:#8B968C;font-size:13px;font-weight:600}
+.wbtn{flex:1;padding:9px 0;border-radius:10px;border:1px solid #262A32;background:#16171D;color:#8B968C;font-size:13px;font-weight:600}
 .tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
 .tag-fact{background:#222C26;color:#7E8A80}
 .tag-sched{background:rgba(203,164,92,.14);color:#CBA45C}
-.cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border-radius:12px;background:#12180F;border:1px solid #232B24;margin-top:14px}
+.cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border-radius:12px;background:#0E0F13;border:1px solid #20232A;margin-top:14px}
 .cat-name{font-size:15px;font-weight:700;color:#E8ECE6}
 .cat-count{font-size:12.5px;color:#79A98D;font-weight:600}
-.tchip{margin-left:6px;color:#5C655C;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #283029}
+.tchip{margin-left:6px;color:#5C655C;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #262A32}
 .tchip.lag{color:#CBA45C;border-color:#5a4630}
 .wlog{display:flex;flex-wrap:wrap;gap:5px}
-.wlog-e{font-size:11.5px;color:#8B968C;background:#161D17;border:1px solid #283029;border-radius:7px;padding:3px 7px}
+.wlog-e{font-size:11.5px;color:#8B968C;background:#131419;border:1px solid #262A32;border-radius:7px;padding:3px 7px}
 .wlog-e b{color:#41C07E;font-family:ui-monospace,Menlo,monospace}
 .mrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-top:1px solid #1c241d}
-.msel{flex:0 0 92px;background:#161D17;border:1px solid #283029;border-radius:9px;color:#E8ECE6;font-size:12.5px;padding:8px 6px}
+.msel{flex:0 0 92px;background:#131419;border:1px solid #262A32;border-radius:9px;color:#E8ECE6;font-size:12.5px;padding:8px 6px}
 .mval{flex:1;min-width:0}
 .munit{flex:0 0 auto;font-size:11px;color:#5C655C;min-width:32px}
 .mtime{flex:0 0 92px}
-.mlog{margin-top:8px;border-top:1px solid #232B24;padding-top:6px}
+.mlog{margin-top:8px;border-top:1px solid #20232A;padding-top:6px}
 .mlog-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:12.5px}
 .mlog-v{flex:1;color:#a9b3a4}
 .mlog-v b{color:#E8ECE6}
-.mlog-x{flex:0 0 30px;border-radius:8px;border:1px solid #283029;background:#161D17;color:#5C655C;font-size:12px;padding:5px 0}
+.mlog-x{flex:0 0 30px;border-radius:8px;border:1px solid #262A32;background:#131419;color:#5C655C;font-size:12px;padding:5px 0}
 .hud{border-bottom:1px solid #1c241d;padding:3px 2px;margin:0 0 6px}
 .hud-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .hud-day{font-size:13.5px;font-weight:700;color:#E8ECE6}
@@ -57,10 +57,10 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .hud-earn{font-size:11.5px;color:#CBA45C;margin-left:6px;font-weight:700}
 .hud-sub{font-size:11.5px;color:#8B968C;margin-top:2px}
 .hud-life{color:#CBA45C;font-family:ui-monospace,Menlo,monospace}
-.gear{position:absolute;top:12px;right:14px;z-index:50;width:42px;height:42px;border-radius:12px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:19px}
+.gear{position:absolute;top:12px;right:14px;z-index:50;width:42px;height:42px;border-radius:12px;border:1px solid #262A32;background:#131419;color:#8B968C;font-size:19px}
 .gear-bad{border-color:#E0795B;color:#E0795B}
 .gear-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#E0795B}
-.log-card{background:#12180F;border:1px solid #232B24;border-radius:14px;margin:10px 0 4px;overflow:hidden}
+.log-card{background:#0E0F13;border:1px solid #20232A;border-radius:14px;margin:10px 0 4px;overflow:hidden}
 .log-head{width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:none;border:none;color:#E8ECE6;font-size:13.5px;font-weight:700}
 .log-list{padding:0 13px 10px;max-height:300px;overflow-y:auto}
 .log-row{display:flex;gap:10px;padding:5px 0;border-top:1px solid #1c241d;font-size:12.5px}
@@ -86,13 +86,13 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .toggle-thumb{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:11px;background:#5C655C;transition:.15s}
 .toggle-track.on .toggle-thumb{left:22px;background:#41C07E}
 .toggle-track.danger.on .toggle-thumb{left:22px;background:#E0795B}
-.state-btn{padding:7px 12px;border-radius:10px;font-size:13px;border:1px solid #283029;background:#19211A;color:#8B968C}
+.state-btn{padding:7px 12px;border-radius:10px;font-size:13px;border:1px solid #262A32;background:#16171D;color:#8B968C}
 .state-btn.on{border-color:#41C07E;background:rgba(65,192,126,.12);color:#41C07E}
-.expand-btn{width:100%;margin-top:14px;padding:13px 15px;border-radius:13px;background:#161D17;border:1px solid #283029;color:#8B968C;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-.details-inner{background:#161D17;border:1px solid #283029;border-radius:15px;padding:15px;margin-top:8px;display:flex;flex-direction:column;gap:14px}
-.dcard{background:#12180F;border:1px solid #232B24;border-radius:16px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:12px}
+.expand-btn{width:100%;margin-top:14px;padding:13px 15px;border-radius:13px;background:#131419;border:1px solid #262A32;color:#8B968C;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.details-inner{background:#131419;border:1px solid #262A32;border-radius:15px;padding:15px;margin-top:8px;display:flex;flex-direction:column;gap:14px}
+.dcard{background:#0E0F13;border:1px solid #20232A;border-radius:16px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:12px}
 .dcard-h{font-size:13.5px;font-weight:800;color:#E8ECE6;letter-spacing:.3px}
-.slip-indent{padding-left:10px;border-left:2px solid #283029;display:flex;flex-direction:column;gap:10px}
+.slip-indent{padding-left:10px;border-left:2px solid #262A32;display:flex;flex-direction:column;gap:10px}
 .field-label{font-size:12px;color:#8B968C;margin-bottom:6px}
 .field-row{display:flex;gap:10px}
 .field-item{flex:1;min-width:0}
@@ -104,16 +104,16 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .states-row{display:flex;gap:6px;flex-wrap:wrap}
 .export-btn{width:100%;margin-top:14px;padding:13px;border-radius:13px;background:rgba(65,192,126,.10);border:1px solid #2C6B49;color:#41C07E;font-size:15px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:8px}
 .backup-row{display:flex;gap:10px;margin-top:10px}
-.backup-btn{flex:1;padding:11px;border-radius:12px;background:#161D17;border:1px solid #283029;color:#8B968C;font-size:13px;font-weight:600}
-.header-card{border-radius:20px;border:1px solid #283029;padding:16px;transition:background .5s}
-.topbar{position:sticky;top:0;z-index:40;background:#0E120F;padding:7px 0 8px;margin-bottom:10px;border-bottom:1px solid #1A221B}
+.backup-btn{flex:1;padding:11px;border-radius:12px;background:#131419;border:1px solid #262A32;color:#8B968C;font-size:13px;font-weight:600}
+.header-card{border-radius:20px;border:1px solid #262A32;padding:16px;transition:background .5s}
+.topbar{position:sticky;top:0;z-index:40;background:#08090B;padding:7px 0 8px;margin-bottom:10px;border-bottom:1px solid #1A221B}
 .datebar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 40px 0 2px}
 .db-ring{position:relative;width:40px;height:40px;flex-shrink:0}
 .db-ring svg{position:absolute;inset:0}
 .db-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800}
 .db-bal{font-size:12px;font-weight:700;color:#CBA45C;flex-shrink:0;text-align:right;min-width:44px}
 .dstrip{display:flex;gap:3px;padding:7px 2px 0}
-.dcell{flex:1;height:20px;border-radius:5px;border:1px solid #283029;background:#161D17;cursor:pointer;font-size:9px;line-height:18px;text-align:center;padding:0}
+.dcell{flex:1;height:20px;border-radius:5px;border:1px solid #262A32;background:#131419;cursor:pointer;font-size:9px;line-height:18px;text-align:center;padding:0}
 .dcell.sel{border:1.5px solid #CBA45C}
 .datebar-c{display:flex;align-items:baseline;gap:8px}
 .datebar-dow{font-size:12px;color:#8B968C;text-transform:uppercase;letter-spacing:.5px}
@@ -140,25 +140,25 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .bal-txt{font-size:12px;color:#8B968C;margin-top:4px}
 .bal-num{color:#E8ECE6;font-weight:600}
 .hist-row{display:flex;gap:3px;flex-wrap:wrap}
-.hist-cell{width:calc(12.5% - 3px);height:22px;border-radius:5px;border:1px solid #283029;background:#161D17;cursor:pointer}
+.hist-cell{width:calc(12.5% - 3px);height:22px;border-radius:5px;border:1px solid #262A32;background:#131419;cursor:pointer}
 .hist-cell.sel{border:1.5px solid #CBA45C}
 .hist-cell.skip-cell{border:1px dashed #3a453e;opacity:.85}
 .hist-month{font-size:12px;color:#8B968C;font-weight:600;margin:13px 0 6px 2px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal-box{background:#161D17;width:100%;max-width:440px;border-radius:20px 20px 0 0;border:1px solid #283029;padding:18px;max-height:80vh;display:flex;flex-direction:column}
+.modal-box{background:#131419;width:100%;max-width:440px;border-radius:20px 20px 0 0;border:1px solid #262A32;padding:18px;max-height:80vh;display:flex;flex-direction:column}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .modal-title{font-size:16px;font-weight:700}
 .modal-hint{font-size:12.5px;color:#8B968C;margin-bottom:10px}
-.copy-btn{margin-top:12px;padding:13px;border-radius:13px;border:none;background:#41C07E;color:#0E120F;font-size:15px;font-weight:700;width:100%}
+.copy-btn{margin-top:12px;padding:13px;border-radius:13px;border:none;background:#41C07E;color:#08090B;font-size:15px;font-weight:700;width:100%}
 .mark-row{display:flex;gap:6px;margin-top:4px}
-.mark-btn{flex:1;padding:10px 4px;border-radius:12px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:13px;font-weight:600}
+.mark-btn{flex:1;padding:10px 4px;border-radius:12px;border:1px solid #262A32;background:#131419;color:#8B968C;font-size:13px;font-weight:600}
 .banner{border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.5;margin-bottom:6px}
 .banner-empty{background:rgba(203,164,92,.10);border:1px solid #6b5a2c;color:#CBA45C}
 .banner-warn{background:rgba(224,121,91,.12);border:1px solid #7a4a2a;color:#E0b09b}
 .banner b{color:#fff}
 .auto-save{text-align:center;font-size:11px;color:#5C655C;margin-top:22px;line-height:1.6}
 .vt-row{display:flex;gap:5px;justify-content:flex-end;margin-bottom:10px}
-.vt-btn{padding:6px 11px;border-radius:9px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:12px;font-weight:600}
+.vt-btn{padding:6px 11px;border-radius:9px;border:1px solid #262A32;background:#131419;color:#8B968C;font-size:12px;font-weight:600}
 .vt-btn.on{border-color:#41C07E;color:#41C07E;background:rgba(65,192,126,.12)}
 .side-title{display:none}
 #app.mode-mobile .grid{display:block}
@@ -175,14 +175,14 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 #app.mode-desktop .date-txt{font-size:24px}
 #app.mode-desktop .col-full{margin-top:8px}
 .pt-time{font-size:10px;font-weight:700;opacity:.9}
-.pt-cfg{background:#12180F;border:1px solid #232B24;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
+.pt-cfg{background:#0E0F13;border:1px solid #20232A;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
 .pt-cfg u{cursor:pointer}
-.pt-sel{width:100%;background:#19211A;color:#E8ECE6;border:1px solid #283029;border-radius:10px;padding:9px 10px;font-size:14px;height:38px}
+.pt-sel{width:100%;background:#16171D;color:#E8ECE6;border:1px solid #262A32;border-radius:10px;padding:9px 10px;font-size:14px;height:38px}
 .q-row{display:flex;gap:6px;margin:2px 0 4px 10px}
-.q-btn{padding:6px 11px;border-radius:9px;border:1px solid #283029;background:#19211A;color:#8B968C;font-size:12px;font-weight:600}
+.q-btn{padding:6px 11px;border-radius:9px;border:1px solid #262A32;background:#16171D;color:#8B968C;font-size:12px;font-weight:600}
 .q-btn.good.on{border-color:#41C07E;color:#41C07E;background:rgba(65,192,126,.12)}
 .q-btn.meh.on{border-color:#CBA45C;color:#CBA45C;background:rgba(203,164,92,.12)}
-.tasks-card{background:#12180F;border:1px solid #232B24;border-radius:14px;padding:12px;margin-bottom:14px}
+.tasks-card{background:#0E0F13;border:1px solid #20232A;border-radius:14px;padding:12px;margin-bottom:14px}
 .tasks-card.locked{border-color:#7a4a2a}
 .tasks-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .tk-title{font-size:14px;font-weight:700;color:#E8ECE6}
@@ -194,19 +194,19 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .task-add{width:30px;height:30px;border-radius:9px;border:1px solid #2f6b45;background:rgba(65,192,126,.12);color:#41C07E;font-size:20px;font-weight:700;line-height:1;padding:0}
 .tasks-list{display:flex;flex-direction:column;gap:6px}
 .task-row{display:flex;gap:6px}
-.task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #283029;background:#161D17;text-align:left}
+.task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #262A32;background:#131419;text-align:left}
 .task-check.on{border-color:#2f6b45;background:rgba(65,192,126,.08)}
 .task-box{width:20px;height:20px;border-radius:6px;border:1.5px solid #3a463c;display:flex;align-items:center;justify-content:center;color:#41C07E;font-size:13px;font-weight:700;flex:0 0 auto}
 .task-check.on .task-box{border-color:#41C07E}
 .task-lbl{font-size:14px;color:#E8ECE6}
 .task-lbl.done{color:#5C655C;text-decoration:line-through}
-.task-del{flex:0 0 40px;border-radius:12px;border:1px solid #283029;background:#161D17;color:#5C655C;font-size:13px}
+.task-del{flex:0 0 40px;border-radius:12px;border:1px solid #262A32;background:#131419;color:#5C655C;font-size:13px}
 .task-del.armed{background:#E0795B;border-color:#E0795B;color:#fff;font-size:11px;flex:0 0 60px}
 .pt-cap{font-size:11px;color:#5C655C;padding:8px 2px 2px;line-height:1.4}
 .prayer-btn.next{border-color:#E0955B;box-shadow:0 0 0 1.5px rgba(224,149,91,.5)}
 .prayer-btn.next .pt-time{color:#E0955B}
-.field-ta{width:100%;background:#19211A;color:#E8ECE6;border:1px solid #283029;border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;min-height:110px;resize:vertical;line-height:1.5;box-sizing:border-box}
-.meas-card{background:#12180F;border:1px solid #232B24;border-radius:14px;padding:12px;margin-top:14px}
+.field-ta{width:100%;background:#16171D;color:#E8ECE6;border:1px solid #262A32;border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;min-height:110px;resize:vertical;line-height:1.5;box-sizing:border-box}
+.meas-card{background:#0E0F13;border:1px solid #20232A;border-radius:14px;padding:12px;margin-top:14px}
 .cf{position:fixed;top:-14px;width:8px;height:13px;border-radius:2px;z-index:99;pointer-events:none;animation:cfFall linear forwards}
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(65,192,126,.5)}70%{box-shadow:0 0 0 16px rgba(65,192,126,0)}100%{box-shadow:0 0 0 0 rgba(65,192,126,0)}}
@@ -234,7 +234,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .streak-tag.tier3{display:inline-block;color:#CBA45C;font-weight:700;text-shadow:0 0 9px rgba(203,164,92,.55)}
 .toast{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.92);background:rgba(18,24,19,.97);border:1px solid #2f6b45;color:#41C07E;padding:14px 24px;border-radius:16px;font-size:15px;font-weight:700;z-index:70;pointer-events:none;animation:toastPop 1.8s ease forwards;white-space:nowrap}
 @keyframes toastPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-.life-card{background:#12180F;border:1px solid #232B24;border-radius:14px;padding:10px;margin-bottom:10px}
+.life-card{background:#0E0F13;border:1px solid #20232A;border-radius:14px;padding:10px;margin-bottom:10px}
 .life-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
 .life-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#8B968C}
 .life-nums{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;font-weight:700;color:#E8ECE6;white-space:nowrap}
@@ -244,7 +244,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#5C655C;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:#12180F;border:1px solid #2a332b;border-radius:22px;padding:18px 18px 15px;margin:2px 0 14px}
+.dash{background:#0E0F13;border:1px solid #2a332b;border-radius:22px;padding:18px 18px 15px;margin:2px 0 14px}
 .dash-top{display:flex;align-items:center;gap:14px;padding-right:44px}
 .dash-date{flex:1;display:flex;align-items:center;justify-content:center;gap:6px}
 .dash-dow{font-size:13px;letter-spacing:1.5px;color:#8B968C;text-transform:uppercase}
@@ -254,7 +254,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .dash-bal-u{font-size:13px;color:#5C655C;margin-left:2px}
 .dash-earn{font-size:13px;color:#CBA45C;font-weight:700;margin-top:3px}
 .dash-namaz{display:flex;gap:6px;margin-top:16px}
-.npz{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px;border-radius:13px;border:1px solid #283029;background:#161D17;color:#8B968C;transition:all .15s}
+.npz{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 2px;border-radius:13px;border:1px solid #262A32;background:#131419;color:#8B968C;transition:all .15s}
 .npz-n{font-size:12.5px;font-weight:700}
 .npz-t{font-size:12px;font-family:ui-monospace,Menlo,monospace;color:#5C655C}
 .npz.on{border-color:#41C07E;background:rgba(65,192,126,.14);color:#41C07E}
@@ -272,7 +272,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .dash-life-lbl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#5C655C;flex:0 0 auto}
 .dash-life-pct{font-size:11.5px;color:#CBA45C;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
 .dash-streaks{display:flex;gap:14px;font-size:13px;color:#8B968C;flex:0 0 auto}
-.life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #283029;background:#161D17;color:#8B968C;font-size:12px;font-weight:600}
+.life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #262A32;background:#131419;color:#8B968C;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#41C07E;color:#41C07E;background:rgba(65,192,126,.12)}
 @media (prefers-reduced-motion:reduce){
 .check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf{animation:none!important}
@@ -281,7 +281,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 </style>
 </head>
 <body>
-<div id="lock-screen" style="position:fixed;inset:0;background:#0E120F;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;"><div style="max-width:320px;width:100%;text-align:center;"><div style="font-size:22px;font-weight:800;color:#41C07E;margin-bottom:20px;">BLOCK 3</div><input type="password" id="pass-input" placeholder="Введите пароль" style="width:100%;padding:11px;border-radius:10px;background:#19211A;border:1px solid #283029;color:#E8ECE6;outline:none;text-align:center;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPass()"><button onclick="checkPass()" style="width:100%;padding:11px;border-radius:10px;background:#41C07E;border:none;color:#0E120F;font-weight:700;width:100%">Войти</button><div id="lock-err" style="color:#E0795B;font-size:13px;margin-top:10px;display:none;">Неверный пароль</div></div></div>
+<div id="lock-screen" style="position:fixed;inset:0;background:#08090B;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;"><div style="max-width:320px;width:100%;text-align:center;"><div style="font-size:22px;font-weight:800;color:#41C07E;margin-bottom:20px;">BLOCK 3</div><input type="password" id="pass-input" placeholder="Введите пароль" style="width:100%;padding:11px;border-radius:10px;background:#16171D;border:1px solid #262A32;color:#E8ECE6;outline:none;text-align:center;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPass()"><button onclick="checkPass()" style="width:100%;padding:11px;border-radius:10px;background:#41C07E;border:none;color:#08090B;font-weight:700;width:100%">Войти</button><div id="lock-err" style="color:#E0795B;font-size:13px;margin-top:10px;display:none;">Неверный пароль</div></div></div>
 
 <input type="file" id="file-input" accept=".json,application/json" style="display:none" onchange="onFile(event)">
 <div id="app"></div>
@@ -343,7 +343,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.49.0";
+const VERSION="0.50.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{}};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -867,7 +867,7 @@ function lockHTML(){
   if(sel>t)return `<div class="banner banner-warn" style="border-color:#7a4a2a"><b>${dayLabel(sel).txt} ещё не наступило.</b><div style="font-size:12px;margin-top:4px;color:#a9b3a4">Записывать в будущее нельзя — ничего не сохранится.</div></div>`;
   if(sel===t)return "";
   if(unlockedDay===sel)return `<div class="banner" style="background:rgba(203,164,92,.1);border-color:#5a4630;color:#CBA45C"><b>⚠ ТЫ ПРАВИШЬ ПРОШЛОЕ: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#a9b3a4">Не сегодня. Всё, что отметишь, ляжет на этот день.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="relock()">🔒 Закрыть обратно</button></div></div>`;
-  return `<div class="banner" style="background:#12180F;border-color:#232B24"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#8B968C">Чтобы не записать сегодняшнее во вчерашнее. Хочешь дописать — нажми замок <b>3 раза</b>.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">🔒 Открыть ${lockTaps?"· "+lockTaps+"/3":""}</button></div></div>`;
+  return `<div class="banner" style="background:#0E0F13;border-color:#20232A"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#8B968C">Чтобы не записать сегодняшнее во вчерашнее. Хочешь дописать — нажми замок <b>3 раза</b>.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">🔒 Открыть ${lockTaps?"· "+lockTaps+"/3":""}</button></div></div>`;
 }
 function setDay(patch){
   if(!dayEditable(sel)){
@@ -991,7 +991,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
     </div>
   </div>`;
 }
-function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#0E120F" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
+function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#08090B" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 
 function rowHTML(it,day,offSched){
   if(it.id==="istinja_b"&&!(Number(day.poop)>0)){return `<button class="row" style="opacity:.45" onclick="toast('Сначала укажи «Стул (раз)» в Поведении внизу')"><span style="display:flex;align-items:center;gap:8px"><span class="tag tag-fact">после стула</span><span class="row-label">${it.label}</span></span><span class="check-box"></span></button>`;}
@@ -1139,7 +1139,7 @@ function toggleHTML(label,f,val,danger){return `<div class="toggle-wrap"><span s
 const CHARGE_EX=[["abs","Пресс"],["pushups","Отжимания"],["squats","Приседания"]];
 function chargeDone(day){const c=day.charge||{};return CHARGE_EX.some(([k])=>Number(c[k])>=20);}
 function setCharge(ex,v){const d=getDay();const c={...(d.charge||{})};c[ex]=clampNum(Math.round(num(v,0)),0,100000);const done=CHARGE_EX.some(([k])=>Number(c[k])>=20);setDay({charge:c,items:{...(d.items||{}),charge:done}});}
-function chargeHTML(day){const c=day.charge||{};const done=chargeDone(day);const rows=CHARGE_EX.map(([k,l])=>{const v=Number(c[k])||0;const ok=v>=20;return `<div class="mrow"><span class="mlog-v" style="flex:1;color:${ok?"#41C07E":"#8B968C"}">${l}</span><input class="mval" style="flex:0 0 96px;text-align:center" type="number" inputmode="numeric" value="${v||""}" placeholder="повт." onchange="setCharge('${k}',this.value)"><span class="munit" style="min-width:18px;text-align:center">${ok?"✓":""}</span></div>`;}).join("");return `<div class="meas-card" style="margin-top:7px;border-color:${done?"#2f6b45":"#232B24"}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span class="row-label${done?" on":""}" style="font-size:14px">🤸 Зарядка</span><span style="font-size:11px;color:${done?"#41C07E":"#5C655C"}">${done?"засчитано ✓":"хотя бы одно × 20"}</span></div>${rows}</div>`;}
+function chargeHTML(day){const c=day.charge||{};const done=chargeDone(day);const rows=CHARGE_EX.map(([k,l])=>{const v=Number(c[k])||0;const ok=v>=20;return `<div class="mrow"><span class="mlog-v" style="flex:1;color:${ok?"#41C07E":"#8B968C"}">${l}</span><input class="mval" style="flex:0 0 96px;text-align:center" type="number" inputmode="numeric" value="${v||""}" placeholder="повт." onchange="setCharge('${k}',this.value)"><span class="munit" style="min-width:18px;text-align:center">${ok?"✓":""}</span></div>`;}).join("");return `<div class="meas-card" style="margin-top:7px;border-color:${done?"#2f6b45":"#20232A"}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span class="row-label${done?" on":""}" style="font-size:14px">🤸 Зарядка</span><span style="font-size:11px;color:${done?"#41C07E":"#5C655C"}">${done?"засчитано ✓":"хотя бы одно × 20"}</span></div>${rows}</div>`;}
 // Прокрастинация: несколько записей за день (сила / время / комментарий) — механика как у замеров.
 const PROC_LEVELS=[["little","немного"],["mid","средне"],["much","сильно"]];
 function addProc(){const d=getDay();setDay({procLog:[...(d.procLog||[]),{level:"mid",t:nowHM(),note:""}]});}
@@ -1173,7 +1173,7 @@ function vibNice(){vib([22,26,38]);}
 function popPoints(n){if(!n)return;const el=document.createElement("div");el.className="pt-pop";el.textContent="+"+n;document.body.appendChild(el);setTimeout(()=>el.remove(),900);}
 function toast(msg){const el=document.createElement("div");el.className="toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),1800);}
 function confetti(){const cols=["#41C07E","#CBA45C","#E9C46A","#79A98D","#E0955B"];for(let i=0;i<28;i++){const e=document.createElement("div");e.className="cf";e.style.left=(Math.random()*100)+"vw";e.style.background=cols[i%cols.length];e.style.animationDuration=(0.9+Math.random()*1.0)+"s";e.style.animationDelay=(Math.random()*0.25)+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),2300);}vib([30,40,60]);}
-function dayColor(k){const d=days[k];const MC={crown:"#3DDC84",mid:"#CBA45C",fail:"#E0795B"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([28,40,32],[65,192,126],hp/100):"#161D17";}
+function dayColor(k){const d=days[k];const MC={crown:"#3DDC84",mid:"#CBA45C",fail:"#E0795B"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([28,40,32],[65,192,126],hp/100):"#131419";}
 function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#5C655C;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
 function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
 function stripHTML(){const t=todayKey();let h="";for(let i=13;i>=0;i--){const k=addDays(t,-i);const d=days[k];const crown=d&&d.mark==="crown";h+=`<button class="dcell${k===sel?" sel":""}" style="background:${dayColor(k)}" onclick="selDay('${k}')" title="${k}">${crown?"👑":""}</button>`;}return h;}
@@ -1233,7 +1233,7 @@ function render(){
     const mkRing=(d&&d.mark)?"box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28);":"";
     const crownCls=(d&&d.mark==="crown")?" crown-cell":"";
     const skipped=isSkippedDay(kk);
-    const cellBg=skipped?"#161D17":hbg;
+    const cellBg=skipped?"#131419":hbg;
     const inner=(d&&d.mark==="crown")?"👑":(skipped?'<span style="color:#5C655C;font-weight:700">✕</span>':"");
     histHTML+=`<button class="hist-cell${kk===sel?" sel":""}${crownCls}${skipped?" skip-cell":""}" style="background:${cellBg};${mkRing};font-size:11px;line-height:20px;padding:0" onclick="selDay('${kk}')" title="${kk}${skipped?" · пропущен (мало данных)":""}">${inner}</button>`;
     kk=addDays(kk,1);
@@ -1363,10 +1363,10 @@ function healthHTML(){
   const snaps=listSnapshots();
   const snapRows=snaps.length?snaps.map(sn=>`<div class="mrow"><span class="log-t" style="flex:0 0 84px">${sn.date}</span><span class="mlog-v">${sn.n} дн.</span><button class="backup-btn" style="flex:0 0 auto;padding:5px 9px;font-size:11px" onclick="restoreSnapshot('${sn.key}')">${snapArm===sn.key?"точно?":"Восстановить"}</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Снимков пока нет</div>`;
   const errRows=errLog.length?errLog.slice(0,8).map(e=>`<div style="font-size:11px;color:#a9b3a4;padding:4px 0;border-top:1px solid #1c241d"><b style="color:#E0795B">${e.where}</b> <span style="color:#5C655C">${e.t}</span><br>${String(e.msg).replace(/</g,"&lt;")}</div>`).join(""):`<div class="muted-note" style="padding:4px 0">Ошибок не было</div>`;
-  return `<div style="background:#12180F;border:1px solid ${bad?"#7a4a2a":"#232B24"};border-radius:12px;padding:12px;margin-top:8px">
+  return `<div style="background:#0E0F13;border:1px solid ${bad?"#7a4a2a":"#20232A"};border-radius:12px;padding:12px;margin-top:8px">
     <div style="font-size:13px;font-weight:800;color:${bad?"#E0795B":"#41C07E"};margin-bottom:8px">${bad?"⚠ Проблем: "+bad:"✓ Все проверки пройдены"} (${R.length})</div>
     ${rows}
-    <div style="margin-top:10px;padding-top:8px;border-top:1px solid #232B24;font-size:12px;color:#8B968C">Схема: v${SCHEMA} · Дней: ${Object.keys(days).length} · Занято: ${fmtBytes(storageBytes())}${loadState.repaired?` · Починено: ${loadState.repaired}`:""}</div>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid #20232A;font-size:12px;color:#8B968C">Схема: v${SCHEMA} · Дней: ${Object.keys(days).length} · Занято: ${fmtBytes(storageBytes())}${loadState.repaired?` · Починено: ${loadState.repaired}`:""}</div>
     <div class="side-title" style="display:block;margin:12px 0 4px">Резервные снимки (авто, до 3)</div>${snapRows}
     <div class="side-title" style="display:block;margin:12px 0 4px">Журнал ошибок (${errLog.length})</div>${errRows}
     ${errLog.length?`<button class="backup-btn" style="width:100%;margin-top:8px" onclick="clearErrors()">Очистить журнал ошибок</button>`:""}
@@ -1397,11 +1397,11 @@ function settingsTab1HTML(day){
     <div class="backup-row" style="margin-top:6px"><button class="backup-btn" onclick="togglePaste()">📥 Вставить копию</button><label class="backup-btn" style="text-align:center;cursor:pointer">📂 Из файла<input type="file" accept=".json,application/json" style="display:none" onchange="onFile(event)"></label></div>
     <div class="backup-row" style="margin-top:6px"><button class="backup-btn" onclick="openExport()">📄 Отчёт для Claude</button><button class="backup-btn" onclick="cycleView()">🖥 Вид: ${meta.view}</button></div>
     ${pasteOpen?`<div style="margin-top:8px"><textarea class="field-ta" style="min-height:90px" placeholder="вставь сюда JSON-копию целиком" oninput="pasteText=this.value"></textarea><button class="backup-btn" style="margin-top:6px;width:100%;border-color:#2f6b45;color:#41C07E" onclick="importPaste()">Импортировать вставленное</button></div>`:""}
-    <div class="meas-card" style="margin-top:14px;border-color:#2c6b49;background:#12180F">
+    <div class="meas-card" style="margin-top:14px;border-color:#2c6b49;background:#0E0F13">
       <div class="side-title" style="display:block;margin:0 0 6px;color:#E8ECE6;font-size:13px;font-weight:700">☁️ Google Drive Синхронизация</div>
       <div style="font-size:12px;color:#8B968C;margin-bottom:8px">Статус: <b style="color:#41C07E">${syncStatus}</b></div>
       <div class="field-label">Google Client ID:</div>
-      <input type="text" value="${meta.googleClientId}" placeholder="Client ID из Google Console" onchange="meta.googleClientId=this.value.trim(); saveMeta(); initGsi();" style="margin-bottom:8px;width:100%;padding:8px;border-radius:8px;background:#19211A;border:1px solid #283029;color:#E8ECE6">
+      <input type="text" value="${meta.googleClientId}" placeholder="Client ID из Google Console" onchange="meta.googleClientId=this.value.trim(); saveMeta(); initGsi();" style="margin-bottom:8px;width:100%;padding:8px;border-radius:8px;background:#16171D;border:1px solid #262A32;color:#E8ECE6">
       <div class="backup-row">
         <button class="backup-btn" style="border-color:#2f6b45;color:#41C07E" onclick="triggerAuth()">🔗 Войти</button>
         <button class="backup-btn" onclick="disconnectGoogle()">✕ Отключить</button>
@@ -1428,7 +1428,7 @@ function openSettings(){settingsOpen=true;render();}
 function alarmHTML(){
   let out="";
   if(!saveState.ok)out+=`<div class="banner banner-warn" style="border-color:#E0795B;background:rgba(224,121,91,.12)"><b style="color:#E0795B">⛔ ДАННЫЕ НЕ СОХРАНЯЮТСЯ!</b><div style="font-size:12.5px;margin-top:5px;color:#E8ECE6">${saveState.err}</div><div style="font-size:12px;margin-top:5px;color:#a9b3a4">${saveState.quota?"Хранилище браузера заполнено.":"Немедленно сделай копию."}</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" style="border-color:#2f6b45;color:#41C07E" onclick="copyBackup()">📋 СПАСТИ ДАННЫЕ В БУФЕР</button></div></div>`;
-  if(loadState.corrupt)out+=`<div class="banner banner-warn" style="border-color:#E0795B"><b style="color:#E0795B">⚠ Сохранённые данные были повреждены</b><div style="font-size:12px;margin-top:5px;color:#a9b3a4">${loadState.restoredFrom?`Восстановлено из снимка от ${loadState.restoredFrom}.`:"Снимков не нашлось. Запись ЗАБЛОКИРОВАНА."}</div>${!loadState.restoredFrom?`<textarea readonly style="width:100%;height:90px;margin-top:8px;background:#0E120F;border:1px solid #232B24;border-radius:8px;color:#8B968C;font-size:10px;padding:8px">${String(loadState.raw).slice(0,4000).replace(/</g,"&lt;")}</textarea><button class="backup-btn" style="width:100%;margin-top:6px" onclick="ackCorrupt()">Понял, разблокировать запись</button>`:""}</div>`;
+  if(loadState.corrupt)out+=`<div class="banner banner-warn" style="border-color:#E0795B"><b style="color:#E0795B">⚠ Сохранённые данные были повреждены</b><div style="font-size:12px;margin-top:5px;color:#a9b3a4">${loadState.restoredFrom?`Восстановлено из снимка от ${loadState.restoredFrom}.`:"Снимков не нашлось. Запись ЗАБЛОКИРОВАНА."}</div>${!loadState.restoredFrom?`<textarea readonly style="width:100%;height:90px;margin-top:8px;background:#08090B;border:1px solid #20232A;border-radius:8px;color:#8B968C;font-size:10px;padding:8px">${String(loadState.raw).slice(0,4000).replace(/</g,"&lt;")}</textarea><button class="backup-btn" style="width:100%;margin-top:6px" onclick="ackCorrupt()">Понял, разблокировать запись</button>`:""}</div>`;
   const b=storageBytes();
   if(b>3.5*1024*1024&&saveState.ok)out+=`<div class="banner banner-warn"><b>Хранилище заполняется: ${fmtBytes(b)}</b><div style="font-size:12px;margin-top:4px;color:#a9b3a4">Сделай копию.</div></div>`;
   return out;
@@ -1445,13 +1445,13 @@ function diagHTML(){
   else if(proto==="file:")verdict="Открыто напрямую как файл (file://).";
   else if(!hasClipboard&&!hasShare)verdict="Буфер и «Поделиться» в этом браузере не поддерживаются.";
   else verdict="База API в порядке.";
-  return `<div style="background:#12180F;border:1px solid #232B24;border-radius:12px;padding:12px;margin-top:8px;font-size:12px">
+  return `<div style="background:#0E0F13;border:1px solid #20232A;border-radius:12px;padding:12px;margin-top:8px;font-size:12px">
     ${row(!inIframe,"Открыто как отдельная страница")}
     ${row(proto!=="file:","Загружено как веб-страница")}
     ${row(hasClipboard,"Буфер обмена (новый)")}
     ${row(hasExec,"Буфер обмена (запасной)")}
     ${row(hasShare,"«Поделиться»")}
-    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #232B24;color:#CBA45C;line-height:1.5">${verdict}</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #20232A;color:#CBA45C;line-height:1.5">${verdict}</div>
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];render();}
@@ -1657,7 +1657,7 @@ render=function(force){
        +'<div style="font-size:19px;font-weight:800;color:#E0795B;margin-bottom:10px">Экран не отрисовался</div>'
        +'<div style="font-size:13.5px;color:#a9b3a4;margin-bottom:6px">Данные целы. Скопируй их.</div>'
        +'<button id="rescue" style="width:100%;padding:13px;border-radius:12px;border:1px solid #2f6b45;background:rgba(65,192,126,.12);color:#41C07E;font-size:15px;font-weight:700;margin-bottom:12px">Скопировать данные</button>'
-       +'<textarea id="rescue-ta" readonly style="width:100%;height:170px;background:#12180F;border:1px solid #232B24;border-radius:12px;color:#8B968C;font-size:11px;padding:10px">'+raw.replace(/</g,"&lt;")+'</textarea></div>';
+       +'<textarea id="rescue-ta" readonly style="width:100%;height:170px;background:#0E0F13;border:1px solid #20232A;border-radius:12px;color:#8B968C;font-size:11px;padding:10px">'+raw.replace(/</g,"&lt;")+'</textarea></div>';
       const btn=document.getElementById("rescue");
       if(btn)btn.onclick=function(){
         const ta=document.getElementById("rescue-ta");
