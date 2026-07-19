@@ -362,7 +362,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.54.0";
+const VERSION="0.55.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1319,7 +1319,7 @@ function render(){
 
   const firstKey=Object.keys(days).sort()[0]||todayKey();
   const periodStart=[firstKey,addDays(todayKey(),-60)].sort()[0];
-  const periodEnd=addDays(todayKey(),14);
+  const periodEnd=addDays(todayKey(),45);
   let histHTML="",curMonth=-1,kk=periodStart;
   while(kk<=periodEnd){
     const mo=Number(kk.split("-")[1]);
