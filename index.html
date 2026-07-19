@@ -23,7 +23,7 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid #3A453E;background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
 .check-box.on{border-color:#46D98C;background:rgba(70,217,140,.20)}
-.prayer-btn{flex:1;padding:11px 2px;border-radius:12px;border:1px solid #34343B;background:#151517;color:#929699;font-size:12.5px;font-weight:600;transition:all .15s}
+.prayer-btn{position:relative;overflow:hidden;flex:1;padding:11px 2px;border-radius:12px;border:1px solid #34343B;background:#151517;color:#929699;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#46D98C;background:rgba(70,217,140,.14);color:#46D98C}
 .prayers-row{display:flex;gap:6px;margin-top:7px}
 .step-btn{width:34px;height:34px;border-radius:10px;border:1px solid #34343B;background:#1A1A1D;color:#ECEEF1;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
@@ -217,18 +217,19 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(70,217,140,.5)}70%{box-shadow:0 0 0 16px rgba(70,217,140,0)}100%{box-shadow:0 0 0 0 rgba(70,217,140,0)}}
 @keyframes cfFall{to{transform:translateY(108vh) rotate(720deg)}}
-/* === Микро-эффекты: волна из центра пункта + разнобойные акценты мягких оттенков === */
-.fx{position:fixed;pointer-events:none;z-index:80;will-change:transform,opacity;left:0;top:0}
-.fx-wave{border-radius:50%;border:2px solid var(--c,#8DE3B4);transform:translate(-50%,-50%) scale(.14);opacity:.8;animation:fxWave var(--d,.7s) cubic-bezier(.22,.68,.28,1) forwards}
-@keyframes fxWave{0%{transform:translate(-50%,-50%) scale(.14);opacity:.72}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
-.fx-glow2{border-radius:50%;transform:translate(-50%,-50%);background:radial-gradient(circle,var(--c,#8DE3B4),transparent 66%);opacity:0;animation:fxGlow2 .8s ease-out forwards}
-@keyframes fxGlow2{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}28%{opacity:.42}100%{opacity:0;transform:translate(-50%,-50%) scale(1.18)}}
-.fx-dot{width:var(--sz,7px);height:var(--sz,7px);border-radius:50%;background:var(--c,#8DE3B4);transform:translate(-50%,-50%) scale(0);opacity:0;animation:fxDot var(--d,.85s) ease-out forwards}
-@keyframes fxDot{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}26%{opacity:.95;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,-16px))) scale(.55)}}
-.fx-petal{width:var(--sz,8px);height:var(--sz,8px);border-radius:64% 0 64% 0;background:var(--c,#8DE3B4);transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg));opacity:0;animation:fxPetal var(--d,.9s) cubic-bezier(.2,.8,.3,1) forwards}
-@keyframes fxPetal{0%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg))}30%{opacity:.95;transform:translate(-50%,-50%) scale(1) rotate(var(--r,0deg))}70%{opacity:.9}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,-6px))) scale(1.05) rotate(var(--r,0deg))}}
-.fx-ring{width:16px;height:16px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 0 var(--c,#8DE3B4);opacity:.6;animation:fxRing .62s ease-out forwards}
-@keyframes fxRing{0%{box-shadow:0 0 0 0 var(--c,#8DE3B4);opacity:.55}100%{box-shadow:0 0 0 26px transparent;opacity:0}}
+/* === Микро-эффекты: контрастные, КЛИПУЮТСЯ границами пункта (не вылезают наружу) === */
+.fx-box{position:fixed;overflow:hidden;pointer-events:none;z-index:80;border-radius:12px}
+.fx-wave{position:absolute;border-radius:50%;border:2.5px solid var(--c,#8DE3B4);transform:translate(-50%,-50%) scale(.08);opacity:.95;animation:fxWave var(--d,.58s) cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes fxWave{0%{transform:translate(-50%,-50%) scale(.08);opacity:.95}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+.fx-flash{position:absolute;border-radius:11px;background:var(--c,#8DE3B4);opacity:0;transform:translate(-50%,-50%);mix-blend-mode:screen;animation:fxFlash .5s ease-out forwards}
+@keyframes fxFlash{0%{opacity:0}22%{opacity:.32}100%{opacity:0}}
+.fx-p{position:absolute;width:var(--sz,7px);height:var(--sz,7px);background:var(--c,#8DE3B4);transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg));opacity:0;animation:fxP var(--d,.82s) cubic-bezier(.2,.8,.3,1) forwards}
+.fx-p.pet{border-radius:64% 0 64% 0}.fx-p.dotp{border-radius:50%}
+@keyframes fxP{0%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg))}32%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(var(--r,0deg))}72%{opacity:.95}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,-4px))) scale(1.05) rotate(var(--r,0deg))}}
+/* Постоянные цветы на выполненном намазе — остаются, пока намаз отмечен, внутри кнопки */
+.pbloom-wrap{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;border-radius:11px}
+.pbloom{position:absolute}.pbloom.pet{border-radius:64% 0 64% 0}
+.pb-fg{position:relative;z-index:1;display:block}
 .row{transition:background .3s ease,border-color .3s ease}
 .row.on{background:rgba(70,217,140,.13);border-color:rgba(70,217,140,.5)}
 .task-check{transition:background .3s ease,border-color .3s ease}
@@ -293,7 +294,7 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #34343B;background:#151517;color:#929699;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#46D98C;color:#46D98C;background:rgba(70,217,140,.12)}
 @media (prefers-reduced-motion:reduce){
-.check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-glow2,.fx-dot,.fx-petal,.fx-ring{animation:none!important}
+.check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-flash,.fx-p{animation:none!important}
 .row,.task-check,.db-ring,.life-fill,.dcell,.hist-cell{transition:none!important}
 }
 </style>
@@ -361,7 +362,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.53.0";
+const VERSION="0.54.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1036,7 +1037,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
     <div class="dash-spark"><span class="spk-label">неделя</span><span class="spk-row">${sparkHTML()}</span><span class="dash-perc"><b style="color:#46D98C">${r.obPct}%</b> об · <b style="color:#79A98D">${r.desPct}%</b> жел</span></div>
     <div class="dash-foot">
       <div class="dash-life"><span class="dash-life-lbl">жизнь</span><div class="life-track" style="flex:1;height:5px"><div class="life-fill" style="width:${lifePct}%"></div></div><span class="dash-life-pct">${lifePct}%</span></div>
-      <div class="dash-streaks"><span>🕌 серия <b style="color:${streak>0?"#CBA45C":"#62646A"}">${streak}</b></span><span>🛡 без срывов <b style="color:${clean>0?"#46D98C":"#62646A"}">${clean}</b></span></div>
+      <div class="dash-streaks"><span>🕌 серия <b class="${streakTier(streak)}" style="color:${streak>0?"#CBA45C":"#62646A"}">${streak}</b></span><span>🛡 без срывов <b class="${streakTier(clean)}" style="color:${clean>0?"#46D98C":"#62646A"}">${clean}</b></span></div>
     </div>
   </div>`;
 }
@@ -1073,7 +1074,7 @@ function prayerTimesHTML(day){
   }).join("");
   return `<div class="wlog" style="margin-top:6px">${chips}</div><div style="font-size:10.5px;color:#62646A;margin-top:3px">Жёлтое = стоит время отметки. Нажми и впиши, во сколько реально совершил.</div>`;
 }
-function namazHTML(day){const pt=ptFor(sel);const nx=nextPrayerId(pt);let h='<div class="prayers-row">';PRAYERS.forEach(([id,name])=>{const on=!!day.prayers?.[id];const tm=pt[PT_MAP[id]]||"";const justOn=justChecked==="prayer_"+id;if(justOn)justChecked="";h+=`<button class="prayer-btn${on?" on":""}${id===nx?" next":""}${justOn?" just":""}" onclick="togglePrayer('${id}')">${name}${tm?`<br><span class="pt-time">${tm}</span>`:""}</button>`;});return h+'</div>'+prayerTimesHTML(day)+'<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>';}
+function namazHTML(day){const pt=ptFor(sel);const nx=nextPrayerId(pt);let h='<div class="prayers-row">';PRAYERS.forEach(([id,name])=>{const on=!!day.prayers?.[id];const tm=pt[PT_MAP[id]]||"";const justOn=justChecked==="prayer_"+id;if(justOn)justChecked="";h+=`<button class="prayer-btn${on?" on":""}${id===nx?" next":""}${justOn?" just":""}" onclick="togglePrayer('${id}')">${on?prayerBloomHTML(id):""}<span class="pb-fg">${name}${tm?`<br><span class="pt-time">${tm}</span>`:""}</span></button>`;});return h+'</div>'+prayerTimesHTML(day)+'<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>';}
 const MEAS_TYPES=[["weight","Вес","кг"],["pulse","Пульс","уд/мин"],["bp","Давление",""],["temp","Темп.","°C"],["height","Рост","см"]];
 const MEAS_RU={weight:"вес",pulse:"пульс",temp:"темп.",bp:"давление",height:"рост"};
 const MEAS_UNIT={weight:"кг",pulse:"уд/мин",temp:"°C",bp:"",height:"см"};
@@ -1230,34 +1231,36 @@ function _softColor(){return FX_COLORS[(Math.random()*FX_COLORS.length)|0];}
 // Запоминаем точку касания И прямоугольник задетого пункта — чтобы волна шла из ЦЕНТРА пункта.
 let _lastTap=null;
 try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
-function _fxNode(x,y,cls,styl,life){const e=document.createElement("div");e.className="fx "+cls;e.style.left=x+"px";e.style.top=y+"px";if(styl)for(const k in styl)e.style.setProperty(k,styl[k]);document.body.appendChild(e);setTimeout(()=>{try{e.remove();}catch(_){}},life||1100);}
-function _wave(x,y,col,dia,dur,delay){_fxNode(x,y,"fx-wave",Object.assign({"width":dia+"px","height":dia+"px","--c":col,"--d":dur+"s"},delay?{"animation-delay":delay+"s"}:null),(dur+(delay||0))*1000+140);}
-function _glow(x,y,col,dia){_fxNode(x,y,"fx-glow2",{"width":dia+"px","height":dia+"px","--c":col},1000);}
-function _ring(x,y,col){_fxNode(x,y,"fx-ring",{"--c":col},820);}
-// Расцвет лепестков/искр по всему пункту — «цветочки появились и растаяли».
-function _bloom(rect){const n=10+((Math.random()*6)|0);for(let i=0;i<n;i++){const px=rect.left+Math.random()*rect.width,py=rect.top+6+Math.random()*Math.max(4,rect.height-12);const petal=Math.random()<0.6;const sz=(petal?7:5)+((Math.random()*5)|0);_fxNode(px,py,petal?"fx-petal":"fx-dot",{"--c":_softColor(),"--sz":sz+"px","--r":((Math.random()*360)|0)+"deg","--dx":(((Math.random()*16)|0)-8)+"px","--dy":(-(6+((Math.random()*14)|0)))+"px","--d":(0.75+Math.random()*0.35).toFixed(2)+"s","animation-delay":(Math.random()*0.18).toFixed(2)+"s"},1250);}}
-function _sparks(x,y){const n=5+((Math.random()*4)|0);for(let i=0;i<n;i++)_fxNode(x,y,"fx-dot",{"--c":_softColor(),"--sz":(4+((Math.random()*4)|0))+"px","--dx":(((Math.random()*70)|0)-35)+"px","--dy":(-(20+((Math.random()*40)|0)))+"px","--d":(0.7+Math.random()*0.4).toFixed(2)+"s","animation-delay":(Math.random()*0.12).toFixed(2)+"s"},1250);}
-// Главный отклик: 70% — волна из ЦЕНТРА пункта, 30% — из точки касания; + разнобойный акцент.
+function _boxChild(box,x,y,cls,styl){const e=document.createElement("div");e.className=cls;e.style.left=x+"px";e.style.top=y+"px";if(styl)for(const k in styl)e.style.setProperty(k,styl[k]);box.appendChild(e);}
+// Эффект КЛИПУЕТСЯ границами пункта: контейнер точно по rect, overflow:hidden — ничего не вылезает.
+// Контрастно и «задевает только сам пункт»: вспышка-заливка + волна + лепестки/искры внутри.
 function fxBurst(rect,tapX,tapY){
-  if(reduceMotion())return;
-  let cx,cy,w;
-  const center=rect&&Math.random()<0.7;
-  if(center){cx=rect.left+rect.width/2;cy=rect.top+rect.height/2;w=rect.width;}
-  else{cx=(tapX!=null?tapX:(rect?rect.left+rect.width/2:innerWidth/2));cy=(tapY!=null?tapY:(rect?rect.top+rect.height/2:innerHeight*0.4));w=rect?rect.width:180;}
+  if(reduceMotion()||!rect||rect.width<8)return;
+  const box=document.createElement("div");box.className="fx-box";
+  box.style.left=rect.left+"px";box.style.top=rect.top+"px";box.style.width=rect.width+"px";box.style.height=rect.height+"px";
+  document.body.appendChild(box);setTimeout(()=>{try{box.remove();}catch(_){}},1150);
+  const lx=(tapX!=null?tapX-rect.left:rect.width/2),ly=(tapY!=null?tapY-rect.top:rect.height/2);
   const col=_softColor();
-  const dia=Math.max(70,Math.min(w*0.95,220));
-  _wave(cx,cy,col,dia,0.66,0);_wave(cx,cy,col,dia*1.45,0.82,0.08);
-  const p=Math.random();
-  if(p<0.34&&rect)_bloom(rect);
-  else if(p<0.58)_sparks(cx,cy);
-  else if(p<0.78)_glow(cx,cy,col,Math.max(w*0.8,120));
-  else if(p<0.90)_ring(cx,cy,_softColor());
-  // иначе — только волна (чистый минимал)
+  _boxChild(box,rect.width/2,rect.height/2,"fx-flash",{"width":rect.width+"px","height":rect.height+"px","--c":col});
+  const dia=Math.max(rect.width,rect.height)*2.2;
+  _boxChild(box,lx,ly,"fx-wave",{"width":dia+"px","height":dia+"px","--c":col});
+  const n=8+((Math.random()*6)|0);
+  for(let i=0;i<n;i++){const px=6+Math.random()*Math.max(2,rect.width-12),py=5+Math.random()*Math.max(2,rect.height-10);const pet=Math.random()<0.6;_boxChild(box,px,py,"fx-p "+(pet?"pet":"dotp"),{"--c":_softColor(),"--sz":((pet?6:4)+((Math.random()*4)|0))+"px","--r":((Math.random()*360)|0)+"deg","--dx":(((Math.random()*10)|0)-5)+"px","--dy":(-(2+((Math.random()*7)|0)))+"px","--d":(0.68+Math.random()*0.3).toFixed(2)+"s","animation-delay":(Math.random()*0.14).toFixed(2)+"s"});}
 }
-// Вызывать при отметке «выполнено»: разнообразный мягкий отклик из центра пункта + микровибрация.
-function tapFx(){const lt=_lastTap&&(Date.now()-_lastTap.t)<1500?_lastTap:null;fxBurst(lt&&lt.rect?lt.rect:null,lt?lt.x:null,lt?lt.y:null);}
-// Спокойное «всё выполнено» (без конфетти/салюта): щедрый мягкий расцвет из пункта/точки касания.
-function confetti(){vibNice();if(reduceMotion())return;const lt=_lastTap,rect=lt&&lt.rect?lt.rect:null;const cx=rect?rect.left+rect.width/2:(lt?lt.x:innerWidth/2),cy=rect?rect.top+rect.height/2:(lt?lt.y:innerHeight*0.4),w=rect?rect.width:200;const col=_softColor();_glow(cx,cy,col,Math.max(w,160));_wave(cx,cy,col,Math.max(90,w),0.7,0);_wave(cx,cy,_softColor(),Math.max(140,w*1.5),0.9,0.1);_ring(cx,cy,_softColor());if(rect)_bloom(rect);else _sparks(cx,cy);_sparks(cx,cy);}
+// Вызывать при отметке «выполнено»: контрастный отклик внутри самого пункта + микровибрация.
+function tapFx(){const lt=_lastTap&&(Date.now()-_lastTap.t)<1500?_lastTap:null;if(lt&&lt.rect)fxBurst(lt.rect,lt.x,lt.y);}
+// «Все намазы» — тот же контрастный отклик на последней кнопке (цветы и так остаются на каждой).
+function confetti(){vibNice();const lt=_lastTap&&(Date.now()-_lastTap.t)<2000?_lastTap:null;if(lt&&lt.rect)fxBurst(lt.rect,lt.x,lt.y);}
+// Постоянные цветы/лепестки на выполненном намазе — стабильные позиции (seed из id), внутри кнопки.
+function prayerBloomHTML(id){
+  let s=0;for(let i=0;i<id.length;i++)s=((s*31)+id.charCodeAt(i))>>>0;
+  const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};
+  const cols=["#8DE3B4","#8FBEF0","#B9A9E8","#EAD79E","#9FD6CE","#F0B6C6"];
+  let h="";for(let i=0;i<15;i++){const x=(5+rnd()*90).toFixed(1),y=(6+rnd()*86).toFixed(1),sz=(3.5+rnd()*3.5).toFixed(1),rot=(rnd()*360)|0,c=cols[(rnd()*cols.length)|0],op=(0.4+rnd()*0.45).toFixed(2),pet=rnd()<0.6;h+=`<span class="pbloom${pet?" pet":""}" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;background:${c};opacity:${op};transform:translate(-50%,-50%) rotate(${rot}deg)"></span>`;}
+  return `<span class="pbloom-wrap">${h}</span>`;
+}
+// Свечение серии на рубежах (было в CSS, но не подключено): 3 → пульс, 7 → вспышка, 30 → золото.
+function streakTier(n){return n>=30?"streak-tag tier3":n>=7?"streak-tag tier2":n>=3?"streak-tag tier1":"";}
 function dayColor(k){const d=days[k];const MC={crown:"#5CE89C",mid:"#CBA45C",fail:"#E0795B"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([28,40,32],[65,192,126],hp/100):"#151517";}
 function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#62646A;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
 function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
