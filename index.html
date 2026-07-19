@@ -77,6 +77,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .sup-course{font-size:10.5px;color:#5C655C;margin-top:2px}
 .sups-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;padding:2px 0}
 .sub-label:first-child{margin-top:6px}
+.sub-label.sub-fact{color:#5C655C;letter-spacing:.6px;border-top:1px solid #1c241d;padding-top:9px;margin-top:14px}
 .muted-note{font-size:13px;color:#5C655C;padding:10px 4px}
 .sched-cap{font-size:12px;color:#7E8A80;padding:10px 4px 2px;line-height:1.5}
 .toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
@@ -142,7 +143,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .hist-row{display:flex;gap:3px;flex-wrap:wrap}
 .hist-cell{width:calc(12.5% - 3px);height:22px;border-radius:5px;border:1px solid #262A32;background:#131419;cursor:pointer}
 .hist-cell.sel{border:1.5px solid #CBA45C}
-.hist-cell.skip-cell{border:1px dashed #3a453e;opacity:.85}
+.hist-cell.skip-cell{border:1px dashed rgba(224,121,91,.5);opacity:.9}
 .hist-month{font-size:12px;color:#8B968C;font-weight:600;margin:13px 0 6px 2px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
 .modal-box{background:#131419;width:100%;max-width:440px;border-radius:20px 20px 0 0;border:1px solid #262A32;padding:18px;max-height:80vh;display:flex;flex-direction:column}
@@ -164,9 +165,11 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 #app.mode-mobile .grid{display:block}
 #app.mode-desktop{max-width:1120px}
 #app.mode-desktop .grid{display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:22px;align-items:start;margin-top:16px}
-#app.mode-desktop .cats-wrap{display:grid;grid-template-columns:1fr 1fr;gap:12px 14px;align-items:start}
+/* Плотная упаковка «как пазл»: multicolumn вместо grid — короткий блок больше не
+   оставляет дыру до конца строки, блоки складываются вплотную сверху вниз. */
+#app.mode-desktop .cats-wrap{column-count:2;column-gap:14px}
 #app.mode-desktop .cat-header{margin-top:0}
-#app.mode-desktop .cat-block{min-width:0}
+#app.mode-desktop .cat-block{min-width:0;break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 12px}
 #app.mode-desktop .col-side{position:sticky;top:16px;display:flex;flex-direction:column}
 #app.mode-desktop .col-side .side-title{display:block;font-size:13px;font-weight:700;color:#E8ECE6;margin:0 0 10px 2px;letter-spacing:.3px}
 #app.mode-desktop .details-inner{margin-top:0}
@@ -211,6 +214,17 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(65,192,126,.5)}70%{box-shadow:0 0 0 16px rgba(65,192,126,0)}100%{box-shadow:0 0 0 0 rgba(65,192,126,0)}}
 @keyframes cfFall{to{transform:translateY(108vh) rotate(720deg)}}
+/* === Микро-эффекты выполнения: тихая волна от касания + разнобойные акценты === */
+.fx{position:fixed;pointer-events:none;z-index:80;will-change:transform,opacity}
+.fx-ripple{width:16px;height:16px;border-radius:50%;border:2px solid rgba(65,192,126,.6);transform:translate(-50%,-50%) scale(0);animation:fxRipple .6s cubic-bezier(.22,.7,.3,1) forwards}
+.fx-ripple.r2{animation-duration:.82s;animation-delay:.08s;border-color:rgba(65,192,126,.3)}
+@keyframes fxRipple{0%{transform:translate(-50%,-50%) scale(0);opacity:.85}100%{transform:translate(-50%,-50%) scale(6.5);opacity:0}}
+.fx-glow{width:10px;height:10px;border-radius:50%;background:radial-gradient(circle,rgba(65,192,126,.6),rgba(65,192,126,0) 68%);transform:translate(-50%,-50%);animation:fxGlow .72s ease-out forwards}
+@keyframes fxGlow{0%{opacity:0;transform:translate(-50%,-50%) scale(.35)}22%{opacity:1}100%{opacity:0;transform:translate(-50%,-50%) scale(9)}}
+.fx-petal{width:7px;height:7px;border-radius:62% 0 62% 0;background:linear-gradient(135deg,#69D6A0,#2E8B57);transform:translate(-50%,-50%);opacity:0;animation:fxPetal .95s ease-out forwards}
+@keyframes fxPetal{0%{opacity:0;transform:translate(-50%,-50%) scale(.4) rotate(0)}22%{opacity:.95}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% - 150%)) scale(1) rotate(var(--rot,40deg))}}
+.fx-ring{width:14px;height:14px;border-radius:50%;transform:translate(-50%,-50%);box-shadow:0 0 0 0 rgba(105,214,160,.55);animation:fxRing .6s ease-out forwards}
+@keyframes fxRing{0%{box-shadow:0 0 0 0 rgba(105,214,160,.5)}100%{box-shadow:0 0 0 22px rgba(105,214,160,0)}}
 .row{transition:background .3s ease,border-color .3s ease}
 .row.on{background:rgba(65,192,126,.07);border-color:#2a4a35}
 .task-check{transition:background .3s ease,border-color .3s ease}
@@ -275,7 +289,7 @@ input[type=range]{background:none;accent-color:#41C07E;width:100%;height:28px;pa
 .life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #262A32;background:#131419;color:#8B968C;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#41C07E;color:#41C07E;background:rgba(65,192,126,.12)}
 @media (prefers-reduced-motion:reduce){
-.check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf{animation:none!important}
+.check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-ripple,.fx-glow,.fx-petal,.fx-ring{animation:none!important}
 .row,.task-check,.db-ring,.life-fill,.dcell,.hist-cell{transition:none!important}
 }
 </style>
@@ -332,7 +346,7 @@ const KEY="journal_block3";
 const ERR_KEY="journal_block3_errors";
 const SNAP_PREFIX="journal_block3_snap_";
 const SCHEMA=2;
-const BUILD="17 июля 2026";
+const BUILD="19 июля 2026";
 let errLog=[];
 try{const e=localStorage.getItem(ERR_KEY);if(e){const p=JSON.parse(e);if(Array.isArray(p))errLog=p.slice(0,40);}}catch(e){}
 function logError(where,e,extra){
@@ -343,7 +357,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.51.0";
+const VERSION="0.52.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -377,7 +391,6 @@ const CATEGORIES=[
  ]},
  {id:"regime",name:"Ритуалы: утро и вечер",items:[
    {id:"bed",label:"☀️ Заправить кровать",type:"ob",pts:0.5},
-   {id:"teeth_am",label:"☀️ Зубы (утро)",type:"ob",pts:0.5,pen:1},
    {id:"warmwater",label:"☀️ Тёплая вода",type:"ob",pts:1,pen:1},
    {id:"lymph",label:"☀️ Лимфодренаж",type:"ob",pts:1},
    {id:"charge",label:"🤸 Зарядка (мин. 1 × 20)",type:"ob",pts:1},
@@ -497,9 +510,37 @@ function dayTouched(d){if(!d)return false;if(d.items&&Object.values(d.items).som
 const PENALTY_FROM="2026-07-09";
 const HIST_FLOOR="2026-06-01";
 const TRACK_START="2026-06-25";
-// Пропущенный день = ПРОШЛЫЙ день (строго до сегодня) в диапазоне ведения с < 5 заполненных
-// разделов. Текущий и будущие дни НИКОГДА не помечаются — чтобы не ломать ввод за сегодня.
-function isSkippedDay(dk){return dk<todayKey()&&dk>=TRACK_START&&loggedSections(days[dk])<5;}
+// Пропущенный день = ПРОШЛЫЙ день (строго до сегодня) в диапазоне ведения, где заполнено
+// МЕНЬШЕ 5 ОТДЕЛЬНЫХ ОТВЕТОВ (галочки, намазы, ползунки, поля, записи логов — поштучно).
+// Текущий и будущие дни НИКОГДА не помечаются — чтобы не ломать ввод за сегодня.
+function isSkippedDay(dk){return dk<todayKey()&&dk>=TRACK_START&&answersCount(days[dk])<5;}
+// Поштучный счёт ответов за день. Именно он решает, ставить ли крестик:
+// один заполненный день легко набирает десятки ответов, крестик — только на почти пустых.
+function answersCount(d){
+  if(!d)return 0;let n=0;
+  if(d.items)n+=Object.values(d.items).filter(Boolean).length;
+  if(d.prayers)n+=Object.values(d.prayers).filter(Boolean).length;
+  if(d.sups)n+=Object.values(d.sups).filter(v=>Number(v)>0).length;
+  n+=(d.waterLog||[]).length||((d.water||0)>0?1:0);
+  n+=(d.supsLog||[]).length;
+  n+=(d.measLog||[]).length;
+  n+=(d.meals||[]).length;
+  n+=(d.procLog||[]).length;
+  n+=(d.workLog||[]).length;
+  n+=(d.spends||[]).length;
+  if(d.sleepDown)n++;
+  if(d.sleepUp)n++;
+  for(const f of ["energy","focus","spirit","control"])if(d[f]!==""&&d[f]!=null)n++;
+  for(const f of ["main","analysis","seq","extract","block"])if(d[f])n++;
+  for(const f of ["weight","pulse","bpSys","temp"])if(d[f]!==""&&d[f]!=null)n++;
+  if(d.mark)n++;
+  if(Number(d.poop)>0)n++;
+  if(Number(d.income)>0)n++;
+  if(d.slip||d.onTime||d.bounced||d.urge)n++;
+  return n;
+}
+// loggedSections оставлен для денежной логики (dayMoney: closed-порог), чтобы НЕ сдвигать
+// исторический баланс. Крестик/пропуск теперь считает answersCount, а не эту функцию.
 function loggedSections(d){
   if(!d)return 0;
   let n=0;
@@ -569,7 +610,9 @@ function lastSlip(days,upto){
   }
   return "";
 }
-function calcStreak(days,upto){let k=upto,n=0;while(dayComplete(days[k])){n++;k=addDays(k,-1);}return n;}
+// Серия 5/5 намазов. Пустые (пропущенные) дни — нейтральны: не считаются и НЕ рвут серию,
+// чтобы забытый/незаполненный день не обнулял реальную серию. Рвёт только непустой день без 5/5.
+function calcStreak(days,upto){let k=upto,n=0,guard=0;while(guard++<800){if(dayComplete(days[k]))n++;else if(!isSkippedDay(k))break;k=addDays(k,-1);}return n;}
 function buildExport(days){
   const keys=Object.keys(days).sort();
   if(!keys.length)return "Журнал пуст.";
@@ -1174,7 +1217,28 @@ function vib(ms){try{if(navigator.vibrate)navigator.vibrate(ms||10);}catch(e){}}
 function vibNice(){vib([22,26,38]);}
 function popPoints(n){if(!n)return;const el=document.createElement("div");el.className="pt-pop";el.textContent="+"+n;document.body.appendChild(el);setTimeout(()=>el.remove(),900);}
 function toast(msg){const el=document.createElement("div");el.className="toast";el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.remove(),1800);}
-function confetti(){const cols=["#41C07E","#CBA45C","#E9C46A","#79A98D","#E0955B"];for(let i=0;i<28;i++){const e=document.createElement("div");e.className="cf";e.style.left=(Math.random()*100)+"vw";e.style.background=cols[i%cols.length];e.style.animationDuration=(0.9+Math.random()*1.0)+"s";e.style.animationDelay=(Math.random()*0.25)+"s";document.body.appendChild(e);setTimeout(()=>e.remove(),2300);}vib([30,40,60]);}
+function reduceMotion(){try{return matchMedia("(prefers-reduced-motion:reduce)").matches;}catch(e){return false;}}
+// Запоминаем точку касания, чтобы волна расходилась именно от пальца (как камень в воду).
+let _lastTap=null;
+try{document.addEventListener("pointerdown",e=>{_lastTap={x:e.clientX,y:e.clientY,t:Date.now()};},true);}catch(e){}
+function _fxNode(x,y,cls,styl,life){const e=document.createElement("div");e.className="fx "+cls;e.style.left=x+"px";e.style.top=y+"px";if(styl)for(const k in styl)e.style.setProperty(k,styl[k]);document.body.appendChild(e);setTimeout(()=>e.remove(),life||1050);}
+// Тихий, «дорогой» отклик: волна от точки касания — всегда; акцент — вразнобой (иногда чисто,
+// иногда мягкое свечение, иногда природный лепесток, иногда лёгкое кольцо). Экспериментально.
+function fxAt(x,y){
+  if(reduceMotion())return;
+  if(x==null||y==null){x=innerWidth/2;y=innerHeight*0.4;}
+  _fxNode(x,y,"fx-ripple");_fxNode(x,y,"fx-ripple r2");
+  const r=Math.random();
+  if(r<0.30)_fxNode(x,y,"fx-glow");
+  else if(r<0.55){const n=1+(Math.random()<0.45?1:0);for(let i=0;i<n;i++)_fxNode(x,y,"fx-petal",{"--dx":(((Math.random()*44)|0)-22)+"px","--rot":(((Math.random()*80)|0)-40)+"deg"});}
+  else if(r<0.72)_fxNode(x,y,"fx-ring");
+  // иначе — только чистая волна (минимал)
+}
+// Вызывать при отметке «выполнено»: волна от последнего касания + микровибрация.
+function tapFx(){if(_lastTap&&(Date.now()-_lastTap.t)<1500)fxAt(_lastTap.x,_lastTap.y);else fxAt();}
+// Спокойное «всё выполнено» вместо конфетти (пользователь не любит конфетти/салют):
+// свечение + волны + лепестки из точки касания, мягкая вибрация. Никакого падающего мусора.
+function confetti(){vibNice();if(reduceMotion())return;const x=_lastTap?_lastTap.x:innerWidth/2,y=_lastTap?_lastTap.y:innerHeight*0.4;_fxNode(x,y,"fx-glow",null,1200);_fxNode(x,y,"fx-ripple",null,1200);_fxNode(x,y,"fx-ripple r2",null,1200);_fxNode(x,y,"fx-ring",null,1200);for(let i=0;i<6;i++)_fxNode(x,y,"fx-petal",{"--dx":(((Math.random()*90)|0)-45)+"px","--rot":(((Math.random()*120)|0)-60)+"deg"},1200);}
 function dayColor(k){const d=days[k];const MC={crown:"#3DDC84",mid:"#CBA45C",fail:"#E0795B"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([28,40,32],[65,192,126],hp/100):"#131419";}
 function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#5C655C;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
 function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
@@ -1193,7 +1257,7 @@ function catItemsHTML(cat,day,wd){
   if(cat.id==="health")inner+=supsLoggingHTML(day)+measurementsHTML(day);
   // Ритуалы: визуальное деление на утро/вечер карточками-подблоками (без скрытия по времени).
   if(cat.id==="regime"){
-    const groups=[["morning","☀️","Утро",["bed","teeth_am","warmwater","lymph","charge"]],["evening","🌙","Вечер",["phone","groin","teeth","facemassage","expander"]]];
+    const groups=[["morning","☀️","Утро",["bed","warmwater","lymph","charge"]],["evening","🌙","Вечер",["phone","groin","teeth","facemassage","expander"]]];
     for(const [cls,icon,title,ids] of groups){
       inner+=`<div class="daypart ${cls}"><span class="daypart-ic">${icon}</span><span>${title}</span></div>`;
       for(const id of ids){if(id==="charge"){inner+=chargeHTML(day);continue;}const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
@@ -1202,7 +1266,12 @@ function catItemsHTML(cat,day,wd){
   }
   const vis=cat.items.filter(it=>isDue(it,wd)||it.sched);
   if(vis.length===0)inner+=`<div class="muted-note">Сегодня по графику ничего</div>`;
-  vis.forEach(it=>{inner+=catRowHTML(it,day,wd);});
+  // Считаемые цели идут сверху (именно они дают X/Y в счётчике), «по факту» — отдельной
+  // группой ниже с подписью, чтобы «0/2» при большем числе пунктов не выглядело ошибкой.
+  const mainV=vis.filter(it=>it.type!=="fact");
+  const factV=vis.filter(it=>it.type==="fact");
+  mainV.forEach(it=>{inner+=catRowHTML(it,day,wd);});
+  if(factV.length){inner+=`<div class="sub-label sub-fact">по факту · не входит в счёт</div>`;factV.forEach(it=>{inner+=catRowHTML(it,day,wd);});}
   if(cat.id==="body")inner+=waterHTML(day);
   if(cat.id==="sunnah")inner+=`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`;
   return inner;
@@ -1236,7 +1305,7 @@ function render(){
     const crownCls=(d&&d.mark==="crown")?" crown-cell":"";
     const skipped=isSkippedDay(kk);
     const cellBg=skipped?"#131419":hbg;
-    const inner=(d&&d.mark==="crown")?"👑":(skipped?'<span style="color:#5C655C;font-weight:700">✕</span>':"");
+    const inner=(d&&d.mark==="crown")?"👑":(skipped?'<span style="color:#E0795B;font-weight:700;opacity:.9">✕</span>':"");
     histHTML+=`<button class="hist-cell${kk===sel?" sel":""}${crownCls}${skipped?" skip-cell":""}" style="background:${cellBg};${mkRing};font-size:11px;line-height:20px;padding:0" onclick="selDay('${kk}')" title="${kk}${skipped?" · пропущен (мало данных)":""}">${inner}</button>`;
     kk=addDays(kk,1);
   }
@@ -1253,8 +1322,10 @@ function render(){
     else if(cat.id==="health"){const AS=activeSups();cobT=due.filter(it=>it.type!=="fact").length+AS.length;cob=due.filter(it=>it.type!=="fact"&&day.items?.[it.id]).length+AS.filter(([id])=>(day.sups?.[id]||0)>0).length;}
     else due.forEach(it=>{if(it.type==="fact")return;if(it.id==="istinja_b"&&!(Number(day.poop)>0))return;cobT++;if(day.items?.[it.id])cob++;});
     const bonusVis=["din","body","edu","health"].includes(cat.id)?0:cat.items.filter(it=>it.type!=="fact"&&!isDue(it,wd)&&it.sched).length;
+    const factVis=["din","body","edu","health"].includes(cat.id)?0:cat.items.filter(it=>it.type==="fact").length;
     const open=catOpen[cat.id];
-    const cnt=cobT?`<span class="cat-count" style="${kpiWarn?"color:#E0955B":""}">${cob}/${cobT}${cat.id==="edu"?" мин":""}${bonusVis?` <span style="color:#5C655C">+${bonusVis} доп</span>`:""}</span>`:"";
+    const cntTitle=factVis?` title="${cob}/${cobT} — считаемые цели. Пунктов «по факту»: ${factVis} (в счёт не входят)."`:"";
+    const cnt=cobT?`<span class="cat-count"${cntTitle} style="${kpiWarn?"color:#E0955B":""}">${cob}/${cobT}${cat.id==="edu"?" мин":""}${bonusVis?` <span style="color:#5C655C">+${bonusVis} доп</span>`:""}</span>`:"";
     const justDone=justCompletedCat===cat.id||(cat.id==="body"&&justCompletedCat==="health");if(justDone)justCompletedCat=null;
     cats+=`<div class="cat-block"><button class="cat-header${justDone?" cat-pulse":""}" ${kpiWarn?'style="border-color:#5a4630"':""} onclick="toggleCat('${cat.id}')"><span class="cat-name">${cat.id==="body"?"Тело и здоровье":cat.name}</span><span style="display:flex;align-items:center;gap:10px">${cnt}<span style="color:#5C655C;font-size:13px">${open?"▾":"▸"}</span></span></button>`;
     if(open){
@@ -1462,12 +1533,12 @@ function diagHTML(){
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];render();}
-function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else vib(4);}
+function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else if(on)tapFx();else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
   if(longTask){
     longTask.done=!longTask.done;
-    if(longTask.done){justChecked=id;vib(4);}else vib(4);
+    if(longTask.done){justChecked=id;tapFx();vib(4);}else vib(4);
     pushLog((longTask.done?"🎯 цель выполнена: ":"↩ снял цель: ")+longTask.label);
     saveMeta();render();
     return;
@@ -1483,7 +1554,7 @@ function toggleItem(id){
   const after=cat?catCompletion(cat,{...d,items:nItems},wd):null;
   const milestone=before&&after&&after.total>0&&after.done===after.total&&before.done<before.total;
   if(milestone)justCompletedCat=cat.id;
-  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);}
+  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);tapFx();}
   setDay({items:nItems,itemTimes:nTimes,itemRecTimes:nRec});
   if(milestone)vibNice();else vib(4);
 }
