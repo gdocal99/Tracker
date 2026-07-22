@@ -371,7 +371,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.58.0";
+const VERSION="0.58.1";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1375,8 +1375,9 @@ function blocksHTML(day,wd){
   {
     const dinItems=catItems("din"),sunnah=catItems("sunnah");
     const c=countItems(dinItems,day,wd);const pd=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
-    out+=blockShell("din","🕌 Дин",cntChip(pd,5),()=>{
+    out+=blockShell("din","🕌 Дин (вера)",cntChip(pd,5),()=>{
       let h=namazHTML(day)+itemsBlock(dinItems,day,wd);
+      h+=subHTML("🤲","Иман (состояние веры)",sliderHTML("Иман","spirit",day.spirit));
       if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`);
       return h;
     });
@@ -1428,7 +1429,6 @@ function blocksHTML(day,wd){
       let h="";
       h+=sliderHTML("Энергия","energy",day.energy);
       h+=sliderHTML("Фокус / собранность","focus",day.focus);
-      h+=sliderHTML("Состояние (иман)","spirit",day.spirit);
       h+=sliderHTML("Самоконтроль над импульсами","control",day.control);
       h+=toggleHTML("Перед сном тянуло «ещё что-то»","urge",day.urge);
       h+=toggleHTML("Срыв","slip",day.slip,true)+(day.slip?slipDetailHTML(day):"");
@@ -1439,11 +1439,11 @@ function blocksHTML(day,wd){
       return h;
     });
   }
-  // 7) ✍️ Рефлексия — дневниковые поля, все свёртываемые (закрыто по умолчанию).
-  out+=blockShell("reflect","✍️ Рефлексия (дневник)","",()=>{
-    return collapTa("seq","События дня (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
-      +collapTa("extract","Что я могу извлечь из сегодняшнего дня?","вывод",day)
-      +collapTa("analysis","Мысли и анализ","эмоции, наблюдения",day)
+  // 7) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
+  out+=blockShell("reflect","📒 Дневник","",()=>{
+    return collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
+      +collapTa("analysis","Анализ (мысли, эмоции, наблюдения)","что чувствовал и заметил",day)
+      +collapTa("extract","Выводы (что извлёк из дня)","вывод",day)
       +collapTa("block","Помеха дня","что сбило",day);
   });
   out+=offSchedHTML(day,wd);
