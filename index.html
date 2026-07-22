@@ -371,7 +371,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.58.1";
+const VERSION="0.58.2";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1053,13 +1053,14 @@ function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill
 
 // Динамическая подпись: чекины показывают выбранные пользователем времена.
 function dispLabel(it){if(it.id==="checkin_day")return "⏰ Дневной чекин ("+(meta.checkinDay||"12:00")+")";if(it.id==="checkin_eve")return "⏰ Вечерний чекин ("+(meta.checkinEve||"22:30")+")";return it.label;}
-function rowHTML(it,day,offSched){
+function rowHTML(it,day,offSched,plain){
   if(it.id==="istinja_b"&&!(Number(day.poop)>0)){return `<button class="row" style="opacity:.45" onclick="toast('Сначала укажи «Стул (раз)» в Поведении внизу')"><span style="display:flex;align-items:center;gap:8px"><span class="tag tag-fact">после стула</span><span class="row-label">${it.label}</span></span><span class="check-box"></span></button>`;}
   const on=!!day.items?.[it.id];
   const col=it.type==="ob"?"#46D98C":it.type==="des"?"#79A98D":"#586057";
   const DW=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
   const schedTxt=it.sched?it.sched.map(x=>DW[x]).join("·"):"";
-  const tag=it.type==="fact"?`<span class="tag tag-fact">по факту</span>`:(it.sched?(offSched?`<span class="tag tag-fact">вне графика · бонус</span>`:`<span class="tag tag-sched">${schedTxt}</span>`):"");
+  // plain: пункт показывается как обычный (без ярлыка «по факту») — для нерегулярных дел в Быту.
+  const tag=plain?"":(it.type==="fact"?`<span class="tag tag-fact">по факту</span>`:(it.sched?(offSched?`<span class="tag tag-fact">вне графика · бонус</span>`:`<span class="tag tag-sched">${schedTxt}</span>`):""));
   const justOn=justChecked===it.id;if(justOn)justChecked="";
   const act=day.itemTimes?.[it.id],rec=day.itemRecTimes?.[it.id];
   const ttime=on?(act
@@ -1273,8 +1274,8 @@ function dayColor(k){const d=days[k];const MC={crown:"#5CE89C",mid:"#CBA45C",fai
 function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#62646A;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
 function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
 function stripHTML(){const t=todayKey();let h="";for(let i=13;i>=0;i--){const k=addDays(t,-i);const d=days[k];const crown=d&&d.mark==="crown";h+=`<button class="dcell${k===sel?" sel":""}" style="background:${dayColor(k)}" onclick="selDay('${k}')" title="${k}">${crown?"👑":""}</button>`;}return h;}
-function catRowHTML(it,day,wd){
-  let s=rowHTML(it,day,!isDue(it,wd));
+function catRowHTML(it,day,wd,plain){
+  let s=rowHTML(it,day,!isDue(it,wd),plain);
   if(day.items?.[it.id])s+=timeEditHTML(it.id,day);
   if(it.q&&day.items?.[it.id])s+=qualityHTML(it,day);
   if(it.opts&&day.items?.[it.id])s+=optsHTML(it,day);
@@ -1336,18 +1337,32 @@ function itemsBlock(items,day,wd,opts){
   const dueMain=items.filter(it=>it.type!=="fact"&&isDue(it,wd));
   const offDone=items.filter(it=>it.type!=="fact"&&it.sched&&!isDue(it,wd)&&day.items?.[it.id]);
   const factV=opts.noFact?[]:items.filter(it=>it.type==="fact");
+  // mergeFact: нерегулярные дела (косить траву, ремонт, помощь) показываем как обычные пункты,
+  // без ярлыка «по факту · не в счёт». Баллы за них начисляются как обычно.
   dueMain.forEach(it=>{inner+=catRowHTML(it,day,wd);});
   offDone.forEach(it=>{inner+=catRowHTML(it,day,wd);});
-  if(factV.length){inner+=`<div class="sub-label sub-fact">по факту · не в счёт</div>`;factV.forEach(it=>{inner+=catRowHTML(it,day,wd);});}
+  if(factV.length){
+    if(!opts.mergeFact)inner+=`<div class="sub-label sub-fact">по факту · не в счёт</div>`;
+    factV.forEach(it=>{inner+=catRowHTML(it,day,wd,opts.mergeFact);});
+  }
   if(!inner&&opts.empty)inner=`<div class="muted-note" style="padding:4px 0">${opts.empty}</div>`;
   return inner;
 }
 function hasVisible(items,day,wd){return items.some(it=>(it.type!=="fact"&&isDue(it,wd))||(it.type==="fact")||(it.sched&&!isDue(it,wd)&&day.items?.[it.id]));}
-// Ритуалы: утро/вечер карточками (как было), вынесено в отдельную функцию.
+// Тайм-гейт ритуалов: ТОЛЬКО для сегодняшнего дня. Утро видно 06:00–13:00, вечер 19:00–23:00,
+// вне окна блок сегодня прячется до завтра. Прошлые/будущие дни — всегда открыты (дозаполнить вчера).
+const RITUAL_WINDOWS={morning:[6,13],evening:[19,23]};
+function ritualVisible(part){
+  if(sel!==todayKey())return true;
+  const now=new Date(),h=now.getHours()+now.getMinutes()/60,w=RITUAL_WINDOWS[part];
+  return h>=w[0]&&h<w[1];
+}
+// Ритуалы: утро/вечер карточками. Группа рисуется только если её окно активно (для сегодня).
 function regimeInner(day,wd){
   let inner="";const cat=CATEGORIES.find(c=>c.id==="regime");
   const groups=[["morning","☀️","Утро",["bed","warmwater","lymph","charge"]],["evening","🌙","Вечер",["phone","groin","teeth","facemassage","expander"]]];
   for(const [cls,icon,title,ids] of groups){
+    if(!ritualVisible(cls))continue;
     inner+=`<div class="daypart ${cls}"><span class="daypart-ic">${icon}</span><span>${title}</span></div>`;
     for(const id of ids){if(id==="charge"){inner+=chargeHTML(day);continue;}const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
     for(const it of cat.items)if(it.custom&&it.part===cls)inner+=catRowHTML(it,day,wd);
@@ -1383,7 +1398,7 @@ function blocksHTML(day,wd){
     });
   }
   // 2) ☀️ Ритуалы дня — утро / вечер.
-  out+=blockShell("regime","☀️ Ритуалы дня","",()=>regimeInner(day,wd));
+  if(ritualVisible("morning")||ritualVisible("evening"))out+=blockShell("regime","☀️ Ритуалы дня","",()=>regimeInner(day,wd));
   // 3) 💪 Здоровье и тело — активность/тренировки, вода, питание, замеры+сон+стул, БАДы.
   {
     const bodyItems=catItems("body"),healthItems=catItems("health");
@@ -1419,7 +1434,7 @@ function blocksHTML(day,wd){
   // 5) 🏠 Быт.
   {
     const homeItems=catItems("home");const c=countItems(homeItems,day,wd);
-    out+=blockShell("home","🏠 Быт",cntChip(c.done,c.total),()=>itemsBlock(homeItems,day,wd));
+    out+=blockShell("home","🏠 Быт",cntChip(c.done,c.total),()=>itemsBlock(homeItems,day,wd,{mergeFact:true}));
   }
   // 6) 🧠 Состояние — ползунки, прокрастинация, срыв, самоконтроль, общение, «как прошёл день».
   {
@@ -1939,6 +1954,9 @@ render=function(force){
 applyCustomItems();
 loadSyncScripts();
 render();
+// Раз в минуту тихо перерисовываем сегодняшний день — чтобы ритуалы сами появились/исчезли
+// на границе своего окна (06/13, 19/23), без единого нажатия. При наборе текста render пропускается.
+setInterval(()=>{try{if(sel===todayKey()&&!_typing())render();}catch(e){}},60000);
 </script>
 </body>
 </html>
