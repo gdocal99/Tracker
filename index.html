@@ -167,10 +167,10 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .side-title{display:none}
 #app.mode-mobile .grid{display:block}
 #app.mode-desktop{max-width:1120px}
-#app.mode-desktop .grid{display:grid;grid-template-columns:minmax(0,1fr) 384px;gap:22px;align-items:start;margin-top:16px}
-/* Плотная упаковка «как пазл»: multicolumn вместо grid — короткий блок больше не
-   оставляет дыру до конца строки, блоки складываются вплотную сверху вниз. */
-#app.mode-desktop .cats-wrap{column-count:2;column-gap:14px}
+#app.mode-desktop .grid{display:block;margin-top:16px}
+/* Плотная упаковка «как пазл»: multicolumn — блоки складываются вплотную. На широком
+   экране 3 колонки, чтобы разделы были обозримы одним взглядом. */
+#app.mode-desktop .cats-wrap{column-count:3;column-gap:14px}
 #app.mode-desktop .cat-header{margin-top:0}
 #app.mode-desktop .cat-block{min-width:0;break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 12px}
 #app.mode-desktop .col-side{position:sticky;top:16px;display:flex;flex-direction:column}
@@ -371,7 +371,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.58.2";
+const VERSION="0.60.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -444,7 +444,7 @@ const CATEGORIES=[
    {id:"grandma",label:"Помощь бабушке",type:"fact",pts:0.5},
    {id:"laundry",label:"Постирать бельё",type:"ob",pts:1.5,sched:[6],opts:HOMEQ},
    {id:"clothes",label:"Одежда убрана на место (не на пол)",type:"ob",pts:0.5,opts:HOMEQ},
-   {id:"cleaning",label:"Уборка дома",type:"des",pts:1.5,opts:HOMEQ},
+   {id:"cleaning",label:"Уборка дома (весь дом)",type:"des",pts:1.5,sched:[4],opts:HOMEQ},
    {id:"plant",label:"Полив растения",type:"des",pts:0.25,opts:HOMEQ},
    {id:"water3",label:"Вода на 3 этаж",type:"des",pts:0.5},
    {id:"phoneclean",label:"Протереть экран телефона",type:"ob",pen:1,pts:1,sched:[3,0]},
@@ -602,7 +602,7 @@ function calcBalance(days){
 function addSpend(){const d=getDay();const now=nowHM();const L=[...(d.spends||[]),{t:now,rt:now,n:0,what:""}];setDay({spends:L});}
 function setSpend(i,f,v){const d=getDay();const L=[...(d.spends||[])];if(!L[i])return;L[i]={...L[i],[f]:f==="n"?clampNum(Math.round(num(v,0)),0,100000):v};setDay({spends:L});}
 function delSpend(i){const d=getDay();const L=[...(d.spends||[])];L.splice(i,1);setDay({spends:L});}
-function spendHTML(day){const L=day.spends||[];const spentToday=L.reduce((s,x)=>s+(Number(x.n)||0),0);return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="side-title" style="display:block;margin:0">Потратить баллы</span>${spentToday?`<span style="font-size:12px;color:#E0795B;font-weight:700">−${spentToday} сегодня</span>`:""}</div>${L.length?L.map((x,i)=>`<div class="mlog-row"><input type="time" value="${x.t||""}" style="flex:0 0 88px" onchange="setSpend(${i},'t',this.value)"><input type="number" inputmode="numeric" value="${x.n||""}" placeholder="баллов" style="flex:0 0 84px" onchange="setSpend(${i},'n',this.value)"><input type="text" value="${String(x.what||"").replace(/"/g,"&quot;")}" placeholder="на что потратил" onchange="setSpend(${i},'what',this.value)"><button class="mlog-x" onclick="delSpend(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Пока ничего не тратил</div>`}<button class="task-add" style="margin-top:8px;width:100%" onclick="addSpend()">− Потратить баллы</button><div style="font-size:11px;color:#62646A;margin-top:6px">Списывается из общего баланса. Каталога нет намеренно — пиши свободно, за месяц сам увидишь, на что уходят баллы.</div></div>`;}
+function spendHTML(day){const L=day.spends||[];const spentToday=L.reduce((s,x)=>s+(Number(x.n)||0),0);return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="side-title" style="display:block;margin:0">Потратить баллы</span>${spentToday?`<span style="font-size:12px;color:#E0795B;font-weight:700">−${spentToday} сегодня</span>`:""}</div>${L.length?L.map((x,i)=>`<div class="mlog-row"><input type="time" value="${x.t||""}" style="flex:0 0 88px" onchange="setSpend(${i},'t',this.value)"><input type="number" inputmode="numeric" value="${x.n||""}" placeholder="баллов" style="flex:0 0 84px" onchange="setSpend(${i},'n',this.value)"><input type="text" value="${String(x.what||"").replace(/"/g,"&quot;")}" placeholder="на что потратил" onchange="setSpend(${i},'what',this.value)"><button class="mlog-x" onclick="delSpend(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Пока ничего не тратил</div>`}<button class="task-add" style="margin-top:8px;width:100%" onclick="addSpend()">− Потратить баллы</button></div>`;}
 function cleanStreak(days,upto){
   let k=upto,n=0,guard=0;
   while(guard++<400){
@@ -1114,7 +1114,7 @@ function setWork(i,f,v){const d=getDay();const L=[...(d.workLog||[])];if(!L[i])r
 function delWork(i){const d=getDay();const L=[...(d.workLog||[])];L.splice(i,1);setDay({workLog:L});}
 function workMinutes(x){if(!x||!x.from||!x.to)return 0;const p=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));let m=p(x.to)-p(x.from);if(m<0)m+=1440;return m;}
 function workTotalH(L){const mm=(L||[]).reduce((a,x)=>a+workMinutes(x),0);return mm/60;}
-function workHTML(day){const L=day.workLog||[];const th=workTotalH(L);const rows=L.length?L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.from||""}" onchange="setWork(${i},'from',this.value)"><span style="color:#62646A;flex:0 0 auto">→</span><input class="mtime" type="time" value="${x.to||""}" onchange="setWork(${i},'to',this.value)"><span class="mlog-v" style="flex:1;text-align:right;color:#929699;font-size:12px">${workMinutes(x)?(workMinutes(x)/60).toFixed(1)+" ч":""}</span><button class="mlog-x" onclick="delWork(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Смен нет. Нажми «+», когда был на работе.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🏢 Рабочие смены${th?` · ${th.toFixed(1)} ч`:""}</div><button class="task-add" onclick="addWorkPeriod()">+</button></div>${rows}<div style="font-size:11px;color:#62646A;margin-top:4px">Несколько периодов за день — норм. Для отчёта и анализа, на баллы не влияет.</div></div>`;}
+function workHTML(day){const L=day.workLog||[];const th=workTotalH(L);const rows=L.length?L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.from||""}" onchange="setWork(${i},'from',this.value)"><span style="color:#62646A;flex:0 0 auto">→</span><input class="mtime" type="time" value="${x.to||""}" onchange="setWork(${i},'to',this.value)"><span class="mlog-v" style="flex:1;text-align:right;color:#929699;font-size:12px">${workMinutes(x)?(workMinutes(x)/60).toFixed(1)+" ч":""}</span><button class="mlog-x" onclick="delWork(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Смен нет. Нажми «+», когда был на работе.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🏢 Рабочие смены${th?` · ${th.toFixed(1)} ч`:""}</div><button class="task-add" onclick="addWorkPeriod()">+</button></div>${rows}</div>`;}
 function measurementsHTML(day){
   const L=day.measLog||[];
   const rows=L.map((x,i)=>{
@@ -1123,7 +1123,7 @@ function measurementsHTML(day){
     const selOpt=MEAS_TYPES.map(([id,ru])=>`<option value="${id}"${x.type===id?" selected":""}>${ru}</option>`).join("");
     return `<div class="mrow"><select class="msel" onchange="setMeas(${i},'type',this.value)">${selOpt}</select><input class="mval" type="${isBp?"text":"number"}" ${isBp?'placeholder="120/80"':'inputmode="decimal" step="0.1" placeholder="—"'} value="${String(x.v||"").replace(/"/g,"&quot;")}" onchange="setMeas(${i},'v',this.value)"><span class="munit">${unit}</span><input class="mtime" type="time" value="${x.t||""}" onchange="setMeas(${i},'t',this.value)"><button class="mlog-x" onclick="delMeas(${i})">✕</button></div>`;
   }).join("");
-  return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Замеры</div><button class="task-add" onclick="addMeas()">+</button></div><div style="font-size:11px;color:#62646A;margin:2px 0 6px">Жми «+» для добавления строки. Мерил дважды — жми «+» ещё раз.</div>${L.length?rows:`<div class="muted-note" style="padding:4px 0">Пока нет замеров</div>`}</div>`;
+  return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Замеры</div><button class="task-add" onclick="addMeas()">+</button></div>${L.length?rows:`<div class="muted-note" style="padding:4px 0">Пока нет замеров</div>`}</div>`;
 }
 function supRow(day,id,label,step,unit,sub){const v=(day.sups||{})[id]||0;const course=supCourse(id);return `<div style="margin-top:11px"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="min-width:0"><span class="row-label${v>0?" on":""}" style="font-size:14px;display:block">${label}</span>${sub?`<span style="font-size:10.5px;color:#62646A">${sub}</span>`:""}${course?`<span class="sup-course">${course}</span>`:""}</span><div style="display:flex;align-items:center;gap:7px;flex-shrink:0"><button class="step-btn" onclick="changeSup('${id}',-${step})">−</button><span style="min-width:72px;text-align:center;font-weight:700;font-size:14px;color:${v>0?"#46D98C":"#62646A"}">${v} ${unit}</span><button class="step-btn" onclick="changeSup('${id}',${step})">+</button><button class="task-del" style="flex:0 0 38px;height:34px;border-color:#3a453e;color:#929699" title="Поставить курс на паузу" onclick="supStop('${id}')">⏸</button></div></div>${supTimesHTML(day,id,unit)}<div class="field-row" style="margin-top:5px"><div class="field-item"><input type="number" inputmode="decimal" value="${(day.supsLog||[]).some(x=>x.id===id&&x.t)?"":(v||"")}" placeholder="итог за день" onchange="setSupTotal('${id}',this.value,${step})"></div></div></div>`;}
 // Курсы БАДов: активен по умолчанию; пауза с датой начала/конца хранится в meta.supPeriods.
@@ -1147,7 +1147,7 @@ function supsLoggingHTML(day){
     arch=`<button class="sup-arch-head" onclick="supsArchOpen=!supsArchOpen;render()"><span>💤 На паузе (${paused.length})</span><span>${supsArchOpen?"▾":"▸"}</span></button>`;
     if(supsArchOpen)arch+=paused.map(s=>`<div class="sup-paused" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #262626"><span style="min-width:0"><span class="row-label" style="font-size:13.5px;display:block">${s.label}</span><span class="sup-course">${supCourse(s.id)||"курс не начинался"}</span></span><button class="backup-btn" style="flex:0 0 auto;padding:6px 11px;border-color:#2f6b45;color:#46D98C" onclick="supStart('${s.id}')">▶ Возобновить</button></div>`).join("");
   }
-  return `<div class="meas-card">${head}<div style="font-size:11px;color:#62646A;margin:2px 0 2px">Ноль = не принимал. «⏸» — курс на паузу (не удаляя). Добавить / удалить БАД — в ⚙ настройках.</div>${rows}${arch}</div>`;}
+  return `<div class="meas-card">${head}${rows}${arch}</div>`;}
 // Настройки (Таб 2): только форма добавления и удаление кастомных БАДов из базы.
 function supsConfigHTML(){
   const list=meta.userSups||[];
@@ -1206,7 +1206,7 @@ const PROC_LEVELS=[["little","немного"],["mid","средне"],["much","�
 function addProc(){const d=getDay();setDay({procLog:[...(d.procLog||[]),{level:"mid",t:nowHM(),note:""}]});}
 function setProc(i,f,v){const d=getDay();const L=[...(d.procLog||[])];if(!L[i])return;L[i]={...L[i],[f]:v};setDay({procLog:L});}
 function delProc(i){const d=getDay();const L=[...(d.procLog||[])];L.splice(i,1);setDay({procLog:L});}
-function procHTML(day){const L=day.procLog||[];const rows=L.length?L.map((x,i)=>{const opts=PROC_LEVELS.map(([v,l])=>`<option value="${v}"${x.level===v?" selected":""}>${l}</option>`).join("");return `<div class="mrow"><select class="msel" style="flex:0 0 90px" onchange="setProc(${i},'level',this.value)">${opts}</select><input class="mtime" type="time" value="${x.t||""}" onchange="setProc(${i},'t',this.value)"><input class="mval" type="text" value="${String(x.note||"").replace(/"/g,"&quot;")}" placeholder="на что / комментарий" onchange="setProc(${i},'note',this.value)"><button class="mlog-x" onclick="delProc(${i})">✕</button></div>`;}).join(""):`<div class="muted-note" style="padding:4px 0">Прокрастинации не было — или добавь запись, если залипал.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🌀 Прокрастинация</div><button class="task-add" onclick="addProc()">+</button></div><div style="font-size:11px;color:#62646A;margin:2px 0 4px">Сколько раз залипал без дела — сила, время, на что. Можно несколько записей.</div>${rows}</div>`;}
+function procHTML(day){const L=day.procLog||[];const rows=L.length?L.map((x,i)=>{const opts=PROC_LEVELS.map(([v,l])=>`<option value="${v}"${x.level===v?" selected":""}>${l}</option>`).join("");return `<div class="mrow"><select class="msel" style="flex:0 0 90px" onchange="setProc(${i},'level',this.value)">${opts}</select><input class="mtime" type="time" value="${x.t||""}" onchange="setProc(${i},'t',this.value)"><input class="mval" type="text" value="${String(x.note||"").replace(/"/g,"&quot;")}" placeholder="на что / комментарий" onchange="setProc(${i},'note',this.value)"><button class="mlog-x" onclick="delProc(${i})">✕</button></div>`;}).join(""):`<div class="muted-note" style="padding:4px 0">Прокрастинации не было — или добавь запись, если залипал.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🌀 Прокрастинация</div><button class="task-add" onclick="addProc()">+</button></div>${rows}</div>`;}
 // СДВГ-опросник срыва: только кнопки, без текстовых полей.
 const SLIP_TYPES=[["fantasy","Фантазии"],["porn","Порно"],["both","Порно + Фантазии"],["planned","Плановый"]];
 const SLIP_FIRSTS=[["fantasy_first","Сначала фантазии"],["porn_first","Сначала порно"]];
@@ -1379,9 +1379,14 @@ function collapTa(f,label,ph,day){
   if(!open)return `<button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}${filled?' <span style="color:#46D98C;font-weight:600">· заполнено</span>':""}</span><span style="color:#62646A">＋</span></button>`;
   return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#62646A">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
+// Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
+const BLOCK_ACCENT={din:"#CBA45C",regime:"#E0955B",health:"#E08AA0",delo:"#7E94C4",home:"#9FD6CE",state:"#B9A9E8",reflect:"#9DB0A4"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
-  return `<div class="cat-block"><button class="cat-header"${warn?' style="border-color:#5a4630"':""} onclick="toggleCat('${id}')"><span class="cat-name">${title}</span><span style="display:flex;align-items:center;gap:10px">${cnt||""}<span style="color:#62646A;font-size:13px">${open?"▾":"▸"}</span></span></button>${open?`<div class="cat-body">${innerFn()}</div>`:""}</div>`;
+  const ac=BLOCK_ACCENT[id]||"#34343B";
+  const hStyle=`border-left:3px solid ${ac}`+(warn?";border-color:#5a4630":"");
+  const dot=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${ac};margin-right:8px;vertical-align:middle;flex:0 0 auto"></span>`;
+  return `<div class="cat-block" style="border-left:3px solid ${ac}"><button class="cat-header" style="${hStyle}" onclick="toggleCat('${id}')"><span class="cat-name" style="display:flex;align-items:center">${dot}${title}</span><span style="display:flex;align-items:center;gap:10px">${cnt||""}<span style="color:#62646A;font-size:13px">${open?"▾":"▸"}</span></span></button>${open?`<div class="cat-body">${innerFn()}</div>`:""}</div>`;
 }
 function cntChip(done,total,warn){if(!total)return "";return `<span class="cat-count" style="${warn?"color:#E0955B":""}">${done}/${total}</span>`;}
 function blocksHTML(day,wd){
@@ -1516,12 +1521,7 @@ function render(){
         ${tasksHTML(day)}
         <div class="cats-wrap">${cats}</div>
         ${markHTML(day)}
-      </div>
-      <div class="col-side">
-        <div class="side-title">Закрытие дня</div>
-        ${logHTML(day)}
-        <button class="export-btn" onclick="openExport()">📋 Отчёт для Claude</button>
-        <div style="font-size:11px;color:#62646A;margin-top:10px;text-align:center">Бэкапы, синхронизация, БАДы и диагностика — в ⚙ настройках (кнопка вверху).</div>
+        <div style="font-size:11px;color:#62646A;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
       </div>
     </div>
     <div class="col-full">
@@ -1573,6 +1573,14 @@ function healthHTML(){
 function hasProblem(){return !saveState.ok||loadState.corrupt||storageBytes()>3.5*1024*1024||errLog.length>0;}
 function setSettingsTab(n){settingsTab=n;render();}
 function cycleView(){meta.view=(meta.view==='auto'?'desktop':meta.view==='desktop'?'mobile':'auto');saveMeta();render();}
+function setView(v){meta.view=v;saveMeta();render();}
+function viewSwitchHTML(){
+  const opts=[["auto","🔄 Авто"],["mobile","📱 Телефон"],["desktop","🖥 Компьютер"]];
+  const cur=meta.view||"auto";
+  const now=currentMode();
+  const btns=opts.map(([v,l])=>`<button class="state-btn${cur===v?" on":""}" style="flex:1;padding:10px 4px" onclick="setView('${v}')">${l}</button>`).join("");
+  return `<div style="display:flex;gap:6px">${btns}</div><div style="font-size:11px;color:#62646A;margin-top:5px">Сейчас показывается: <b style="color:#929699">${now==="mobile"?"телефонный":"компьютерный"}</b> вид.</div>`;
+}
 function settingsHTML(){
   const day=getDay();
   const tab=(n,lbl)=>`<button class="state-btn${settingsTab===n?" on":""}" style="flex:1;text-align:center;line-height:1.25;padding:9px 4px;font-size:11.5px" onclick="setSettingsTab(${n})">${lbl}</button>`;
@@ -1593,7 +1601,10 @@ function settingsTab1HTML(day){
     <div class="side-title" style="display:block;margin:0 0 8px">Резервные копии и обмен</div>
     <div class="backup-row"><button class="backup-btn" onclick="copyBackup()">📋 Копия в буфер</button><button class="backup-btn" onclick="saveBackup()">💾 Скачать файлом</button></div>
     <div class="backup-row" style="margin-top:6px"><button class="backup-btn" onclick="togglePaste()">📥 Вставить копию</button><label class="backup-btn" style="text-align:center;cursor:pointer">📂 Из файла<input type="file" accept=".json,application/json" style="display:none" onchange="onFile(event)"></label></div>
-    <div class="backup-row" style="margin-top:6px"><button class="backup-btn" onclick="openExport()">📄 Отчёт для Claude</button><button class="backup-btn" onclick="cycleView()">🖥 Вид: ${meta.view}</button></div>
+    <button class="export-btn" style="margin-top:8px" onclick="openExport()">📄 Отчёт для Claude</button>
+    <div class="side-title" style="display:block;margin:16px 0 8px">Вид приложения</div>
+    ${viewSwitchHTML()}
+    <div style="font-size:11px;color:#62646A;margin-top:6px">Обычно определяется само. Переключи вручную, если хочешь проверить, как выглядит на телефоне с компа.</div>
     ${pasteOpen?`<div style="margin-top:8px"><textarea class="field-ta" style="min-height:90px" placeholder="вставь сюда JSON-копию целиком" oninput="pasteText=this.value"></textarea><button class="backup-btn" style="margin-top:6px;width:100%;border-color:#2f6b45;color:#46D98C" onclick="importPaste()">Импортировать вставленное</button></div>`:""}
     <div class="meas-card" style="margin-top:14px;border-color:#2c6b49;background:#0B0B0C">
       <div class="side-title" style="display:block;margin:0 0 6px;color:#ECEEF1;font-size:13px;font-weight:700">☁️ Google Drive Синхронизация</div>
@@ -1621,7 +1632,7 @@ function settingsTab2HTML(day){
     <div class="side-title" style="display:block;margin:14px 0 2px">🌡 Погода — ручной ввод (${dayLabel(sel).txt})</div>
     ${wxManualHTML(sel)}`;
 }
-function settingsTab3HTML(){return diagHTML()+healthHTML();}
+function settingsTab3HTML(){return `<div class="side-title" style="display:block;margin:0 0 6px">🕓 Хронология дня (${dayLabel(sel).txt})</div>`+logHTML(getDay())+diagHTML()+healthHTML();}
 function taskManageHTML(){
   const all=meta.customTasks||[];
   const rows=all.length?all.map(t=>`<div class="mrow"><span class="mlog-v" style="flex:1">${t.term==="long"?"🎯 ":"• "}${String(t.label).replace(/</g,"&lt;")}</span><button class="task-del${confirmDelId===("task_"+t.id)?" armed":""}" style="flex:0 0 auto;height:34px" onclick="delTask('${t.id}')">${confirmDelId===("task_"+t.id)?"точно?":"✕"}</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Кастомных задач нет. Добавляй их на главном экране кнопкой «+».</div>`;
