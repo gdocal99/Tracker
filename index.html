@@ -362,7 +362,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.56.0";
+const VERSION="0.57.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -422,7 +422,6 @@ const CATEGORIES=[
    {id:"fastwalk",label:"Быстрая ходьба (+2)",type:"des",pts:2},
  ]},
  {id:"health",name:"Здоровье",items:[
-   {id:"warmwater",label:"Тёплая вода",type:"ob",pen:1,pts:1},
    {id:"outdoor",label:"На улице (свежий воздух / солнце)",type:"des",pts:2,opts:[{k:"dur",o:[["short","менее часа"],["long","час и больше"]]}]},
  ]},
  {id:"home",name:"Быт",items:[
@@ -819,7 +818,7 @@ function loadDays(){
 }
 let days=loadDays();
 if(loadState.ok&&!loadState.corrupt&&Object.keys(days).length)makeSnapshot();
-let sel=todayKey(),detailsOpen=false,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="";
+let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="",offSchedOpen=false;
 let catOpen={din:1,regime:1,work:1,body:1,health:1,home:1,selfctrl:0,social:1,edu:0,family:1,sunnah:1};
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0;
 // Состояние конструктора привычек (Таб «Кастом»)
@@ -1288,17 +1287,34 @@ function catItemsHTML(cat,day,wd){
     }
     return inner;
   }
-  const vis=cat.items.filter(it=>isDue(it,wd)||it.sched);
-  if(vis.length===0)inner+=`<div class="muted-note">Сегодня по графику ничего</div>`;
-  // Считаемые цели идут сверху (именно они дают X/Y в счётчике), «по факту» — отдельной
-  // группой ниже с подписью, чтобы «0/2» при большем числе пунктов не выглядело ошибкой.
-  const mainV=vis.filter(it=>it.type!=="fact");
-  const factV=vis.filter(it=>it.type==="fact");
-  mainV.forEach(it=>{inner+=catRowHTML(it,day,wd);});
+  // Показываем только релевантное СЕГОДНЯ: пункты по графику на сегодня + уже выполненные вне графика.
+  // Невыполненные внеграфиковые пункты уходят в общий «➕ Сделал вне графика» — меньше визуального шума.
+  const dueMain=cat.items.filter(it=>it.type!=="fact"&&isDue(it,wd));
+  const offDone=cat.items.filter(it=>it.type!=="fact"&&it.sched&&!isDue(it,wd)&&day.items?.[it.id]);
+  const factV=cat.items.filter(it=>it.type==="fact");
+  if(dueMain.length===0&&offDone.length===0&&factV.length===0)inner+=`<div class="muted-note">Сегодня по графику ничего</div>`;
+  dueMain.forEach(it=>{inner+=catRowHTML(it,day,wd);});
+  offDone.forEach(it=>{inner+=catRowHTML(it,day,wd);});
   if(factV.length){inner+=`<div class="sub-label sub-fact">по факту · не входит в счёт</div>`;factV.forEach(it=>{inner+=catRowHTML(it,day,wd);});}
   if(cat.id==="body")inner+=waterHTML(day);
   if(cat.id==="sunnah")inner+=`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`;
   return inner;
+}
+// Есть ли что показать в блоке СЕГОДНЯ (иначе блок не рисуем — не мозолит глаза).
+function blockHasToday(cat,day,wd){
+  if(cat.id==="din"||cat.id==="body"||cat.id==="edu")return true;
+  if(cat.items.some(it=>it.type==="fact"))return true;
+  if(cat.items.some(it=>it.type!=="fact"&&isDue(it,wd)))return true;
+  if(cat.items.some(it=>it.sched&&!isDue(it,wd)&&day.items?.[it.id]))return true;
+  return false;
+}
+// Все пункты НЕ по сегодняшнему графику и ещё не отмеченные — для общего «➕ Сделал вне графика».
+function offSchedItems(day,wd){const out=[];for(const c of CATEGORIES){if(c.id==="din")continue;for(const it of c.items){if(it.type!=="fact"&&it.sched&&!isDue(it,wd)&&!day.items?.[it.id])out.push([c,it]);}}return out;}
+function offSchedHTML(day,wd){
+  const list=offSchedItems(day,wd);
+  if(!list.length)return "";
+  const rows=offSchedOpen?list.map(([c,it])=>`<div class="task-row"><button class="task-check" onclick="toggleItem('${it.id}')"><span class="task-box"></span><span class="task-lbl">${it.label.replace(/</g,"&lt;")} <span style="color:#62646A;font-size:11px">· ${c.name}</span></span></button></div>`).join(""):"";
+  return `<div class="cat-block"><button class="cat-header" onclick="offSchedOpen=!offSchedOpen;render()"><span class="cat-name">➕ Сделал вне графика</span><span style="display:flex;align-items:center;gap:10px"><span class="cat-count">${list.length}</span><span style="color:#62646A;font-size:13px">${offSchedOpen?"▾":"▸"}</span></span></button>${offSchedOpen?`<div class="cat-body"><div style="font-size:11px;color:#ACAFAD;margin:2px 0 6px">Пункты не по сегодняшнему графику. Отметь, если всё-таки сделал сегодня.</div>${rows}</div>`:""}</div>`;
 }
 function render(){
   const day=getDay(),wd=weekdayOf(sel);
@@ -1338,6 +1354,7 @@ function render(){
   let cats="";
   for(const cat of [...CATEGORIES.filter(c=>c.id!=="din"),...CATEGORIES.filter(c=>c.id==="din")]){
     if(cat.id==="health")continue;
+    if(!blockHasToday(cat,day,wd))continue;
     const due=cat.items.filter(it=>isDue(it,wd));
     let cob=0,cobT=0,kpiWarn=false;
     if(cat.id==="din"){cobT=5;cob=PRAYERS.filter(([id])=>day.prayers?.[id]).length;}
@@ -1349,7 +1366,7 @@ function render(){
     const factVis=["din","body","edu","health"].includes(cat.id)?0:cat.items.filter(it=>it.type==="fact").length;
     const open=catOpen[cat.id];
     const cntTitle=factVis?` title="${cob}/${cobT} — считаемые цели. Пунктов «по факту»: ${factVis} (в счёт не входят)."`:"";
-    const cnt=cobT?`<span class="cat-count"${cntTitle} style="${kpiWarn?"color:#E0955B":""}">${cob}/${cobT}${cat.id==="edu"?" мин":""}${bonusVis?` <span style="color:#62646A">+${bonusVis} доп</span>`:""}</span>`:"";
+    const cnt=cobT?`<span class="cat-count"${cntTitle} style="${kpiWarn?"color:#E0955B":""}">${cob}/${cobT}${cat.id==="edu"?" мин":""}</span>`:"";
     const justDone=justCompletedCat===cat.id||(cat.id==="body"&&justCompletedCat==="health");if(justDone)justCompletedCat=null;
     cats+=`<div class="cat-block"><button class="cat-header${justDone?" cat-pulse":""}" ${kpiWarn?'style="border-color:#5a4630"':""} onclick="toggleCat('${cat.id}')"><span class="cat-name">${cat.id==="body"?"Тело и здоровье":cat.name}</span><span style="display:flex;align-items:center;gap:10px">${cnt}<span style="color:#62646A;font-size:13px">${open?"▾":"▸"}</span></span></button>`;
     if(open){
@@ -1365,6 +1382,7 @@ function render(){
     }
     cats+=`</div>`;
   }
+  cats+=offSchedHTML(day,wd);
 
   let details="";
   if(dOpen){
