@@ -371,7 +371,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.60.0";
+const VERSION="0.61.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -483,7 +483,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -934,8 +934,36 @@ function setDay(patch){
     else toast("День закрыт — нажми замок 3 раза");
     vib(8);render();return;
   }
-  patch.lastUpdated=Date.now();
-  const before=getDay();const after={...before,...patch};const ev=logDiff(before,after);if(ev.length)after.log=[...(before.log||[]),...ev];days[sel]=after;save();render(true);}
+  const ts=Date.now();patch.lastUpdated=ts;
+  const before=getDay();const after={...before,...patch};
+  after.t=stampDayTimes(before,after,ts);
+  const ev=logDiff(before,after);if(ev.length){after.log=[...(before.log||[]),...ev];after.t={...after.t,log:ts};}
+  days[sel]=after;save();render(true);}
+// Группы полей, которые обязаны переезжать при слиянии вместе (иначе рассинхрон производных
+// значений, напр. water и waterLog). Ключ группы — единица времени в day.t.
+const MERGE_GROUPS={
+  water:["water","waterLog"],
+  meas:["weight","weightTime","pulse","pulseTime","bpSys","bpDia","bpTime","temp","tempTime","height","measTime","measLog"],
+  sups:["sups","supsLog"],
+  charge:["charge"],
+  meals:["meals"],work:["workLog"],proc:["procLog"],spends:["spends"],weather:["weather"]
+};
+// Служебные поля, которые НЕ являются самостоятельными единицами слияния (переезжают со своими
+// «хозяевами»: itemTimes — вместе с items, и т.д.).
+const MERGE_SKIP=new Set(["t","lastUpdated","items","prayers","quality","opts","itemTimes","itemRecTimes","prayerTimes","prayerRecTimes","log"]);
+// Проставляем метку времени ts каждой изменившейся единице (пункт, намаз, поле, группа).
+function stampDayTimes(before,after,ts){
+  const t={...(after.t||{})};const K=o=>Object.keys(o||{});
+  const je=(a,b)=>JSON.stringify(a)!==JSON.stringify(b);
+  for(const id of new Set([...K(before.items),...K(after.items)]))if((before.items||{})[id]!==(after.items||{})[id])t["i:"+id]=ts;
+  for(const id of new Set([...K(before.prayers),...K(after.prayers)]))if((before.prayers||{})[id]!==(after.prayers||{})[id])t["p:"+id]=ts;
+  for(const id of new Set([...K(before.quality),...K(after.quality)]))if((before.quality||{})[id]!==(after.quality||{})[id])t["q:"+id]=ts;
+  for(const id of new Set([...K(before.opts),...K(after.opts)]))if(je((before.opts||{})[id],(after.opts||{})[id]))t["o:"+id]=ts;
+  const grouped=new Set();
+  for(const g in MERGE_GROUPS){let ch=false;for(const f of MERGE_GROUPS[g]){grouped.add(f);if(je(before[f],after[f]))ch=true;}if(ch)t[g]=ts;}
+  for(const f in after){if(MERGE_SKIP.has(f)||grouped.has(f))continue;if(je(before[f],after[f]))t[f]=ts;}
+  return t;
+}
 function setMark(v){const d=getDay();const nv=(d.mark===v&&v!=="")?"":v;setDay({mark:nv,markTime:nv?nowHM():""});if(nv==="crown"){vibNice();toast("✨ Отличный день");}else vib(4);}
 function currentMode(){if(meta.view==="mobile")return "mobile";if(meta.view==="desktop")return "desktop";return window.innerWidth>=900?"desktop":"mobile";}
 const PT_METHODS=[[3,"MWL"],[13,"Турция"],[5,"Египет"],[4,"Мекка"],[2,"ISNA"]];
@@ -1816,22 +1844,66 @@ function copyBackup(){const payload=JSON.stringify({_app:"block3",_v:VERSION,_ex
 function togglePaste(){pasteOpen=!pasteOpen;pasteText="";render();}
 function importPaste(){let obj;try{obj=JSON.parse(pasteText);}catch(e){importErr="Это не JSON. Скопируй копию целиком.";render();return;}if(!obj||obj._app!=="block3"||!obj.days){importErr="Формат не совпал.";render();return;}const s=sanitizeImportDays(obj.days);if(Object.keys(s.out).length===0){importErr="В копии нет дней с датами.";render();return;}pendingImport={days:s.out,meta:obj.meta&&typeof obj.meta==="object"?obj.meta:null,dropped:s.dropped,from:s.from,to:s.to,source:"paste"};render();}
 function loadBackup(){document.getElementById("file-input").click();}
-function dayIsEmpty(d){if(!d)return true;const b=blankDay();for(const k in b){if(k==="weather")continue;const bv=b[k],dv=d[k];if(bv&&typeof bv==="object"){if(dv&&typeof dv==="object"&&Object.keys(dv).length>0)return false;}else if(dv!==undefined&&dv!==bv)return false;}return true;}
+function dayIsEmpty(d){if(!d)return true;const b=blankDay();for(const k in b){if(k==="weather"||k==="t")continue;const bv=b[k],dv=d[k];if(bv&&typeof bv==="object"){if(dv&&typeof dv==="object"&&Object.keys(dv).length>0)return false;}else if(dv!==undefined&&dv!==bv)return false;}return true;}
 // LWW: \u043f\u043e\u0431\u0435\u0436\u0434\u0430\u0435\u0442 \u0446\u0435\u043b\u0438\u043a\u043e\u043c \u0442\u043e\u0442 \u0434\u0435\u043d\u044c, \u0443 \u043a\u043e\u0442\u043e\u0440\u043e\u0433\u043e lastUpdated \u0431\u043e\u043b\u044c\u0448\u0435.
 // \u041f\u0440\u0438 \u0440\u0430\u0432\u0435\u043d\u0441\u0442\u0432\u0435 \u0438\u043b\u0438 \u043e\u0442\u0441\u0443\u0442\u0441\u0442\u0432\u0438\u0438 \u0442\u0430\u0439\u043c\u0441\u0442\u0430\u043c\u043f\u043e\u0432 \u2014 \u0431\u0435\u0440\u0451\u043c \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u044b\u0439 \u0434\u0435\u043d\u044c.
 // \u042d\u0442\u043e \u0438\u0441\u043a\u043b\u044e\u0447\u0430\u0435\u0442 \u00ab\u0432\u043e\u0441\u043a\u0440\u0435\u0448\u0435\u043d\u0438\u0435\u00bb \u0441\u043d\u044f\u0442\u044b\u0445 \u0433\u0430\u043b\u043e\u0447\u0435\u043a \u0438 \u0441\u0442\u0430\u0442\u0443\u0441\u043e\u0432 \u043f\u0440\u043e\u0432\u0430\u043b\u0430.
+// Слияние на уровне ПОЛЕЙ (field-level LWW). Каждая единица (пункт, намаз, поле, группа)
+// имеет свою метку времени в day.t; побеждает та сторона, где эта единица изменена позже.
+// Так отметка воды с телефона и абзац рефлексии с ноута не затирают друг друга.
+// Обратная совместимость: у старых дней нет day.t → падаем на day.lastUpdated (прежний LWW).
+// Строим полную карту меток времени по единицам. Если у единицы есть явная метка (day.t) —
+// берём её; если нет, но значение отличается от пустого — считаем, что её задали в lastUpdated
+// (это оживляет field-level даже для старых дней без day.t). Пустые/нетронутые единицы метки не
+// получают — значит «не трогали», и при слиянии проигрывают стороне, которая единицу задала.
+function fieldTimes(d){
+  const base=Number(d.lastUpdated)||0,b=blankDay(),t={...(d.t||{})};
+  const setIf=k=>{if(t[k]==null)t[k]=base;};
+  for(const id in (d.items||{}))setIf("i:"+id);
+  for(const id in (d.prayers||{}))setIf("p:"+id);
+  for(const id in (d.quality||{}))setIf("q:"+id);
+  for(const id in (d.opts||{}))setIf("o:"+id);
+  const grouped=new Set();
+  for(const g in MERGE_GROUPS){let ch=false;for(const f of MERGE_GROUPS[g]){grouped.add(f);if(JSON.stringify(d[f])!==JSON.stringify(b[f]))ch=true;}if(ch)setIf(g);}
+  for(const f in b){if(MERGE_SKIP.has(f)||grouped.has(f))continue;if(JSON.stringify(d[f])!==JSON.stringify(b[f]))setIf(f);}
+  return t;
+}
 function mergeDayDeep(local,imp){
-  const lt=Number(local&&local.lastUpdated)||0;
-  const it=Number(imp&&imp.lastUpdated)||0;
-  if(it>lt)return imp;
-  if(lt>it)return local;
-  // Равные метки времени (крайне редко): детерминированный выбор, одинаковый на обоих
-  // устройствах, чтобы они сходились к одному дню, а не «пинг-понгили» вечно.
   if(!local)return imp||blankDay();
   if(!imp)return local;
-  const ls=JSON.stringify(local),is=JSON.stringify(imp);
-  if(ls===is)return local;
-  return is>ls?imp:local;
+  const L=repairDay(local),I=repairDay(imp);
+  const lBase=Number(L.lastUpdated)||0,iBase=Number(I.lastUpdated)||0;
+  const lt=fieldTimes(L),it=fieldTimes(I);
+  // Победитель по единице: у кого метка есть и новее — тот и берёт. Если метка есть только у
+  // одной стороны — она победила (другая единицу не трогала). Нет ни у кого — падаем на day-LWW.
+  const win=k=>{const a=lt[k],b=it[k],ld=a!=null,id=b!=null;if(ld&&id)return b>a?'I':'L';if(id)return 'I';if(ld)return 'L';return iBase>lBase?'I':'L';};
+  const out=repairDay(local);
+  const mergedT={};for(const k of new Set([...Object.keys(lt),...Object.keys(it)]))mergedT[k]=(win(k)==='I'?it[k]:lt[k]);
+  const K=o=>Object.keys(o||{});
+  // Пункты (значение + оба времени отметки едут вместе с i:<id>).
+  out.items={};out.itemTimes={};out.itemRecTimes={};
+  for(const id of new Set([...K(L.items),...K(I.items)])){const S=win("i:"+id)==='I'?I:L;
+    if(S.items&&id in S.items)out.items[id]=S.items[id];
+    if(S.itemTimes&&id in S.itemTimes)out.itemTimes[id]=S.itemTimes[id];
+    if(S.itemRecTimes&&id in S.itemRecTimes)out.itemRecTimes[id]=S.itemRecTimes[id];}
+  out.prayers={};out.prayerTimes={};out.prayerRecTimes={};
+  for(const id of new Set([...K(L.prayers),...K(I.prayers)])){const S=win("p:"+id)==='I'?I:L;
+    if(S.prayers&&id in S.prayers)out.prayers[id]=S.prayers[id];
+    if(S.prayerTimes&&id in S.prayerTimes)out.prayerTimes[id]=S.prayerTimes[id];
+    if(S.prayerRecTimes&&id in S.prayerRecTimes)out.prayerRecTimes[id]=S.prayerRecTimes[id];}
+  out.quality={};
+  for(const id of new Set([...K(L.quality),...K(I.quality)])){const S=win("q:"+id)==='I'?I:L;if(S.quality&&id in S.quality)out.quality[id]=S.quality[id];}
+  out.opts={};
+  for(const id of new Set([...K(L.opts),...K(I.opts)])){const S=win("o:"+id)==='I'?I:L;if(S.opts&&id in S.opts)out.opts[id]=S.opts[id];}
+  // Группы (water, meas, sups, …): вся группа едет от одного победителя.
+  for(const g in MERGE_GROUPS){const S=win(g)==='I'?I:L;for(const f of MERGE_GROUPS[g])out[f]=S[f];}
+  // Хронология (log): берём более длинную сторону — записи только добавляются.
+  out.log=((I.log||[]).length>=(L.log||[]).length)?I.log:L.log;
+  // Остальные скалярные поля — по своей метке.
+  const grouped=new Set();for(const g in MERGE_GROUPS)for(const f of MERGE_GROUPS[g])grouped.add(f);
+  for(const f in out){if(MERGE_SKIP.has(f)||grouped.has(f))continue;out[f]=win(f)==='I'?I[f]:L[f];}
+  out.t=mergedT;out.lastUpdated=Math.max(lBase,iBase);
+  return out;
 }
 // Слияние meta из бэкапа: цели/задачи и кастомные БАДы — по id (без дублей), курсы — по ключу.
 function mergeMetaIn(im,replace){
@@ -1967,7 +2039,20 @@ loadSyncScripts();
 render();
 // Раз в минуту тихо перерисовываем сегодняшний день — чтобы ритуалы сами появились/исчезли
 // на границе своего окна (06/13, 19/23), без единого нажатия. При наборе текста render пропускается.
-setInterval(()=>{try{if(sel===todayKey()&&!_typing())render();}catch(e){}},60000);
+// Тихое авто-обновление ритуалов: перерисовываем НЕ каждую минуту, а только когда окно
+// утра/вечера реально переключилось (≈4 раза в сутки). И не трогаем экран во время ввода,
+// открытых настроек/модалки или сразу после касания — чтобы не мигнуть и не проглотить клик.
+function _ritualKey(){if(sel!==todayKey())return "past";return (ritualVisible("morning")?1:0)+"|"+(ritualVisible("evening")?1:0);}
+let _lastRitualKey=_ritualKey();
+setInterval(()=>{
+  try{
+    if(sel!==todayKey()||settingsOpen||modalOpen||_typing())return;
+    const k=_ritualKey();
+    if(k===_lastRitualKey)return;
+    if(_lastTap&&Date.now()-_lastTap.t<2000)return;
+    _lastRitualKey=k;render();
+  }catch(e){}
+},20000);
 </script>
 </body>
 </html>
