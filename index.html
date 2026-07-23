@@ -6,14 +6,14 @@
 <title>BLOCK 3 — Трекер</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-body{background:#000000;color:#F5F5F7;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+body{background:#060609;color:#F5F5F7;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
 #app{max-width:440px;margin:0 auto;padding:18px 16px 70px}
 button{cursor:pointer;font-family:inherit;transition:transform .09s ease}
 .row:active,.prayer-btn:active,.cat-header:active,.mark-btn:active,.wbtn:active,.task-check:active,.q-btn:active,.state-btn:active,.backup-btn:active,.export-btn:active,.nav-btn:active,.task-add:active,.vt-btn:active,.task-del:active{transform:scale(.96)}
 .prayer-btn.on{box-shadow:0 0 10px rgba(129,140,248,.22)}
 @keyframes crownPulse{0%,100%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}50%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.42),0 0 9px rgba(165,180,252,.6)}}
 .hist-cell.crown-cell{animation:crownPulse 2.4s ease-in-out infinite}
-input,textarea{font-family:inherit;color:#F5F5F7;background:#101014;border:1px solid #2A2A35;border-radius:10px;padding:9px 10px;font-size:14px;outline:none;width:100%}
+input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:10px;padding:9px 10px;font-size:14px;outline:none;width:100%}
 textarea{resize:none}
 input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0}
 .section-label{font-size:11px;letter-spacing:1.5px;color:#6B6B75;text-transform:uppercase;margin:20px 0 9px 2px}
@@ -23,18 +23,18 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid #3A3A45;background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
 .check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
-.prayer-btn{position:relative;overflow:hidden;flex:1;padding:11px 2px;border-radius:12px;border:1px solid #2A2A35;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
+.prayer-btn{position:relative;overflow:hidden;flex:1;padding:11px 2px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#818CF8;background:rgba(129,140,248,.14);color:#818CF8}
 .prayers-row{display:flex;gap:6px;margin-top:7px}
-.step-btn{width:34px;height:34px;border-radius:10px;border:1px solid #2A2A35;background:#101014;color:#F5F5F7;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-btn{width:34px;height:34px;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#F5F5F7;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .water-count{font-size:15px;font-weight:700;min-width:118px;text-align:center}
-.wbtn{flex:1;padding:9px 0;border-radius:10px;border:1px solid #2A2A35;background:#101014;color:#A1A1AA;font-size:13px;font-weight:600}
+.wbtn{flex:1;padding:9px 0;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:13px;font-weight:600}
 .tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
-.tag-fact{background:#2A2A35;color:#A8A29E}
+.tag-fact{background:#1B1B26;color:#A8A29E}
 .tag-sched{background:rgba(203,164,92,.14);color:#FBBF24}
 /* Каждая категория — чётко очерченный блок (карта: ясно, что к чему относится). */
-.cat-block{border:1px solid #2A2A35;border-radius:14px;background:#101014;overflow:hidden;margin-top:12px}
-.cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border:none;border-radius:0;background:#101014;margin-top:0}
+.cat-block{border:1px solid #1B1B26;border-radius:14px;background:#101017;overflow:hidden;margin-top:12px}
+.cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border:none;border-radius:0;background:#101017;margin-top:0}
 .cat-body{padding:2px 11px 12px}
 .cat-name{font-size:15px;font-weight:700;color:#F5F5F7;letter-spacing:.2px}
 .blk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;flex:0 0 auto;box-shadow:0 0 6px -1px currentColor}
@@ -42,22 +42,22 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 @keyframes accOpen{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .cat-body-anim{animation:accOpen .26s cubic-bezier(.2,.7,.3,1)}
 .cat-count{font-size:12.5px;color:#4ADE80;font-weight:600}
-.tchip{margin-left:6px;color:#6B6B75;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #2A2A35}
+.tchip{margin-left:6px;color:#6B6B75;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #1B1B26}
 .tchip.lag{color:#FBBF24;border-color:#4A3821}
 .wlog{display:flex;flex-wrap:wrap;gap:5px}
-.wlog-e{font-size:11.5px;color:#A1A1AA;background:#16161C;border:1px solid #2A2A35;border-radius:7px;padding:3px 7px}
+.wlog-e{font-size:11.5px;color:#A1A1AA;background:#16161C;border:1px solid #1B1B26;border-radius:7px;padding:3px 7px}
 .wlog-e b{color:#818CF8;font-family:ui-monospace,Menlo,monospace}
-.mrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-top:1px solid #2A2A35}
-.msel{flex:0 0 92px;background:#16161C;border:1px solid #2A2A35;border-radius:9px;color:#F5F5F7;font-size:12.5px;padding:8px 6px}
+.mrow{display:flex;align-items:center;gap:6px;padding:5px 0;border-top:1px solid #1B1B26}
+.msel{flex:0 0 92px;background:#16161C;border:1px solid #1B1B26;border-radius:9px;color:#F5F5F7;font-size:12.5px;padding:8px 6px}
 .mval{flex:1;min-width:0}
 .munit{flex:0 0 auto;font-size:11px;color:#6B6B75;min-width:32px}
 .mtime{flex:0 0 92px}
-.mlog{margin-top:8px;border-top:1px solid #2A2A35;padding-top:6px}
+.mlog{margin-top:8px;border-top:1px solid #1B1B26;padding-top:6px}
 .mlog-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:12.5px}
 .mlog-v{flex:1;color:#D4D4D8}
 .mlog-v b{color:#F5F5F7}
-.mlog-x{flex:0 0 30px;border-radius:8px;border:1px solid #2A2A35;background:#16161C;color:#6B6B75;font-size:12px;padding:5px 0}
-.hud{border-bottom:1px solid #2A2A35;padding:3px 2px;margin:0 0 6px}
+.mlog-x{flex:0 0 30px;border-radius:8px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:12px;padding:5px 0}
+.hud{border-bottom:1px solid #1B1B26;padding:3px 2px;margin:0 0 6px}
 .hud-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .hud-day{font-size:13.5px;font-weight:700;color:#F5F5F7}
 .hud-bal{font-size:19px;font-weight:800;color:#818CF8;font-family:ui-monospace,Menlo,monospace}
@@ -65,13 +65,13 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .hud-earn{font-size:11.5px;color:#FBBF24;margin-left:6px;font-weight:700}
 .hud-sub{font-size:11.5px;color:#A1A1AA;margin-top:2px}
 .hud-life{color:#FBBF24;font-family:ui-monospace,Menlo,monospace}
-.gear{position:absolute;top:12px;right:14px;z-index:50;width:42px;height:42px;border-radius:12px;border:1px solid #2A2A35;background:#16161C;color:#A1A1AA;font-size:19px}
+.gear{position:absolute;top:12px;right:14px;z-index:50;width:42px;height:42px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:19px}
 .gear-bad{border-color:#F87171;color:#F87171}
 .gear-dot{position:absolute;top:5px;right:5px;width:7px;height:7px;border-radius:50%;background:#F87171}
-.log-card{background:#101014;border:1px solid #2A2A35;border-radius:14px;margin:10px 0 4px;overflow:hidden}
+.log-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;margin:10px 0 4px;overflow:hidden}
 .log-head{width:100%;display:flex;justify-content:space-between;align-items:center;padding:11px 13px;background:none;border:none;color:#F5F5F7;font-size:13.5px;font-weight:700}
 .log-list{padding:0 13px 10px;max-height:300px;overflow-y:auto}
-.log-row{display:flex;gap:10px;padding:5px 0;border-top:1px solid #2A2A35;font-size:12.5px}
+.log-row{display:flex;gap:10px;padding:5px 0;border-top:1px solid #1B1B26;font-size:12.5px}
 .log-t{flex:0 0 40px;color:#818CF8;font-family:ui-monospace,Menlo,Consolas,monospace;font-weight:700}
 .log-e{color:#D4D4D8;line-height:1.45}
 .sub-label{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:#4ADE80;margin:12px 0 4px 4px;font-weight:700}
@@ -84,23 +84,23 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .sup-course{font-size:10.5px;color:#6B6B75;margin-top:2px}
 .sups-head{width:100%;display:flex;justify-content:space-between;align-items:center;background:none;border:none;padding:2px 0}
 .sub-label:first-child{margin-top:6px}
-.sub-label.sub-fact{color:#6B6B75;letter-spacing:.6px;border-top:1px solid #2A2A35;padding-top:9px;margin-top:14px}
+.sub-label.sub-fact{color:#6B6B75;letter-spacing:.6px;border-top:1px solid #1B1B26;padding-top:9px;margin-top:14px}
 .muted-note{font-size:13px;color:#6B6B75;padding:10px 4px}
 .sched-cap{font-size:12px;color:#A8A29E;padding:10px 4px 2px;line-height:1.5}
 .toggle-wrap{display:flex;align-items:center;justify-content:space-between;padding:4px 0}
-.toggle-track{width:46px;height:27px;border-radius:14px;background:#2A2A35;position:relative;transition:.15s;flex-shrink:0}
+.toggle-track{width:46px;height:27px;border-radius:14px;background:#1B1B26;position:relative;transition:.15s;flex-shrink:0}
 .toggle-track.on{background:rgba(129,140,248,.3)}
 .toggle-track.danger.on{background:rgba(224,121,91,.3)}
 .toggle-thumb{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:11px;background:#6B6B75;transition:.15s}
 .toggle-track.on .toggle-thumb{left:22px;background:#818CF8}
 .toggle-track.danger.on .toggle-thumb{left:22px;background:#F87171}
-.state-btn{padding:7px 12px;border-radius:10px;font-size:13px;border:1px solid #2A2A35;background:#101014;color:#A1A1AA}
+.state-btn{padding:7px 12px;border-radius:10px;font-size:13px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA}
 .state-btn.on{border-color:#818CF8;background:rgba(129,140,248,.12);color:#818CF8}
-.expand-btn{width:100%;margin-top:14px;padding:13px 15px;border-radius:13px;background:#16161C;border:1px solid #2A2A35;color:#A1A1AA;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-.details-inner{background:#16161C;border:1px solid #2A2A35;border-radius:15px;padding:15px;margin-top:8px;display:flex;flex-direction:column;gap:14px}
-.dcard{background:#101014;border:1px solid #2A2A35;border-radius:16px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:12px}
+.expand-btn{width:100%;margin-top:14px;padding:13px 15px;border-radius:13px;background:#16161C;border:1px solid #1B1B26;color:#A1A1AA;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.details-inner{background:#16161C;border:1px solid #1B1B26;border-radius:15px;padding:15px;margin-top:8px;display:flex;flex-direction:column;gap:14px}
+.dcard{background:#101017;border:1px solid #1B1B26;border-radius:16px;padding:14px;margin-top:10px;display:flex;flex-direction:column;gap:12px}
 .dcard-h{font-size:13.5px;font-weight:800;color:#F5F5F7;letter-spacing:.3px}
-.slip-indent{padding-left:10px;border-left:2px solid #2A2A35;display:flex;flex-direction:column;gap:10px}
+.slip-indent{padding-left:10px;border-left:2px solid #1B1B26;display:flex;flex-direction:column;gap:10px}
 .field-label{font-size:12px;color:#A1A1AA;margin-bottom:6px}
 .field-row{display:flex;gap:10px}
 .field-item{flex:1;min-width:0}
@@ -112,16 +112,16 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .states-row{display:flex;gap:6px;flex-wrap:wrap}
 .export-btn{width:100%;margin-top:14px;padding:13px;border-radius:13px;background:rgba(129,140,248,.10);border:1px solid #6366F1;color:#818CF8;font-size:15px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:8px}
 .backup-row{display:flex;gap:10px;margin-top:10px}
-.backup-btn{flex:1;padding:11px;border-radius:12px;background:#16161C;border:1px solid #2A2A35;color:#A1A1AA;font-size:13px;font-weight:600}
-.header-card{border-radius:20px;border:1px solid #2A2A35;padding:16px;transition:background .5s}
-.topbar{position:sticky;top:0;z-index:40;background:#000000;padding:7px 0 8px;margin-bottom:10px;border-bottom:1px solid #2A2A35}
+.backup-btn{flex:1;padding:11px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;color:#A1A1AA;font-size:13px;font-weight:600}
+.header-card{border-radius:20px;border:1px solid #1B1B26;padding:16px;transition:background .5s}
+.topbar{position:sticky;top:0;z-index:40;background:#060609;padding:7px 0 8px;margin-bottom:10px;border-bottom:1px solid #1B1B26}
 .datebar{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 40px 0 2px}
 .db-ring{position:relative;width:40px;height:40px;flex-shrink:0}
 .db-ring svg{position:absolute;inset:0}
 .db-pct{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10.5px;font-weight:800}
 .db-bal{font-size:12px;font-weight:700;color:#FBBF24;flex-shrink:0;text-align:right;min-width:44px}
 .dstrip{display:flex;gap:3px;padding:7px 2px 0}
-.dcell{flex:1;height:20px;border-radius:5px;border:1px solid #2A2A35;background:#16161C;cursor:pointer;font-size:9px;line-height:18px;text-align:center;padding:0}
+.dcell{flex:1;height:20px;border-radius:5px;border:1px solid #1B1B26;background:#16161C;cursor:pointer;font-size:9px;line-height:18px;text-align:center;padding:0}
 .dcell.sel{border:1.5px solid #FBBF24}
 .datebar-c{display:flex;align-items:baseline;gap:8px}
 .datebar-dow{font-size:12px;color:#A1A1AA;text-transform:uppercase;letter-spacing:.5px}
@@ -148,30 +148,30 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .bal-txt{font-size:12px;color:#A1A1AA;margin-top:4px}
 .bal-num{color:#F5F5F7;font-weight:600}
 .hist-row{display:flex;gap:3px;flex-wrap:wrap}
-.hist-cell{width:calc(12.5% - 3px);height:22px;border-radius:5px;border:1px solid #2A2A35;background:#16161C;cursor:pointer}
+.hist-cell{width:calc(12.5% - 3px);height:22px;border-radius:5px;border:1px solid #1B1B26;background:#16161C;cursor:pointer}
 .hist-cell.sel{border:1.5px solid #FBBF24}
 .hist-cell.skip-cell{border:1px dashed rgba(224,121,91,.5);opacity:.9}
 .hist-month{font-size:12px;color:#A1A1AA;font-weight:600;margin:13px 0 6px 2px}
 .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal-box{background:#16161C;width:100%;max-width:440px;border-radius:20px 20px 0 0;border:1px solid #2A2A35;padding:18px;max-height:80vh;display:flex;flex-direction:column}
+.modal-box{background:#16161C;width:100%;max-width:440px;border-radius:20px 20px 0 0;border:1px solid #1B1B26;padding:18px;max-height:80vh;display:flex;flex-direction:column}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .modal-title{font-size:16px;font-weight:700}
 .modal-hint{font-size:12.5px;color:#A1A1AA;margin-bottom:10px}
 .copy-btn{margin-top:12px;padding:13px;border-radius:13px;border:none;background:#818CF8;color:#16161C;font-size:15px;font-weight:700;width:100%}
 .mark-row{display:flex;gap:6px;margin-top:4px}
-.mark-btn{flex:1;padding:10px 4px;border-radius:12px;border:1px solid #2A2A35;background:#16161C;color:#A1A1AA;font-size:13px;font-weight:600}
+.mark-btn{flex:1;padding:10px 4px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:13px;font-weight:600}
 .banner{border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.5;margin-bottom:6px}
 .banner-empty{background:rgba(203,164,92,.10);border:1px solid #4A3821;color:#FBBF24}
 .banner-warn{background:rgba(224,121,91,.12);border:1px solid #4A2020;color:#FDBA74}
 .banner b{color:#fff}
 .auto-save{text-align:center;font-size:11px;color:#6B6B75;margin-top:22px;line-height:1.6}
 .vt-row{display:flex;gap:5px;justify-content:flex-end;margin-bottom:10px}
-.vt-btn{padding:6px 11px;border-radius:9px;border:1px solid #2A2A35;background:#16161C;color:#A1A1AA;font-size:12px;font-weight:600}
+.vt-btn{padding:6px 11px;border-radius:9px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12px;font-weight:600}
 .vt-btn.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .side-title{display:none}
 #app.mode-mobile .grid{display:block}
-#app.mode-desktop{max-width:1120px}
-#app.mode-desktop .grid{display:block;margin-top:16px}
+#app.mode-desktop{max-width:1080px}
+#app.mode-desktop .grid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:20px;align-items:start;margin-top:16px}
 /* Жёсткая сетка: два фиксированных столбца, каждый блок всегда на своём месте (предсказуемо
    для СДВГ — не надо искать, где что). Никакого masonry-перетекания. */
 #app.mode-desktop .cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
@@ -195,14 +195,14 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
   .settings-grid2 .meas-card{margin-top:0}
 }
 .pt-time{font-size:10px;font-weight:700;opacity:.9}
-.pt-cfg{background:#101014;border:1px solid #2A2A35;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
+.pt-cfg{background:#101017;border:1px solid #1B1B26;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
 .pt-cfg u{cursor:pointer}
-.pt-sel{width:100%;background:#101014;color:#F5F5F7;border:1px solid #2A2A35;border-radius:10px;padding:9px 10px;font-size:14px;height:38px}
+.pt-sel{width:100%;background:#101017;color:#F5F5F7;border:1px solid #1B1B26;border-radius:10px;padding:9px 10px;font-size:14px;height:38px}
 .q-row{display:flex;gap:6px;margin:2px 0 4px 10px}
-.q-btn{padding:6px 11px;border-radius:9px;border:1px solid #2A2A35;background:#101014;color:#A1A1AA;font-size:12px;font-weight:600}
+.q-btn{padding:6px 11px;border-radius:9px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:12px;font-weight:600}
 .q-btn.good.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .q-btn.meh.on{border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.12)}
-.tasks-card{background:#101014;border:1px solid #2A2A35;border-radius:14px;padding:12px;margin-bottom:14px}
+.tasks-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:12px;margin-bottom:14px}
 .tasks-card.locked{border-color:#4A2020}
 .tasks-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .tk-title{font-size:14px;font-weight:700;color:#F5F5F7}
@@ -214,28 +214,28 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .task-add{width:30px;height:30px;border-radius:9px;border:1px solid rgba(129,140,248,.5);background:rgba(129,140,248,.15);color:#A5B4FC;font-size:20px;font-weight:700;line-height:1;padding:0}
 .tasks-list{display:flex;flex-direction:column;gap:6px}
 .task-row{display:flex;gap:6px}
-.task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #2A2A35;background:#16161C;text-align:left}
+.task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
 .task-check.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14)}
 .task-box{width:20px;height:20px;border-radius:6px;border:1.5px solid #3A3A45;display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
 .task-check.on .task-box{border-color:#818CF8}
 .task-lbl{font-size:14px;color:#F5F5F7}
 .task-lbl.done{color:#6B6B75;text-decoration:line-through}
-.task-del{flex:0 0 40px;border-radius:12px;border:1px solid #2A2A35;background:#16161C;color:#6B6B75;font-size:13px}
+.task-del{flex:0 0 40px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:13px}
 .task-del.armed{background:#F87171;border-color:#F87171;color:#fff;font-size:11px;flex:0 0 60px}
 .pt-cap{font-size:11px;color:#6B6B75;padding:8px 2px 2px;line-height:1.4}
 .prayer-btn.next{border-color:#FB923C;box-shadow:0 0 0 1.5px rgba(224,149,91,.5)}
 .prayer-btn.next .pt-time{color:#FB923C}
-.field-ta{width:100%;background:#101014;color:#F5F5F7;border:1px solid #2A2A35;border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;min-height:110px;resize:vertical;line-height:1.5;box-sizing:border-box}
+.field-ta{width:100%;background:#101017;color:#F5F5F7;border:1px solid #1B1B26;border-radius:10px;padding:11px 12px;font-size:14px;font-family:inherit;min-height:110px;resize:vertical;line-height:1.5;box-sizing:border-box}
 /* Свёртываемое поле дневника: закрыто по умолчанию, при открытии растёт по мере ввода (запас 5 строк). */
-.ta-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #2A2A35;color:#D4D4D8;font-size:13.5px;font-weight:600;text-align:left}
+.ta-toggle{width:100%;display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;color:#D4D4D8;font-size:13.5px;font-weight:600;text-align:left}
 .ta-toggle.filled{border-color:#6366F1}
 .ta-grow{overflow:hidden;min-height:96px;margin-top:6px}
 /* Подблок внутри большого блока: тонкая шапка-разделитель. */
 .subblock{margin-top:12px}
 .subblock:first-child{margin-top:2px}
-.sb-head{font-size:12px;font-weight:700;letter-spacing:.4px;color:#86EFAC;padding:6px 2px 3px;border-top:1px solid #2A2A35;margin-top:6px;display:flex;align-items:center;gap:6px}
+.sb-head{font-size:12px;font-weight:700;letter-spacing:.4px;color:#86EFAC;padding:6px 2px 3px;border-top:1px solid #1B1B26;margin-top:6px;display:flex;align-items:center;gap:6px}
 .subblock:first-child .sb-head{border-top:none;margin-top:0}
-.meas-card{background:#101014;border:1px solid transparent;border-radius:14px;padding:12px;margin-top:14px}
+.meas-card{background:#101017;border:1px solid transparent;border-radius:14px;padding:12px;margin-top:14px}
 .cf{position:fixed;top:-14px;width:8px;height:13px;border-radius:2px;z-index:99;pointer-events:none;animation:cfFall linear forwards}
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,.5)}70%{box-shadow:0 0 0 16px rgba(129,140,248,0)}100%{box-shadow:0 0 0 0 rgba(129,140,248,0)}}
@@ -276,17 +276,17 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .streak-tag.tier3{display:inline-block;color:#FBBF24;font-weight:700;text-shadow:0 0 9px rgba(203,164,92,.55)}
 .toast{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.92);background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#818CF8;padding:14px 24px;border-radius:16px;font-size:15px;font-weight:700;z-index:70;pointer-events:none;animation:toastPop 1.8s ease forwards;white-space:nowrap}
 @keyframes toastPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
-.life-card{background:#101014;border:1px solid #2A2A35;border-radius:14px;padding:10px;margin-bottom:10px}
+.life-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:10px;margin-bottom:10px}
 .life-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
 .life-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#A1A1AA}
 .life-nums{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace;font-size:13px;font-weight:700;color:#F5F5F7;white-space:nowrap}
-.life-track{height:6px;border-radius:3px;background:#2A2A35;overflow:hidden;position:relative}
+.life-track{height:6px;border-radius:3px;background:#1B1B26;overflow:hidden;position:relative}
 .life-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#818CF8,#FBBF24);transition:width .6s ease;position:relative;overflow:hidden}
 @keyframes goldBreathe{0%,100%{opacity:.35}50%{opacity:.9}}
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#6B6B75;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:#101014;border:1px solid #2A2A35;border-radius:22px;padding:18px 18px 15px;margin:2px 0 14px}
+.dash{background:#101017;border:1px solid #1B1B26;border-radius:22px;padding:18px 18px 15px;margin:2px 0 14px}
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
 .dash-dow{font-size:13px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
 .dash-date-txt{font-size:20px;font-weight:800;color:#F5F5F7;line-height:1.1}
@@ -302,9 +302,9 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .db-ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:29px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
 .db-ring-pct-u{font-size:14px;color:#6B6B75;font-weight:700;margin-left:1px}
 .db-ring-cap{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B75;margin-top:4px;font-weight:700}
-.dash-namaz-status{width:100%;margin-top:16px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #2A2A35;text-align:left;display:flex;flex-direction:column;gap:6px}
+.dash-namaz-status{width:100%;margin-top:16px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
 .np-dots{display:flex;gap:7px}
-.np-dot{width:9px;height:9px;border-radius:50%;background:#2A2A35;flex:0 0 auto;transition:all .2s}
+.np-dot{width:9px;height:9px;border-radius:50%;background:#1B1B26;flex:0 0 auto;transition:all .2s}
 .np-dot.on{background:#818CF8;box-shadow:0 0 6px rgba(129,140,248,.7)}
 .np-dot.next{background:#FB923C;box-shadow:0 0 5px rgba(251,146,60,.55)}
 .np-sub{font-size:12.5px;color:#A1A1AA;font-weight:600}
@@ -322,7 +322,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .dash-life{display:flex;align-items:center;gap:8px;flex:1 1 150px;min-width:150px}
 .dash-life-lbl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#6B6B75;flex:0 0 auto}
 .dash-life-pct{font-size:11.5px;color:#FBBF24;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
-.life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #2A2A35;background:#16161C;color:#A1A1AA;font-size:12px;font-weight:600}
+.life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 @media (prefers-reduced-motion:reduce){
 .check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-flash,.fx-p,.cat-body-anim{animation:none!important}
@@ -331,7 +331,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 </style>
 </head>
 <body>
-<div id="lock-screen" style="position:fixed;inset:0;background:#000000;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;"><div style="max-width:300px;width:100%;text-align:center;"><div style="font-size:28px;font-weight:700;color:#818CF8;margin-bottom:16px;font-family:'Traditional Arabic','Scheherazade New',serif;" dir="rtl">بِسْمِ اللَّهِ</div><div style="background:#101014;border:1px solid #2A2A35;border-radius:16px;padding:18px;"><input type="password" id="pass-input" placeholder="Введите пароль" style="width:100%;padding:11px;border-radius:10px;background:#0A0A0D;border:1px solid #2A2A35;color:#F5F5F7;outline:none;text-align:center;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPass()"><button onclick="checkPass()" style="width:100%;padding:11px;border-radius:10px;background:#6366F1;border:none;color:#F5F5F7;font-weight:700;width:100%">Войти</button></div><div id="lock-err" style="color:#F87171;font-size:13px;margin-top:10px;display:none;">Неверный пароль</div></div></div>
+<div id="lock-screen" style="position:fixed;inset:0;background:#060609;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;"><div style="max-width:300px;width:100%;text-align:center;"><div style="font-size:28px;font-weight:700;color:#818CF8;margin-bottom:16px;font-family:'Traditional Arabic','Scheherazade New',serif;" dir="rtl">بِسْمِ اللَّهِ</div><div style="background:#0E0E14;border:1px solid #1E1E2A;border-radius:16px;padding:18px;"><input type="password" id="pass-input" placeholder="Введите пароль" style="width:100%;padding:11px;border-radius:10px;background:#0A0A0D;border:1px solid #1E1E2A;color:#F5F5F7;outline:none;text-align:center;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPass()"><button onclick="checkPass()" style="width:100%;padding:11px;border-radius:10px;background:#6366F1;border:none;color:#F5F5F7;font-weight:700;width:100%">Войти</button></div><div id="lock-err" style="color:#F87171;font-size:13px;margin-top:10px;display:none;">Неверный пароль</div></div></div>
 
 <input type="file" id="file-input" accept=".json,application/json" style="display:none" onchange="onFile(event)">
 <div id="app"></div>
@@ -393,7 +393,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.65.0";
+const VERSION="0.66.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -955,7 +955,7 @@ function lockHTML(){
   if(sel>t)return `<div class="banner banner-warn" style="border-color:#4A2020"><b>${dayLabel(sel).txt} ещё не наступило.</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Записывать в будущее нельзя — ничего не сохранится.</div></div>`;
   if(sel===t)return "";
   if(unlockedDay===sel)return `<div class="banner" style="background:rgba(203,164,92,.1);border-color:#4A3821;color:#FBBF24"><b>⚠ ТЫ ПРАВИШЬ ПРОШЛОЕ: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Не сегодня. Всё, что отметишь, ляжет на этот день.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="relock()">🔒 Закрыть обратно</button></div></div>`;
-  return `<div class="banner" style="background:#101014;border-color:#2A2A35"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#A1A1AA">Чтобы не записать сегодняшнее во вчерашнее. Хочешь дописать — нажми замок <b>3 раза</b>.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">🔒 Открыть ${lockTaps?"· "+lockTaps+"/3":""}</button></div></div>`;
+  return `<div class="banner" style="background:#101017;border-color:#1B1B26"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#A1A1AA">Чтобы не записать сегодняшнее во вчерашнее. Хочешь дописать — нажми замок <b>3 раза</b>.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">🔒 Открыть ${lockTaps?"· "+lockTaps+"/3":""}</button></div></div>`;
 }
 function setDay(patch){
   if(!dayEditable(sel)){
@@ -1010,7 +1010,7 @@ function ensureWeather(dk){
   if(weatherPending[dk]||weatherFailed[dk]||weatherTried[dk])return;
   if(typeof fetch!=="function"){weatherFailed[dk]=1;return;}
   weatherPending[dk]=1;
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${PT_LAT}&longitude=${PT_LNG}&hourly=temperature_2m,weather_code&timezone=auto&start_date=${dk}&end_date=${dk}`;
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${PT_LAT}&longitude=${PT_LNG}&hourly=temperature_2m,weather_code&timezone=Europe%2FUzhgorod&start_date=${dk}&end_date=${dk}`;
   let req;
   try{req=fetch(url);}catch(e){weatherFailed[dk]=1;delete weatherPending[dk];return;}
   if(!req||typeof req.then!=="function"){weatherFailed[dk]=1;delete weatherPending[dk];return;}
@@ -1109,6 +1109,21 @@ function namazStatusHTML(day){
   return `<button class="dash-namaz-status" onclick="jumpToDin()"><span class="np-dots">${dots}</span><span class="np-sub">${sub}</span></button>`;
 }
 function jumpToDin(){catOpen.din=true;animBlock="din";render();setTimeout(()=>{const el=document.getElementById("blk-din");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
+// Компактная сводка для правой колонки на десктопе: баланс/заработано и обе серии.
+// Кольцо в шапке уже показывает то же — тут дубль оправдан тем, что на широком экране
+// шапка и сайдбар не всегда в одном поле зрения (сайдбар «липкий», едет со скроллом).
+function sideStatsHTML(bal,streak,clean,earned){
+  return `<div class="meas-card" style="margin-top:0">
+    <div style="display:flex;justify-content:space-between;align-items:baseline">
+      <span class="dash-stat-n" style="font-size:20px">${bal}<span class="dash-stat-u">б</span></span>
+      ${earned!==0?`<span style="font-size:12px;font-weight:700;color:#FBBF24">${fmtPts(earned)}</span>`:""}
+    </div>
+    <div style="display:flex;gap:14px;margin-top:8px">
+      <div class="dash-streak-line">🕌 <b class="${streakTier(streak)}" style="color:${streak>0?"#FBBF24":"#6B6B75"}">${streak}</b></div>
+      <div class="dash-streak-line">🛡 <b class="${streakTier(clean)}" style="color:${clean>0?"#818CF8":"#6B6B75"}">${clean}</b></div>
+    </div>
+  </div>`;
+}
 function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
   const R=42,C=2*Math.PI*R;
   return `<div class="dash">
@@ -1124,7 +1139,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
       </div>
       <div class="db-ring db-ring-big ${ringGlow}">
         <svg viewBox="0 0 100 100" width="108" height="108">
-          <circle cx="50" cy="50" r="${R}" fill="none" stroke="#2A2A35" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 4.4"/>
+          <circle cx="50" cy="50" r="${R}" fill="none" stroke="#1B1B26" stroke-width="7" stroke-linecap="round" stroke-dasharray="2 4.4"/>
           <circle cx="50" cy="50" r="${R}" fill="none" stroke="#818CF8" stroke-width="7" stroke-linecap="round" stroke-dasharray="${C}" stroke-dashoffset="${C*(1-r.obPct/100)}" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s"/>
         </svg>
         <div class="db-ring-pct"><span>${r.obPct}<span class="db-ring-pct-u">%</span></span><span class="db-ring-cap">день</span></div>
@@ -1293,7 +1308,7 @@ function blockersHTML(){
   }).join("");
   const soon=list.filter(b=>{const dl=blockerDaysLeft(b.until);return dl>=1&&dl<=2;});
   const alertLine=soon.length?`<div class="banner banner-warn"><b>⚠ Через ${soon.map(b=>blockerDaysLeft(b.until)).join("/")} дн. истекает защита: ${soon.map(b=>String(b.name||"блок").replace(/</g,"&lt;")).join(", ")}.</b><div style="font-size:12px;margin-top:4px">Продли сейчас, пока есть самоконтроль.</div></div>`:"";
-  const form=`<div style="border-top:1px solid #2A2A35;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px">
+  const form=`<div style="border-top:1px solid #1B1B26;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px">
     <div class="field-row">
       <div class="field-item"><div class="field-label">Название</div><input placeholder="напр. AppBlock" value="${String(blDraft.name||"").replace(/"/g,"&quot;")}" oninput="blDraft.name=this.value"></div>
       <div class="field-item" style="flex:0 0 118px"><div class="field-label">Устройство</div><select class="pt-sel" onchange="blDraft.platform=this.value">${BLOCKER_PLATFORMS.map(([k,ic,l])=>`<option value="${k}"${blDraft.platform===k?" selected":""}>${ic} ${l}</option>`).join("")}</select></div>
@@ -1316,7 +1331,7 @@ function supsLoggingHTML(day){
   let arch="";
   if(paused.length){
     arch=`<button class="sup-arch-head" onclick="supsArchOpen=!supsArchOpen;render()"><span>💤 На паузе (${paused.length})</span><span>${supsArchOpen?"▾":"▸"}</span></button>`;
-    if(supsArchOpen)arch+=paused.map(s=>`<div class="sup-paused" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #2A2A35"><span style="min-width:0"><span class="row-label" style="font-size:13.5px;display:block">${s.label}</span><span class="sup-course">${supCourse(s.id)||"курс не начинался"}</span></span><button class="backup-btn" style="flex:0 0 auto;padding:6px 11px;border-color:#6366F1;color:#818CF8" onclick="supStart('${s.id}')">▶ Возобновить</button></div>`).join("");
+    if(supsArchOpen)arch+=paused.map(s=>`<div class="sup-paused" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:8px 2px;border-top:1px solid #1B1B26"><span style="min-width:0"><span class="row-label" style="font-size:13.5px;display:block">${s.label}</span><span class="sup-course">${supCourse(s.id)||"курс не начинался"}</span></span><button class="backup-btn" style="flex:0 0 auto;padding:6px 11px;border-color:#6366F1;color:#818CF8" onclick="supStart('${s.id}')">▶ Возобновить</button></div>`).join("");
   }
   return `<div class="meas-card">${head}${rows}${arch}</div>`;}
 // Настройки (Таб 2): только форма добавления и удаление кастомных БАДов из базы.
@@ -1371,7 +1386,7 @@ function toggleHTML(label,f,val,danger){return `<div class="toggle-wrap"><span s
 const CHARGE_EX=[["abs","Пресс"],["pushups","Отжимания"],["squats","Приседания"]];
 function chargeDone(day){const c=day.charge||{};return CHARGE_EX.some(([k])=>Number(c[k])>=20);}
 function setCharge(ex,v){const d=getDay();const c={...(d.charge||{})};c[ex]=clampNum(Math.round(num(v,0)),0,100000);const done=CHARGE_EX.some(([k])=>Number(c[k])>=20);setDay({charge:c,items:{...(d.items||{}),charge:done}});}
-function chargeHTML(day){const c=day.charge||{};const done=chargeDone(day);const rows=CHARGE_EX.map(([k,l])=>{const v=Number(c[k])||0;const ok=v>=20;return `<div class="mrow"><span class="mlog-v" style="flex:1;color:${ok?"#818CF8":"#A1A1AA"}">${l}</span><input class="mval" style="flex:0 0 96px;text-align:center" type="number" inputmode="numeric" value="${v||""}" placeholder="повт." onchange="setCharge('${k}',this.value)"><span class="munit" style="min-width:18px;text-align:center">${ok?"✓":""}</span></div>`;}).join("");return `<div class="meas-card" style="margin-top:7px;border-color:${done?"#6366F1":"#2A2A35"}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span class="row-label${done?" on":""}" style="font-size:14px">🤸 Зарядка</span><span style="font-size:11px;color:${done?"#818CF8":"#6B6B75"}">${done?"засчитано ✓":"хотя бы одно × 20"}</span></div>${rows}</div>`;}
+function chargeHTML(day){const c=day.charge||{};const done=chargeDone(day);const rows=CHARGE_EX.map(([k,l])=>{const v=Number(c[k])||0;const ok=v>=20;return `<div class="mrow"><span class="mlog-v" style="flex:1;color:${ok?"#818CF8":"#A1A1AA"}">${l}</span><input class="mval" style="flex:0 0 96px;text-align:center" type="number" inputmode="numeric" value="${v||""}" placeholder="повт." onchange="setCharge('${k}',this.value)"><span class="munit" style="min-width:18px;text-align:center">${ok?"✓":""}</span></div>`;}).join("");return `<div class="meas-card" style="margin-top:7px;border-color:${done?"#6366F1":"#1B1B26"}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span class="row-label${done?" on":""}" style="font-size:14px">🤸 Зарядка</span><span style="font-size:11px;color:${done?"#818CF8":"#6B6B75"}">${done?"засчитано ✓":"хотя бы одно × 20"}</span></div>${rows}</div>`;}
 // Прокрастинация: несколько записей за день (сила / время / комментарий) — механика как у замеров.
 const PROC_LEVELS=[["little","немного"],["mid","средне"],["much","сильно"]];
 function addProc(){const d=getDay();setDay({procLog:[...(d.procLog||[]),{level:"mid",t:nowHM(),note:""}]});}
@@ -1557,7 +1572,7 @@ function collapTa(f,label,ph,day){
 const BLOCK_ACCENT={din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",guard:"#F87171",reflect:"#86EFAC"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
-  const ac=BLOCK_ACCENT[id]||"#2A2A35";
+  const ac=BLOCK_ACCENT[id]||"#1B1B26";
   // Полупрозрачная заливка заголовка цветом блока — различается боковым зрением.
   const hBg=`background:linear-gradient(100deg, ${ac}26, ${ac}0A 55%, transparent)`;
   const hStyle=`border-left:3px solid ${ac};${hBg}`+(warn?";border-left-color:#FBBF24":"");
@@ -1716,7 +1731,14 @@ function render(){
         ${tasksHTML(day)}
         ${cats}
         ${markHTML(day)}
-        <div style="font-size:11px;color:#6B6B75;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
+      </div>
+      <div class="col-side">
+        <div class="side-title">Хронология и статистика</div>
+        ${sideStatsHTML(bal,streak,clean,earned)}
+        ${logHTML(day)}
+        <button class="export-btn" onclick="openExport()">📋 Отчёт для Claude</button>
+        <button class="backup-btn" style="width:100%;margin-top:8px" onclick="copyBackup()">💾 Быстрый бэкап в буфер</button>
+        <div style="font-size:11px;color:#6B6B75;margin-top:10px;text-align:center;line-height:1.6">Синхронизация, БАДы и диагностика — в ⚙ настройках.</div>
       </div>
     </div>
     <div class="col-full">
@@ -1755,11 +1777,11 @@ function healthHTML(){
   const rows=R.map(x=>`<div style="display:flex;justify-content:space-between;padding:3px 0;font-size:12px;gap:8px"><span style="color:#D4D4D8">${x.n}</span><b style="color:${x.ok?"#818CF8":"#F87171"}">${x.ok?"да":"НЕТ"}</b></div>`).join("");
   const snaps=listSnapshots();
   const snapRows=snaps.length?snaps.map(sn=>`<div class="mrow"><span class="log-t" style="flex:0 0 84px">${sn.date}</span><span class="mlog-v">${sn.n} дн.</span><button class="backup-btn" style="flex:0 0 auto;padding:5px 9px;font-size:11px" onclick="restoreSnapshot('${sn.key}')">${snapArm===sn.key?"точно?":"Восстановить"}</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Снимков пока нет</div>`;
-  const errRows=errLog.length?errLog.slice(0,8).map(e=>`<div style="font-size:11px;color:#D4D4D8;padding:4px 0;border-top:1px solid #2A2A35"><b style="color:#F87171">${e.where}</b> <span style="color:#6B6B75">${e.t}</span><br>${String(e.msg).replace(/</g,"&lt;")}</div>`).join(""):`<div class="muted-note" style="padding:4px 0">Ошибок не было</div>`;
-  return `<div style="background:#101014;border:1px solid ${bad?"#4A2020":"#2A2A35"};border-radius:12px;padding:12px;margin-top:8px">
+  const errRows=errLog.length?errLog.slice(0,8).map(e=>`<div style="font-size:11px;color:#D4D4D8;padding:4px 0;border-top:1px solid #1B1B26"><b style="color:#F87171">${e.where}</b> <span style="color:#6B6B75">${e.t}</span><br>${String(e.msg).replace(/</g,"&lt;")}</div>`).join(""):`<div class="muted-note" style="padding:4px 0">Ошибок не было</div>`;
+  return `<div style="background:#101017;border:1px solid ${bad?"#4A2020":"#1B1B26"};border-radius:12px;padding:12px;margin-top:8px">
     <div style="font-size:13px;font-weight:800;color:${bad?"#F87171":"#818CF8"};margin-bottom:8px">${bad?"⚠ Проблем: "+bad:"✓ Все проверки пройдены"} (${R.length})</div>
     ${rows}
-    <div style="margin-top:10px;padding-top:8px;border-top:1px solid #2A2A35;font-size:12px;color:#A1A1AA">Схема: v${SCHEMA} · Дней: ${Object.keys(days).length} · Занято: ${fmtBytes(storageBytes())}${loadState.repaired?` · Починено: ${loadState.repaired}`:""}</div>
+    <div style="margin-top:10px;padding-top:8px;border-top:1px solid #1B1B26;font-size:12px;color:#A1A1AA">Схема: v${SCHEMA} · Дней: ${Object.keys(days).length} · Занято: ${fmtBytes(storageBytes())}${loadState.repaired?` · Починено: ${loadState.repaired}`:""}</div>
     <div class="side-title" style="display:block;margin:12px 0 4px">Резервные снимки (авто, до 3)</div>${snapRows}
     <div class="side-title" style="display:block;margin:12px 0 4px">Журнал ошибок (${errLog.length})</div>${errRows}
     ${errLog.length?`<button class="backup-btn" style="width:100%;margin-top:8px" onclick="clearErrors()">Очистить журнал ошибок</button>`:""}
@@ -1801,11 +1823,11 @@ function settingsTab1HTML(day){
     ${viewSwitchHTML()}
     <div style="font-size:11px;color:#6B6B75;margin-top:6px">Обычно определяется само. Переключи вручную, если хочешь проверить, как выглядит на телефоне с компа.</div>
     ${pasteOpen?`<div style="margin-top:8px"><textarea class="field-ta" style="min-height:90px" placeholder="вставь сюда JSON-копию целиком" oninput="pasteText=this.value"></textarea><button class="backup-btn" style="margin-top:6px;width:100%;border-color:#6366F1;color:#818CF8" onclick="importPaste()">Импортировать вставленное</button></div>`:""}
-    <div class="meas-card" style="margin-top:14px;border-color:#6366F1;background:#101014">
+    <div class="meas-card" style="margin-top:14px;border-color:#6366F1;background:#101017">
       <div class="side-title" style="display:block;margin:0 0 6px;color:#F5F5F7;font-size:13px;font-weight:700">☁️ Google Drive Синхронизация</div>
       <div style="font-size:12px;color:#A1A1AA;margin-bottom:8px">Статус: <b style="color:#818CF8">${syncStatus}</b></div>
       <div class="field-label">Google Client ID:</div>
-      <input type="text" value="${meta.googleClientId}" placeholder="Client ID из Google Console" onchange="meta.googleClientId=this.value.trim(); saveMeta(); initGsi();" style="margin-bottom:8px;width:100%;padding:8px;border-radius:8px;background:#101014;border:1px solid #2A2A35;color:#F5F5F7">
+      <input type="text" value="${meta.googleClientId}" placeholder="Client ID из Google Console" onchange="meta.googleClientId=this.value.trim(); saveMeta(); initGsi();" style="margin-bottom:8px;width:100%;padding:8px;border-radius:8px;background:#101017;border:1px solid #1B1B26;color:#F5F5F7">
       <div class="backup-row">
         <button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="triggerAuth()">🔗 Войти</button>
         <button class="backup-btn" onclick="disconnectGoogle()">✕ Отключить</button>
@@ -1890,7 +1912,7 @@ function constructorHTML(){
     <div class="side-title" style="display:block;margin:0 0 4px">🧩 Конструктор привычек</div>
     <div style="font-size:11px;color:#D4D4D8;margin-bottom:8px">Добавь свою привычку в любой блок: название, тип, баллы, штраф, дни. Появится в трекере сразу — ко мне ходить не нужно.</div>
     ${rows}
-    <div style="border-top:1px solid #2A2A35;margin-top:10px;padding-top:12px;display:flex;flex-direction:column;gap:9px">
+    <div style="border-top:1px solid #1B1B26;margin-top:10px;padding-top:12px;display:flex;flex-direction:column;gap:9px">
       <div><div class="field-label" style="margin-bottom:4px">Блок</div><select class="pt-sel" onchange="ncCat=this.value;render()">${constrCatOptions(ncCat)}</select></div>
       <div><div class="field-label" style="margin-bottom:4px">Название</div><input value="${String(ncLabel).replace(/"/g,"&quot;")}" placeholder="напр. Прочитать 10 страниц" oninput="ncLabel=this.value"></div>
       <div><div class="field-label" style="margin-bottom:4px">Тип</div><div style="display:flex;gap:6px">${typeBtn("ob","Обязат.")}${typeBtn("des","Желат.")}${typeBtn("fact","По факту")}</div></div>
@@ -1909,7 +1931,7 @@ function openSettings(){settingsOpen=true;render();}
 function alarmHTML(){
   let out="";
   if(!saveState.ok)out+=`<div class="banner banner-warn" style="border-color:#F87171;background:rgba(224,121,91,.12)"><b style="color:#F87171">⛔ ДАННЫЕ НЕ СОХРАНЯЮТСЯ!</b><div style="font-size:12.5px;margin-top:5px;color:#F5F5F7">${saveState.err}</div><div style="font-size:12px;margin-top:5px;color:#D4D4D8">${saveState.quota?"Хранилище браузера заполнено.":"Немедленно сделай копию."}</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="copyBackup()">📋 СПАСТИ ДАННЫЕ В БУФЕР</button></div></div>`;
-  if(loadState.corrupt)out+=`<div class="banner banner-warn" style="border-color:#F87171"><b style="color:#F87171">⚠ Сохранённые данные были повреждены</b><div style="font-size:12px;margin-top:5px;color:#D4D4D8">${loadState.restoredFrom?`Восстановлено из снимка от ${loadState.restoredFrom}.`:"Снимков не нашлось. Запись ЗАБЛОКИРОВАНА."}</div>${!loadState.restoredFrom?`<textarea readonly style="width:100%;height:90px;margin-top:8px;background:#16161C;border:1px solid #2A2A35;border-radius:8px;color:#A1A1AA;font-size:10px;padding:8px">${String(loadState.raw).slice(0,4000).replace(/</g,"&lt;")}</textarea><button class="backup-btn" style="width:100%;margin-top:6px" onclick="ackCorrupt()">Понял, разблокировать запись</button>`:""}</div>`;
+  if(loadState.corrupt)out+=`<div class="banner banner-warn" style="border-color:#F87171"><b style="color:#F87171">⚠ Сохранённые данные были повреждены</b><div style="font-size:12px;margin-top:5px;color:#D4D4D8">${loadState.restoredFrom?`Восстановлено из снимка от ${loadState.restoredFrom}.`:"Снимков не нашлось. Запись ЗАБЛОКИРОВАНА."}</div>${!loadState.restoredFrom?`<textarea readonly style="width:100%;height:90px;margin-top:8px;background:#16161C;border:1px solid #1B1B26;border-radius:8px;color:#A1A1AA;font-size:10px;padding:8px">${String(loadState.raw).slice(0,4000).replace(/</g,"&lt;")}</textarea><button class="backup-btn" style="width:100%;margin-top:6px" onclick="ackCorrupt()">Понял, разблокировать запись</button>`:""}</div>`;
   const b=storageBytes();
   if(b>3.5*1024*1024&&saveState.ok)out+=`<div class="banner banner-warn"><b>Хранилище заполняется: ${fmtBytes(b)}</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Сделай копию.</div></div>`;
   return out;
@@ -1926,13 +1948,13 @@ function diagHTML(){
   else if(proto==="file:")verdict="Открыто напрямую как файл (file://).";
   else if(!hasClipboard&&!hasShare)verdict="Буфер и «Поделиться» в этом браузере не поддерживаются.";
   else verdict="База API в порядке.";
-  return `<div style="background:#101014;border:1px solid #2A2A35;border-radius:12px;padding:12px;margin-top:8px;font-size:12px">
+  return `<div style="background:#101017;border:1px solid #1B1B26;border-radius:12px;padding:12px;margin-top:8px;font-size:12px">
     ${row(!inIframe,"Открыто как отдельная страница")}
     ${row(proto!=="file:","Загружено как веб-страница")}
     ${row(hasClipboard,"Буфер обмена (новый)")}
     ${row(hasExec,"Буфер обмена (запасной)")}
     ${row(hasShare,"«Поделиться»")}
-    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2A2A35;color:#FBBF24;line-height:1.5">${verdict}</div>
+    <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1B1B26;color:#FBBF24;line-height:1.5">${verdict}</div>
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];if(catOpen[id])animBlock=id;render();}
@@ -2191,7 +2213,7 @@ render=function(force){
        +'<div style="font-size:19px;font-weight:800;color:#F87171;margin-bottom:10px">Экран не отрисовался</div>'
        +'<div style="font-size:13.5px;color:#D4D4D8;margin-bottom:6px">Данные целы. Скопируй их.</div>'
        +'<button id="rescue" style="width:100%;padding:13px;border-radius:12px;border:1px solid #6366F1;background:rgba(129,140,248,.12);color:#818CF8;font-size:15px;font-weight:700;margin-bottom:12px">Скопировать данные</button>'
-       +'<textarea id="rescue-ta" readonly style="width:100%;height:170px;background:#101014;border:1px solid #2A2A35;border-radius:12px;color:#A1A1AA;font-size:11px;padding:10px">'+raw.replace(/</g,"&lt;")+'</textarea></div>';
+       +'<textarea id="rescue-ta" readonly style="width:100%;height:170px;background:#101017;border:1px solid #1B1B26;border-radius:12px;color:#A1A1AA;font-size:11px;padding:10px">'+raw.replace(/</g,"&lt;")+'</textarea></div>';
       const btn=document.getElementById("rescue");
       if(btn)btn.onclick=function(){
         const ta=document.getElementById("rescue-ta");
