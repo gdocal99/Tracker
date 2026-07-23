@@ -17,7 +17,7 @@ input,textarea{font-family:inherit;color:#ECEEF1;background:#1A1A1D;border:1px s
 textarea{resize:none}
 input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;padding:0}
 .section-label{font-size:11px;letter-spacing:1.5px;color:#62646A;text-transform:uppercase;margin:20px 0 9px 2px}
-.row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#151517;border:1px solid #34343B;margin-top:7px;width:100%;text-align:left}
+.row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#161619;border:1px solid transparent;margin-top:7px;width:100%;text-align:left}
 .row-label{font-size:14.5px;color:#929699;transition:color .15s}
 .row-label.on{color:#ECEEF1}
 .check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid #3A453E;background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
@@ -37,6 +37,10 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border:none;border-radius:0;background:#0E0E11;margin-top:0}
 .cat-body{padding:2px 11px 12px}
 .cat-name{font-size:15px;font-weight:700;color:#ECEEF1;letter-spacing:.2px}
+.blk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;flex:0 0 auto;box-shadow:0 0 6px -1px currentColor}
+/* Плавное «выезжание» тела блока при раскрытии (аккордеон) — глаз успевает проследить. */
+@keyframes accOpen{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+.cat-body-anim{animation:accOpen .26s cubic-bezier(.2,.7,.3,1)}
 .cat-count{font-size:12.5px;color:#79A98D;font-weight:600}
 .tchip{margin-left:6px;color:#62646A;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #34343B}
 .tchip.lag{color:#CBA45C;border-color:#5a4630}
@@ -170,9 +174,12 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 #app.mode-desktop .grid{display:block;margin-top:16px}
 /* Плотная упаковка «как пазл»: multicolumn — блоки складываются вплотную. На широком
    экране 3 колонки, чтобы разделы были обозримы одним взглядом. */
-#app.mode-desktop .cats-wrap{column-count:3;column-gap:14px}
+/* Жёсткая сетка: два фиксированных столбца, каждый блок всегда на своём месте (предсказуемо
+   для СДВГ — не надо искать, где что). Никакого masonry-перетекания. */
+#app.mode-desktop .cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
+#app.mode-desktop .cats-col{min-width:0}
 #app.mode-desktop .cat-header{margin-top:0}
-#app.mode-desktop .cat-block{min-width:0;break-inside:avoid;-webkit-column-break-inside:avoid;margin:0 0 12px}
+#app.mode-desktop .cat-block{min-width:0;margin:0 0 14px}
 #app.mode-desktop .col-side{position:sticky;top:16px;display:flex;flex-direction:column}
 #app.mode-desktop .col-side .side-title{display:block;font-size:13px;font-weight:700;color:#ECEEF1;margin:0 0 10px 2px;letter-spacing:.3px}
 #app.mode-desktop .details-inner{margin-top:0}
@@ -221,7 +228,7 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .subblock:first-child{margin-top:2px}
 .sb-head{font-size:12px;font-weight:700;letter-spacing:.4px;color:#9DB0A4;padding:6px 2px 3px;border-top:1px solid #22221F;margin-top:6px;display:flex;align-items:center;gap:6px}
 .subblock:first-child .sb-head{border-top:none;margin-top:0}
-.meas-card{background:#0B0B0C;border:1px solid #2C2C31;border-radius:14px;padding:12px;margin-top:14px}
+.meas-card{background:#0F0F13;border:1px solid transparent;border-radius:14px;padding:12px;margin-top:14px}
 .cf{position:fixed;top:-14px;width:8px;height:13px;border-radius:2px;z-index:99;pointer-events:none;animation:cfFall linear forwards}
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(70,217,140,.5)}70%{box-shadow:0 0 0 16px rgba(70,217,140,0)}100%{box-shadow:0 0 0 0 rgba(70,217,140,0)}}
@@ -303,7 +310,7 @@ input[type=range]{background:none;accent-color:#46D98C;width:100%;height:28px;pa
 .life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #34343B;background:#151517;color:#929699;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#46D98C;color:#46D98C;background:rgba(70,217,140,.12)}
 @media (prefers-reduced-motion:reduce){
-.check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-flash,.fx-p{animation:none!important}
+.check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-flash,.fx-p,.cat-body-anim{animation:none!important}
 .row,.task-check,.db-ring,.life-fill,.dcell,.hist-cell{transition:none!important}
 }
 </style>
@@ -371,7 +378,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.61.0";
+const VERSION="0.62.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -830,6 +837,7 @@ if(loadState.ok&&!loadState.corrupt&&Object.keys(days).length)makeSnapshot();
 let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="",offSchedOpen=false;
 let catOpen={din:1,regime:1,health:1,delo:1,home:1,state:1,reflect:0};
 let taOpen={};
+let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0;
 // Состояние конструктора привычек (Таб «Кастом»)
 let ncCat="regime:morning",ncLabel="",ncType="ob",ncPts="1",ncPen=false,ncSched=[];
@@ -1412,26 +1420,29 @@ const BLOCK_ACCENT={din:"#CBA45C",regime:"#E0955B",health:"#E08AA0",delo:"#7E94C
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
   const ac=BLOCK_ACCENT[id]||"#34343B";
-  const hStyle=`border-left:3px solid ${ac}`+(warn?";border-color:#5a4630":"");
-  const dot=`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${ac};margin-right:8px;vertical-align:middle;flex:0 0 auto"></span>`;
-  return `<div class="cat-block" style="border-left:3px solid ${ac}"><button class="cat-header" style="${hStyle}" onclick="toggleCat('${id}')"><span class="cat-name" style="display:flex;align-items:center">${dot}${title}</span><span style="display:flex;align-items:center;gap:10px">${cnt||""}<span style="color:#62646A;font-size:13px">${open?"▾":"▸"}</span></span></button>${open?`<div class="cat-body">${innerFn()}</div>`:""}</div>`;
+  // Полупрозрачная заливка заголовка цветом блока — различается боковым зрением.
+  const hBg=`background:linear-gradient(100deg, ${ac}26, ${ac}0A 55%, transparent)`;
+  const hStyle=`border-left:3px solid ${ac};${hBg}`+(warn?";border-left-color:#CBA45C":"");
+  const dot=`<span class="blk-dot" style="background:${ac};color:${ac}"></span>`;
+  const anim=(animBlock===id&&open)?" cat-body-anim":"";if(animBlock===id)animBlock="";
+  return `<div class="cat-block" style="border-left:3px solid ${ac}"><button class="cat-header" style="${hStyle}" onclick="toggleCat('${id}')"><span class="cat-name" style="display:flex;align-items:center">${dot}${title}</span><span style="display:flex;align-items:center;gap:10px">${cnt||""}<span style="color:#62646A;font-size:13px">${open?"▾":"▸"}</span></span></button>${open?`<div class="cat-body${anim}">${innerFn()}</div>`:""}</div>`;
 }
 function cntChip(done,total,warn){if(!total)return "";return `<span class="cat-count" style="${warn?"color:#E0955B":""}">${done}/${total}</span>`;}
 function blocksHTML(day,wd){
-  let out="";
+  const B=[];const push=(id,html)=>{if(html)B.push([id,html]);};
   // 1) 🕌 Дин — намаз, обязательное/желательное, уход по сунне (день-специфично).
   {
     const dinItems=catItems("din"),sunnah=catItems("sunnah");
     const c=countItems(dinItems,day,wd);const pd=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
-    out+=blockShell("din","🕌 Дин (вера)",cntChip(pd,5),()=>{
+    push("din",blockShell("din","🕌 Дин (вера)",cntChip(pd,5),()=>{
       let h=namazHTML(day)+itemsBlock(dinItems,day,wd);
       h+=subHTML("🤲","Иман (состояние веры)",sliderHTML("Иман","spirit",day.spirit));
       if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`);
       return h;
-    });
+    }));
   }
   // 2) ☀️ Ритуалы дня — утро / вечер.
-  if(ritualVisible("morning")||ritualVisible("evening"))out+=blockShell("regime","☀️ Ритуалы дня","",()=>regimeInner(day,wd));
+  if(ritualVisible("morning")||ritualVisible("evening"))push("regime",blockShell("regime","☀️ Ритуалы дня","",()=>regimeInner(day,wd)));
   // 3) 💪 Здоровье и тело — активность/тренировки, вода, питание, замеры+сон+стул, БАДы.
   {
     const bodyItems=catItems("body"),healthItems=catItems("health");
@@ -1439,7 +1450,7 @@ function blocksHTML(day,wd){
     const waterOk=(day.water||0)>=0.8*waterTarget(day,sel)?1:0;
     const done=bc.done+hc.done+waterOk+AS.filter(([id])=>(day.sups?.[id]||0)>0).length;
     const total=bc.total+hc.total+1+AS.length;
-    out+=blockShell("health","💪 Здоровье и тело",cntChip(done,total),()=>{
+    push("health",blockShell("health","💪 Здоровье и тело",cntChip(done,total),()=>{
       let h="";
       h+=subHTML("🥊","Тренировки и активность",itemsBlock(bodyItems.concat(healthItems),day,wd,{empty:"Сегодня по графику ничего"}));
       h+=subHTML("💧","Вода",waterHTML(day));
@@ -1448,32 +1459,32 @@ function blocksHTML(day,wd){
       h+=subHTML("📏","Замеры и тело",measurementsHTML(day)+sleepPoop);
       h+=subHTML("💊","БАДы",supsLoggingHTML(day));
       return h;
-    });
+    }));
   }
   // 4) 💼 Дело — работа (+смены, доход) и обучение.
   {
     const workItems=catItems("work"),eduItems=catItems("edu");
     const wc=countItems(workItems,day,wd);const eduDone=eduItems.filter(it=>day.items?.[it.id]).length;
     const done=wc.done+Math.min(2,eduDone),total=wc.total+2;
-    out+=blockShell("delo","💼 Дело",cntChip(done,total,eduDone<2),()=>{
+    push("delo",blockShell("delo","💼 Дело",cntChip(done,total,eduDone<2),()=>{
       let h="";
       h+=subHTML("💼","Работа",itemsBlock(workItems,day,wd));
       h+=workHTML(day);
       h+=`<div style="margin-top:8px"><div class="field-label">💰 Заработано за день, ₴</div><input type="number" inputmode="numeric" value="${day.income||""}" placeholder="0" onchange="setField('income',this.value)"></div>`;
       h+=subHTML("📚","Обучение · мин. 2",itemsBlock(eduItems,day,wd));
       return h;
-    },eduDone<2);
+    },eduDone<2));
   }
   // 5) 🏠 Быт.
   {
     const homeItems=catItems("home");const c=countItems(homeItems,day,wd);
-    out+=blockShell("home","🏠 Быт",cntChip(c.done,c.total),()=>itemsBlock(homeItems,day,wd,{mergeFact:true}));
+    push("home",blockShell("home","🏠 Быт",cntChip(c.done,c.total),()=>itemsBlock(homeItems,day,wd,{mergeFact:true})));
   }
   // 6) 🧠 Состояние — ползунки, прокрастинация, срыв, самоконтроль, общение, «как прошёл день».
   {
     const selfItems=catItems("selfctrl"),socialItems=catItems("social");
     const sc=countItems(selfItems,day,wd);
-    out+=blockShell("state","🧠 Состояние",cntChip(sc.done,sc.total),()=>{
+    push("state",blockShell("state","🧠 Состояние",cntChip(sc.done,sc.total),()=>{
       let h="";
       h+=sliderHTML("Энергия","energy",day.energy);
       h+=sliderHTML("Фокус / собранность","focus",day.focus);
@@ -1485,17 +1496,28 @@ function blocksHTML(day,wd){
       if(hasVisible(socialItems,day,wd))h+=subHTML("👥","Общение",itemsBlock(socialItems,day,wd));
       h+=`<div class="subblock"><div class="sb-head">📝 Как прошёл день</div>${collapTa("main","Главное / как прошёл день","ключевое за день",day)}</div>`;
       return h;
-    });
+    }));
   }
   // 7) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
-  out+=blockShell("reflect","📒 Дневник","",()=>{
+  push("reflect",blockShell("reflect","📒 Дневник","",()=>{
     return collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
       +collapTa("analysis","Анализ (мысли, эмоции, наблюдения)","что чувствовал и заметил",day)
       +collapTa("extract","Выводы (что извлёк из дня)","вывод",day)
       +collapTa("block","Помеха дня","что сбило",day);
-  });
-  out+=offSchedHTML(day,wd);
-  return out;
+  }));
+  push("offsched",offSchedHTML(day,wd));
+  return B;
+}
+// Раскладка блоков: мобайл — один поток в порядке; десктоп — два фиксированных столбца,
+// каждый блок всегда на своём месте (левый: вера/здоровье/быт; правый: ритуалы/дело/состояние/дневник).
+const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","reflect"];
+function layoutBlocks(blocks,mode){
+  if(mode!=="desktop")return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
+  const pick=ids=>ids.map(id=>{const b=blocks.find(x=>x[0]===id);return b?b[1]:"";}).join("");
+  // блоки, не попавшие ни в один столбец (на всякий случай) — в левый.
+  const known=new Set([...COL_LEFT,...COL_RIGHT]);
+  const extra=blocks.filter(([id])=>!known.has(id)).map(([,h])=>h).join("");
+  return `<div class="cats-grid"><div class="cats-col">${pick(COL_LEFT)}${extra}</div><div class="cats-col">${pick(COL_RIGHT)}</div></div>`;
 }
 function render(){
   const day=getDay(),wd=weekdayOf(sel);
@@ -1532,7 +1554,7 @@ function render(){
   }
   if(curMonth!==-1)histHTML+="</div>";
 
-  const cats=blocksHTML(day,wd);
+  const cats=layoutBlocks(blocksHTML(day,wd),mode);
 
   let modal="";
   if(modalOpen)modal=`<div class="modal-overlay" onclick="closeModal()"><div class="modal-box" onclick="event.stopPropagation()"><div class="modal-header"><span class="modal-title">Отчёт для Claude</span><button class="nav-btn" onclick="closeModal()">✕</button></div><div class="modal-hint">Долгий тап на текст → выделить всё.</div><textarea id="exp-ta" style="flex:1;min-height:160px;font-size:12px;font-family:monospace" readonly onclick="this.select()">${exportText}</textarea><button class="copy-btn" id="copy-btn" onclick="doCopy()">Копировать</button></div></div>`;
@@ -1547,7 +1569,7 @@ function render(){
     <div class="grid">
       <div class="col-main">
         ${tasksHTML(day)}
-        <div class="cats-wrap">${cats}</div>
+        ${cats}
         ${markHTML(day)}
         <div style="font-size:11px;color:#62646A;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
       </div>
@@ -1767,7 +1789,7 @@ function diagHTML(){
     <div style="margin-top:8px;padding-top:8px;border-top:1px solid #2C2C31;color:#CBA45C;line-height:1.5">${verdict}</div>
   </div>`;
 }
-function toggleCat(id){catOpen[id]=!catOpen[id];render();}
+function toggleCat(id){catOpen[id]=!catOpen[id];if(catOpen[id])animBlock=id;render();}
 function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else if(on)tapFx();else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
