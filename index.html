@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#060609">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='86'%3E🕌%3C/text%3E%3C/svg%3E">
 <title>BLOCK 3 — Трекер</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
@@ -280,6 +282,13 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .streak-tag.tier3{display:inline-block;color:#FBBF24;font-weight:700;text-shadow:0 0 9px rgba(203,164,92,.55)}
 .toast{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.92);background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#818CF8;padding:14px 24px;border-radius:16px;font-size:15px;font-weight:700;z-index:70;pointer-events:none;animation:toastPop 1.8s ease forwards;white-space:nowrap}
 @keyframes toastPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
+/* Тихая плашка «доступно обновление» — снизу по центру, не перекрывает контент, легко нажать. */
+.upd-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:75;background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#A5B4FC;padding:11px 18px;border-radius:14px;font-size:13.5px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.45);cursor:pointer;display:flex;align-items:center;gap:8px;animation:updIn .4s ease;max-width:calc(100% - 24px)}
+.upd-bar u{color:#fff;text-underline-offset:2px}
+.upd-x{margin-left:2px;color:#6B6B75;font-weight:700}
+@keyframes updIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
+/* Кнопка «↩ Сегодня» под датой — быстрый возврат из прошлого. */
+.today-btn{display:block;margin:8px auto 0;padding:5px 14px;border-radius:10px;border:1px solid rgba(129,140,248,.5);background:rgba(129,140,248,.12);color:#A5B4FC;font-size:12px;font-weight:700}
 .life-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:10px;margin-bottom:10px}
 .life-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;gap:8px}
 .life-title{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#A1A1AA}
@@ -410,7 +419,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.70.0";
+const VERSION="0.71.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1233,6 +1242,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
       <div style="text-align:center"><div class="dash-dow">${sl.dow}</div><div class="dash-date-txt">${sl.txt}</div></div>
       <button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button>
     </div>
+    ${!isToday?`<button class="today-btn" onclick="goToday()">↩ Сегодня</button>`:""}
     <div class="dash-hero">
       <div class="dash-stat-block">
         <div class="dash-stat-n">${bal}<span class="dash-stat-u">б</span></div>
@@ -1904,6 +1914,7 @@ function render(){
 
 function navDay(n){sel=addDays(sel,n);if(sel>todayKey())sel=todayKey();render();}
 function selDay(k){if(k!==unlockedDay){unlockedDay="";lockTaps=0;}sel=k;render();}
+function goToday(){unlockedDay="";lockTaps=0;sel=todayKey();vib(6);render();}
 function fmtBytes(n){return n>1048576?(n/1048576).toFixed(2)+" МБ":(n/1024).toFixed(0)+" КБ";}
 function selfTest(){
   const R=[];const t=(n,c)=>R.push({n,ok:!!c});
@@ -2628,9 +2639,42 @@ function parseFirebaseConfig(text){
 
 let _rz;window.addEventListener("resize",()=>{if(meta.view!=="auto")return;clearTimeout(_rz);_rz=setTimeout(render,150);});
 // Досинхронизация при сворачивании/закрытии вкладки — чтобы облако получило свежие правки.
-document.addEventListener("visibilitychange",()=>{try{if(document.visibilityState==="hidden"&&cloud)cloud.flushNow();}catch(e){}});
-window.addEventListener("online",()=>{try{if(cloud){cloud.paintDot();cloud.flushNow();}}catch(e){}});
+document.addEventListener("visibilitychange",()=>{try{if(document.visibilityState==="hidden"){if(cloud)cloud.flushNow();}else{checkForUpdate();}}catch(e){}});
+window.addEventListener("online",()=>{try{if(cloud){cloud.paintDot();cloud.flushNow();}checkForUpdate();}catch(e){}});
 window.addEventListener("offline",()=>{try{if(cloud)cloud.paintDot();}catch(e){}});
+
+/* === Авто-проверка версии ===
+   Тихо запрашиваем свою же страницу с хостинга (обходя кэш) и сравниваем VERSION. Если на
+   сервере новее — показываем ненавязчивую плашку «🔄 Обновить». Так пользователь не залипает
+   на старой версии из кэша браузера. На file:// или без сети — просто молча ничего не делаем. */
+let _lastVerCheck=0,_updShown=false;
+async function checkForUpdate(){
+  if(_updShown)return;
+  const now=Date.now();
+  if(now-_lastVerCheck<45000)return;            // не чаще раза в ~45 секунд
+  _lastVerCheck=now;
+  if(location.protocol==="file:")return;
+  try{
+    const base=location.href.split("#")[0].split("?")[0];
+    const res=await fetch(base+"?vc="+now,{cache:"no-store"});
+    if(!res||!res.ok)return;
+    const txt=await res.text();
+    const m=txt.match(/const VERSION="([^"]+)"/);
+    if(m&&m[1]&&m[1]!==VERSION){_updShown=true;showUpdateBanner(m[1]);}
+  }catch(e){}
+}
+function showUpdateBanner(v){
+  try{
+    if(document.getElementById("upd-bar"))return;
+    const bar=document.createElement("div");bar.id="upd-bar";bar.className="upd-bar";
+    bar.innerHTML='🔄 Новая версия '+String(v).replace(/[^0-9.]/g,"")+' — <u>Обновить</u> <span class="upd-x">✕</span>';
+    const x=bar.querySelector(".upd-x");if(x)x.onclick=(e)=>{e.stopPropagation();bar.remove();};
+    bar.onclick=()=>{const base=location.href.split("#")[0].split("?")[0];location.replace(base+"?v="+encodeURIComponent(v));};
+    document.body.appendChild(bar);vib(10);
+  }catch(e){logError("upd-banner",e);}
+}
+setTimeout(()=>{checkForUpdate();},30000);
+setInterval(()=>{if(document.visibilityState==="visible")checkForUpdate();},15*60*1000);
 window.addEventListener("error",ev=>{try{logError("js",(ev&&ev.message)||"?",(ev&&ev.filename?"":"")+"стр."+((ev&&ev.lineno)||"?"));}catch(e){}});
 window.addEventListener("unhandledrejection",ev=>{try{logError("promise",String((ev&&ev.reason)||"?"));}catch(e){}});
 const _origRender=render;
