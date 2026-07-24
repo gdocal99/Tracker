@@ -284,9 +284,9 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .toast{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.92);background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#818CF8;padding:14px 24px;border-radius:16px;font-size:15px;font-weight:700;z-index:70;pointer-events:none;animation:toastPop 1.8s ease forwards;white-space:nowrap}
 @keyframes toastPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
 /* Тихая плашка «доступно обновление» — снизу по центру, не перекрывает контент, легко нажать. */
-.upd-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:75;background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#A5B4FC;padding:11px 18px;border-radius:14px;font-size:13.5px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.45);cursor:pointer;display:flex;align-items:center;gap:8px;animation:updIn .4s ease;max-width:calc(100% - 24px)}
-.upd-bar u{color:#fff;text-underline-offset:2px}
-.upd-x{margin-left:2px;color:#6B6B75;font-weight:700}
+.upd-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:75;background:rgba(18,24,19,.98);border:1px solid #6366F1;color:#A5B4FC;padding:9px 10px 9px 16px;border-radius:14px;font-size:13.5px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;animation:updIn .4s ease;max-width:calc(100% - 24px)}
+.upd-go{padding:9px 16px;border-radius:10px;border:none;background:#818CF8;color:#0B0B12;font-size:13.5px;font-weight:800}
+.upd-x{width:34px;height:34px;border-radius:10px;border:1px solid #1B1B26;background:#16161C;color:#8B8B95;font-size:13px;font-weight:700;flex:0 0 auto}
 @keyframes updIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
 /* Кнопка «↩ Сегодня» под датой — быстрый возврат из прошлого. */
 .today-btn{display:block;margin:8px auto 0;padding:5px 14px;border-radius:10px;border:1px solid rgba(129,140,248,.5);background:rgba(129,140,248,.12);color:#A5B4FC;font-size:12px;font-weight:700}
@@ -422,7 +422,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.72.0";
+const VERSION="0.73.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1991,6 +1991,9 @@ function settingsTab1HTML(day){
     ${restoreOpen?`<div class="backup-row"><button class="backup-btn" onclick="togglePaste()">📥 Вставить копию</button><label class="backup-btn" style="text-align:center;cursor:pointer">📂 Из файла<input type="file" accept=".json,application/json" style="display:none" onchange="onFile(event)"></label></div>
     ${pasteOpen?`<div style="margin-top:8px"><textarea class="field-ta" style="min-height:90px" placeholder="вставь сюда JSON-копию целиком" oninput="pasteText=this.value"></textarea><button class="backup-btn" style="margin-top:6px;width:100%;border-color:#6366F1;color:#818CF8" onclick="importPaste()">Импортировать вставленное</button></div>`:""}
     <div style="font-size:11px;color:#6B6B75;margin-top:6px;line-height:1.5">Когда включена облачная синхронизация, копии нужны редко — данные и так живут в облаке. Это аварийный контур.</div>`:""}
+    <div class="side-title" style="display:block;margin:16px 0 8px">Приложение</div>
+    <button class="backup-btn" style="width:100%;border-color:#6366F1;color:#818CF8" onclick="forceReload()">🔄 Обновить приложение (сбросить кэш)</button>
+    <div style="font-size:11px;color:#6B6B75;margin-top:6px;line-height:1.5">Текущая версия: <b style="color:#A1A1AA">v${VERSION}</b>. Нажми, если сайт показывает старое — принудительно загрузит свежую версию мимо кэша.</div>
     <div class="side-title" style="display:block;margin:16px 0 8px">Вид приложения</div>
     ${viewSwitchHTML()}
     <div style="font-size:11px;color:#6B6B75;margin-top:6px">Обычно определяется само. Переключи вручную, если хочешь проверить, как выглядит на телефоне с компа.</div>
@@ -2671,12 +2674,30 @@ function showUpdateBanner(v){
   try{
     if(document.getElementById("upd-bar"))return;
     const bar=document.createElement("div");bar.id="upd-bar";bar.className="upd-bar";
-    bar.innerHTML='🔄 Новая версия '+String(v).replace(/[^0-9.]/g,"")+' — <u>Обновить</u> <span class="upd-x">✕</span>';
-    const x=bar.querySelector(".upd-x");if(x)x.onclick=(e)=>{e.stopPropagation();bar.remove();};
-    bar.onclick=()=>{const base=location.href.split("#")[0].split("?")[0];location.replace(base+"?v="+encodeURIComponent(v));};
+    const txt=document.createElement("span");txt.textContent="🔄 Новая версия "+String(v).replace(/[^0-9.]/g,"");
+    const btn=document.createElement("button");btn.className="upd-go";btn.textContent="Обновить";
+    btn.onclick=(e)=>{e.stopPropagation();doUpdateNow(v);};
+    const x=document.createElement("button");x.className="upd-x";x.textContent="✕";
+    x.onclick=(e)=>{e.stopPropagation();bar.remove();};
+    bar.appendChild(txt);bar.appendChild(btn);bar.appendChild(x);
     document.body.appendChild(bar);vib(10);
   }catch(e){logError("upd-banner",e);}
 }
+// Жёсткая перезагрузка мимо кэша: уникальный параметр гарантирует свежую загрузку.
+function doUpdateNow(v){
+  try{
+    const base=location.href.split("#")[0].split("?")[0];
+    window.location.href=base+"?v="+encodeURIComponent(v||VERSION)+"_"+Date.now();
+  }catch(e){try{location.reload();}catch(_){}}
+}
+function forceReload(){doUpdateNow("r");}
+// После обновления (в адресе есть ?v=…) — показываем подтверждение и чистим адрес.
+try{
+  if(/[?&]v=/.test(location.search)){
+    setTimeout(()=>{try{toast("✓ Обновлено · v"+VERSION);}catch(e){}},500);
+    try{history.replaceState(null,"",location.pathname);}catch(e){}
+  }
+}catch(e){}
 setTimeout(()=>{checkForUpdate();},30000);
 setInterval(()=>{if(document.visibilityState==="visible")checkForUpdate();},15*60*1000);
 window.addEventListener("error",ev=>{try{logError("js",(ev&&ev.message)||"?",(ev&&ev.filename?"":"")+"стр."+((ev&&ev.lineno)||"?"));}catch(e){}});
