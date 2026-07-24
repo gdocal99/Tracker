@@ -411,9 +411,21 @@ let cloud=null; // облачный модуль (Firebase); присваива�
 function saveMeta(opts){const r=safeWriteMeta();if(!r)logError("saveMeta","не удалось сохранить настройки");if(!(opts&&opts.noStamp)){meta.metaUpdated=Date.now();safeWriteMeta();try{if(cloud&&cloud.queueMeta)cloud.queueMeta();}catch(e){}}return r;}
 function safeWriteMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(meta));return true;}catch(e){return false;}}
 
-// Firebase-конфиг живёт в meta.firebaseConfig (пользователь вставляет его один раз в настройках).
 // Google Drive убран полностью — синхронизация через Firebase (Offline-First, Cloud-Synced).
+// Встроенный конфиг проекта (публичный — это норма для web-SDK). Приложение работает «из коробки»:
+// нужно только войти в аккаунт. Можно переопределить своим проектом в настройках (meta.firebaseConfig).
+const DEFAULT_FIREBASE_CONFIG={
+  apiKey:"AIzaSyA4BhjJfvzaihMX6wP3ai30LBm2mMOOsR4",
+  authDomain:"trac-b4f40.firebaseapp.com",
+  projectId:"trac-b4f40",
+  storageBucket:"trac-b4f40.firebasestorage.app",
+  messagingSenderId:"41367344685",
+  appId:"1:41367344685:web:4ff2225ba5a0c109cb8aa4",
+  measurementId:"G-R0GD578GGM"
+};
 meta.firebaseConfig = meta.firebaseConfig || null;
+// Действующий конфиг: пользовательский (если задан) → иначе встроенный дефолт.
+function effectiveFirebaseConfig(){return meta.firebaseConfig||DEFAULT_FIREBASE_CONFIG;}
 
 if(!meta.cfgV){meta.city=meta.city||"Uzhhorod";meta.country=meta.country||"Ukraine";meta.method=4;meta.cfgV=1;saveMeta();}
 if(meta.cfgV<2){meta.madhab=0;meta.cfgV=2;saveMeta();}
@@ -870,7 +882,7 @@ let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",
 let catOpen={din:1,regime:1,health:1,delo:1,home:1,state:1,guard:1,reflect:0};
 let taOpen={};
 let animBlock="";
-let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false;
+let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
 // Состояние конструктора привычек (Таб «Кастом»)
 let ncCat="regime:morning",ncLabel="",ncType="ob",ncPts="1",ncPen=false,ncSched=[];
 const LIFE_BIRTH=new Date(2006,4,6);
@@ -1930,21 +1942,19 @@ function cloudAuthHTML(){
   const status=cloud?cloud.statusText():"не настроено";
   const header=`<div style="display:flex;align-items:center;gap:9px;margin-bottom:8px"><span style="width:9px;height:9px;border-radius:50%;background:${dot};box-shadow:0 0 6px ${dot};flex:0 0 auto"></span><span class="side-title" style="display:block;margin:0;color:#F5F5F7;font-size:13px;font-weight:700">☁️ Облачная синхронизация</span></div><div style="font-size:12px;color:#A1A1AA;margin-bottom:10px;line-height:1.5">${status}</div>`;
   let body;
+  const ownCfg=`<button class="sup-arch-head" style="margin-top:10px" onclick="fbCfgOpen=!fbCfgOpen;render()"><span>${fbCfgOpen?"▲":"▼"} использовать свой проект Firebase</span></button>${fbCfgOpen?`<div style="margin-top:6px"><div style="font-size:11px;color:#6B6B75;line-height:1.5;margin-bottom:6px">По умолчанию используется встроенный проект. Вставь свой <b>firebaseConfig</b> (Project settings → SDK setup), если хочешь хранить данные в собственном Firebase:</div><textarea id="fb-cfg" class="field-ta" style="min-height:100px;font-size:11px;font-family:ui-monospace,monospace" placeholder='{ apiKey: "…", projectId: "…", …}'></textarea><button class="backup-btn" style="width:100%;margin-top:6px;border-color:#6366F1;color:#818CF8" onclick="cloud.configure(document.getElementById('fb-cfg').value)">Сохранить свой конфиг</button>${meta.firebaseConfig?`<button class="backup-btn" style="width:100%;margin-top:6px" onclick="meta.firebaseConfig=null;saveMeta();toast('Вернул встроенный проект');location.reload()">Вернуть встроенный проект</button>`:""}</div>`:""}`;
   if(!cloud||!cloud.isConfigured()){
-    body=`<div style="font-size:12px;color:#A1A1AA;line-height:1.55;margin-bottom:8px">Данные хранятся локально и незаметно синхронизируются между устройствами через Firebase. Вставь конфиг своего Firebase-проекта (Project settings → Your apps → SDK setup, объект <b>firebaseConfig</b>) — один раз:</div>
-      <textarea id="fb-cfg" class="field-ta" style="min-height:110px;font-size:11px;font-family:ui-monospace,monospace" placeholder='{ apiKey: "…", authDomain: "…", projectId: "…", …}'></textarea>
-      <button class="backup-btn" style="width:100%;margin-top:6px;border-color:#6366F1;color:#818CF8" onclick="cloud.configure(document.getElementById('fb-cfg').value)">Сохранить конфиг</button>
-      <div style="font-size:11px;color:#6B6B75;margin-top:6px;line-height:1.5">Конфиг Firebase не секретный — его можно держать в открытом коде. Нужен проект Firebase с включёнными Authentication (Google + Email/Password) и Cloud Firestore.</div>`;
+    body=`<div style="font-size:12px;color:#A1A1AA;line-height:1.55">Облако недоступно (нет конфига Firebase).</div>${ownCfg}`;
   }else if(!cloud.isSignedIn()){
-    body=`<div class="backup-row"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="cloud.signInGoogle()">Войти через Google</button></div>
+    body=`<div style="font-size:12px;color:#A1A1AA;line-height:1.55;margin-bottom:10px">Данные хранятся локально и незаметно синхронизируются между устройствами. Войди в аккаунт — и тот же журнал появится на всех устройствах.</div>
+      <div class="backup-row"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="cloud.signInGoogle()">Войти через Google</button></div>
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
         <input id="fb-email" type="email" placeholder="e-mail" autocomplete="username" style="width:100%">
         <input id="fb-pass" type="password" placeholder="пароль (≥6 символов)" autocomplete="current-password" style="width:100%" onkeydown="if(event.key==='Enter')cloud.signInEmail(document.getElementById('fb-email').value,document.getElementById('fb-pass').value)">
         <button class="backup-btn" style="width:100%" onclick="cloud.signInEmail(document.getElementById('fb-email').value,document.getElementById('fb-pass').value)">Войти / зарегистрироваться по e-mail</button>
-      </div>
-      <button class="sup-arch-head" style="margin-top:8px" onclick="if(confirm('Убрать конфиг Firebase?')){meta.firebaseConfig=null;saveMeta();render();}">сменить проект Firebase</button>`;
+      </div>${ownCfg}`;
   }else{
-    body=`<div style="font-size:12.5px;color:#F5F5F7;margin-bottom:8px">Вошли как <b>${String(cloud.email()||"аккаунт").replace(/</g,"&lt;")}</b></div>
+    body=`<div style="font-size:12.5px;color:#F5F5F7;margin-bottom:8px">Вошли как <b>${String(cloud.email()||"аккаунт").replace(/</g,"&lt;")}</b>${cloud.usingDefault()?"":' <span style="font-size:11px;color:#6B6B75">· свой проект</span>'}</div>
       <button class="backup-btn" style="width:100%" onclick="cloud.signOut()">Выйти из аккаунта</button>`;
   }
   return `<div class="meas-card" style="margin-top:2px;border-color:#6366F1;background:#101017">${header}${body}</div>`;
@@ -2301,7 +2311,7 @@ cloud=(function(){
   function statusText(){
     switch(S.state){
       case "off":return "не настроено";
-      case "config":return meta.firebaseConfig?"войдите в аккаунт":"не настроено";
+      case "config":return effectiveFirebaseConfig()?"войдите в аккаунт":"не настроено";
       case "connecting":return "подключение…";
       case "syncing":return "синхронизация…";
       case "offline":return "офлайн — правки сохранятся и уйдут в облако позже";
@@ -2338,7 +2348,7 @@ cloud=(function(){
   async function ensureInit(){
     if(S.ready)return true;
     if(S.initing)return false;
-    if(!meta.firebaseConfig){setState("off");return false;}
+    if(!effectiveFirebaseConfig()){setState("off");return false;}
     S.initing=true;setState("connecting");
     try{
       const [appM,authM,fsM]=await Promise.all([
@@ -2349,7 +2359,7 @@ cloud=(function(){
       S.api={...appM,...authM,...fsM};
       // Повторная инициализация (смена проекта): убираем прежнее приложение, иначе initializeApp бросит.
       try{if(appM.getApps&&appM.getApps().length){await appM.deleteApp(appM.getApp());}}catch(e){}
-      S.app=appM.initializeApp(meta.firebaseConfig);
+      S.app=appM.initializeApp(effectiveFirebaseConfig());
       S.auth=authM.getAuth(S.app);
       try{await authM.setPersistence(S.auth,authM.browserLocalPersistence);}catch(e){}
       // Локальный кэш Firestore — как дополнительный офлайн-контур поверх нашего LocalStorage.
@@ -2477,12 +2487,13 @@ cloud=(function(){
     queueDay(k){if(S.applying)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return;S.dirtyDays.add(k);if(!S.ready||!S.user)return;clearTimeout(S.pushT);S.pushT=setTimeout(()=>flushDays().catch(()=>{}),2500);},
     queueMeta(){if(S.applying)return;S.metaDirty=true;if(!S.ready||!S.user)return;clearTimeout(S.metaT);S.metaT=setTimeout(()=>pushMetaNow().catch(()=>{}),2500);},
     flushNow(){try{flushDays().catch(()=>{});if(S.metaDirty)pushMetaNow().catch(()=>{});}catch(e){}},
-    isConfigured(){return !!meta.firebaseConfig;},
+    isConfigured(){return !!effectiveFirebaseConfig();},
+    usingDefault(){return !meta.firebaseConfig;},
     isSignedIn(){return !!S.user;},
     email(){return S.user&&S.user.email||"";},
     state(){return S.state;},
     statusText,paintDot,
-    async boot(){if(meta.firebaseConfig){await ensureInit();}else{setState("off");}},
+    async boot(){if(effectiveFirebaseConfig()){await ensureInit();}else{setState("off");}},
     // сохранить вставленный конфиг и переинициализировать
     async configure(text){
       let cfg;
