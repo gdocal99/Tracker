@@ -397,7 +397,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.67.0";
+const VERSION="0.68.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30"};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -747,7 +747,7 @@ function buildExport(days){
   const LT=(meta.customTasks||[]).filter(t=>t.term==="long");
   const ltLine=LT.length?"\nДолгосрочные цели: "+LT.filter(t=>t.done).length+"/"+LT.length+" — "+LT.map(t=>(t.done?"✓ ":"— ")+String(t.label).replace(/</g,"&lt;")).join(" · ")+"\n":"";
   const BL=meta.blockers||[];
-  const blLine=BL.length?"\nБлокировки: "+BL.map(b=>{const dl=blockerDaysLeft(b.until);return String(b.name||"?").replace(/</g,"&lt;")+" ("+(PLATFORM_NAME[b.platform]||"?")+") — "+(dl>=0?"осталось "+dl+" дн.":"ИСТЕКЛА "+(-dl)+" дн. назад")+(dl<5?" ⚠":"");}).join(" · ")+"\n":"";
+  const blLine=BL.length?"\nБлокировки: "+BL.map(b=>{const ms=blockerMsLeft(b.until),dl=ms/86400000;return String(b.name||"?").replace(/</g,"&lt;")+" ("+(PLATFORM_NAME[b.platform]||"?")+") — "+(ms>=0?"осталось "+blockerFmtLeft(ms):"ИСТЕКЛА "+blockerFmtLeft(ms)+" назад")+(dl<5?" ⚠":"");}).join(" · ")+"\n":"";
   const BLOG=meta.blockerLog||[];
   const blLogLine=BLOG.length?"Журнал причин снятия защиты: "+BLOG.slice(0,10).map(x=>x.t.slice(0,10)+" "+String(x.name).replace(/</g,"&lt;")+" — "+x.action+": «"+String(x.reason).replace(/</g,"&lt;")+"»").join(" · ")+"\n":"";
   return "═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(Date.now())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
@@ -1120,8 +1120,8 @@ function guardStatusHTML(){
   const list=meta.blockers||[];
   if(!list.length)return "";
   const chips=list.map(b=>{
-    const dl=blockerDaysLeft(b.until);const st=blockerStatus(dl);
-    return `<span class="gd-chip" style="color:${st.c}">${String(b.name||"?").replace(/</g,"&lt;")} ${dl}д</span>`;
+    const ms=blockerMsLeft(b.until);const st=blockerStatus(ms/86400000);
+    return `<span class="gd-chip" style="color:${st.c}">${String(b.name||"?").replace(/</g,"&lt;")} ${blockerFmtShort(ms)}</span>`;
   }).join("");
   return `<button class="dash-guard-status" onclick="jumpToGuard()"><span class="gd-ic">🛡</span><span class="gd-chips">${chips}</span></button>`;
 }
@@ -1258,8 +1258,36 @@ function supStop(id){const s=supEnsure(id);s.active=false;const last=s.periods[s
 const BLOCKER_APPS=[["appblock","AppBlock","phone","📱"],["blockerhero","Blocker Hero","phone","📱"],["coldturkey","Cold Turkey","laptop","💻"],["other","Другое","other","🛡"]];
 const PLATFORM_ICON={phone:"📱",laptop:"💻",other:"🛡"};
 const PLATFORM_NAME={phone:"Телефон",laptop:"Ноутбук",other:"Другое"};
-function blockerDaysLeft(until){if(!until)return 0;return supDaysBetween(todayKey(),until);}
-function blockerStatus(dl){if(dl>=5)return{lbl:"🟢 Активна",c:"#4ADE80"};if(dl>=1)return{lbl:"🟡 Продли",c:"#FBBF24"};return{lbl:"🔴 Истекла",c:"#F87171"};}
+// Точность до минуты (не до календарного дня): "1 день" в старой логике мог означать
+// как 23 часа 59 минут, так и 1 минуту до истечения — вводило в заблуждение. Здесь и
+// дальше всё считается в миллисекундах от текущего момента, дни — дробные для порогов.
+function blockerMsLeft(until){if(!until)return 0;return new Date(until).getTime()-Date.now();}
+function blockerDaysLeft(until){return blockerMsLeft(until)/86400000;}
+// Отдельный тир для «меньше суток, но ещё не истекла» — раньше это сливалось с
+// «уже истекла» под одной надписью, что при минутной точности буквально врёт
+// («Истекла», когда на деле ещё 40 минут). Теперь эти два разных состояния различимы.
+function blockerStatus(dl){if(dl>=5)return{lbl:"🟢 Активна",c:"#4ADE80"};if(dl>=1)return{lbl:"🟡 Продли",c:"#FBBF24"};if(dl>0)return{lbl:"🟠 Скоро истечёт",c:"#FB923C"};return{lbl:"🔴 Истекла",c:"#F87171"};}
+// Форматирование остатка: полная форма ("6 дн 4 ч") для карточки/отчёта, короткая
+// ("6д"/"4ч"/"12м") для компактного чипа в шапке. Принимают |ms| — знак решает вызывающий.
+function blockerFmtLeft(ms){
+  const abs=Math.abs(ms),totalMin=Math.floor(abs/60000);
+  const d=Math.floor(totalMin/1440),h=Math.floor((totalMin%1440)/60),m=totalMin%60;
+  if(d>0)return `${d} дн ${h} ч`;
+  if(h>0)return `${h} ч ${m} мин`;
+  return `${m} мин`;
+}
+function blockerFmtShort(ms){
+  const abs=Math.abs(ms),totalMin=Math.floor(abs/60000);
+  const d=Math.floor(totalMin/1440);
+  if(d>0)return `${d}д`;
+  const h=Math.floor(totalMin/60);
+  if(h>0)return `${h}ч`;
+  return `${totalMin}м`;
+}
+// addDays работает только с датами без времени — для datetime-local нужен вариант,
+// сохраняющий час/минуту при продлении.
+function addDaysDT(dtStr,n){const d=new Date(dtStr);d.setDate(d.getDate()+n);const p=x=>String(x).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
+function nowDT(){const d=new Date();const p=x=>String(x).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
 let blDraft={app:"appblock",customName:"",until:""};
 let delBlockerId="",delBlockerReason="",blockerLogOpen=0;
 function saveBlocker(){
@@ -1267,8 +1295,8 @@ function saveBlocker(){
   const isOther=app[0]==="other";
   const name=isOther?(blDraft.customName||"").trim():app[1];
   if(!name){toast("Впиши название блокировки");return;}
-  const until=blDraft.until||addDays(todayKey(),30);
-  meta.blockers=[...(meta.blockers||[]),{id:"bl_"+Date.now().toString(36),app:app[0],name,platform:app[2],until}];
+  if(!blDraft.until){toast("Укажи дату и время окончания");return;}
+  meta.blockers=[...(meta.blockers||[]),{id:"bl_"+Date.now().toString(36),app:app[0],name,platform:app[2],until:blDraft.until}];
   blDraft={app:"appblock",customName:"",until:""};
   saveMeta();vibNice();toast("Блокировка добавлена");render();
 }
@@ -1276,8 +1304,8 @@ function setBlocker(id,f,v){meta.blockers=(meta.blockers||[]).map(b=>b.id===id?{
 function extendBlocker(id,days){
   meta.blockers=(meta.blockers||[]).map(b=>{
     if(b.id!==id)return b;
-    const base=(b.until&&b.until>=todayKey())?b.until:todayKey();
-    return{...b,until:addDays(base,days)};
+    const base=(b.until&&blockerMsLeft(b.until)>0)?b.until:nowDT();
+    return{...b,until:addDaysDT(base,days)};
   });
   saveMeta();vibNice();toast("Продлено на "+days+" дн.");render();
 }
@@ -1298,8 +1326,9 @@ function blockerLogHTML(){
   const L=meta.blockerLog||[];
   const head=`<button class="log-head" style="padding:9px 2px" onclick="blockerLogOpen=!blockerLogOpen;render()"><span>🗒 Журнал причин</span><span style="color:#6B6B75;font-weight:600">${L.length} · ${blockerLogOpen?"▾":"▸"}</span></button>`;
   if(!blockerLogOpen)return head;
+  const cap=`<div style="font-size:11px;color:#6B6B75;padding:2px 2px 6px">Пишется само, когда снимаешь защиту раньше срока (кнопка ✕ у блокировки) — сюда вписывать ничего не нужно.</div>`;
   const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t" style="flex:0 0 84px;font-size:11px">${x.t.slice(5,16)}</span><span class="log-e"><b>${String(x.name).replace(/</g,"&lt;")}</b> — ${x.action}: ${String(x.reason).replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Пока пусто — и пусть будет пусто.</div>`;
-  return head+rows;
+  return head+cap+rows;
 }
 function blockersHTML(){
   const list=meta.blockers||[];
@@ -1311,9 +1340,9 @@ function blockersHTML(){
         <div style="display:flex;gap:8px;margin-top:8px"><button class="backup-btn" style="border-color:#F87171;color:#F87171" onclick="confirmDelBlocker()">Снять и записать</button><button class="backup-btn" onclick="cancelDelBlocker()">Отмена</button></div>
       </div>`;
     }
-    const dl=blockerDaysLeft(b.until);const st=blockerStatus(dl);
+    const ms=blockerMsLeft(b.until);const st=blockerStatus(ms/86400000);
     const plIcon=PLATFORM_ICON[b.platform]||"🛡";
-    const dlTxt=dl>=0?`Осталось: ${dl} дн.`:`Истекла ${-dl} дн. назад`;
+    const dlTxt=ms>=0?`Осталось: ${blockerFmtLeft(ms)}`:`Истекла ${blockerFmtLeft(ms)} назад`;
     return `<div class="mrow" style="align-items:center;flex-wrap:wrap">
       <span style="flex:0 0 22px;font-size:15px">${plIcon}</span>
       <span class="mlog-v" style="flex:1;min-width:120px"><b style="color:#F5F5F7">${String(b.name||"без названия").replace(/</g,"&lt;")}</b><br><span style="font-size:11px;color:#6B6B75">${dlTxt}</span></span>
@@ -1323,7 +1352,7 @@ function blockersHTML(){
     </div>`;
   }).join("");
   const soon=list.filter(b=>{const dl=blockerDaysLeft(b.until);return dl>=1&&dl<=2;});
-  const alertLine=soon.length?`<div class="banner banner-warn"><b>⚠ Через ${soon.map(b=>blockerDaysLeft(b.until)).join("/")} дн. истекает защита: ${soon.map(b=>String(b.name||"блок").replace(/</g,"&lt;")).join(", ")}.</b><div style="font-size:12px;margin-top:4px">Продли сейчас, пока есть самоконтроль.</div></div>`:"";
+  const alertLine=soon.length?`<div class="banner banner-warn"><b>⚠ Через ${soon.map(b=>blockerFmtShort(blockerMsLeft(b.until))).join("/")} истекает защита: ${soon.map(b=>String(b.name||"блок").replace(/</g,"&lt;")).join(", ")}.</b><div style="font-size:12px;margin-top:4px">Продли сейчас, пока есть самоконтроль.</div></div>`:"";
   const isOther=(blDraft.app||"appblock")==="other";
   const form=`<div style="border-top:1px solid #1B1B26;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px">
     <div class="field-row">
@@ -1331,7 +1360,7 @@ function blockersHTML(){
       ${isOther?`<div class="field-item"><div class="field-label">Название</div><input placeholder="напр. Freedom" value="${String(blDraft.customName||"").replace(/"/g,"&quot;")}" oninput="blDraft.customName=this.value"></div>`:""}
     </div>
     <div class="field-row" style="align-items:flex-end">
-      <div class="field-item"><div class="field-label">До какой даты (пусто = +30 дн.)</div><input type="date" value="${blDraft.until||""}" onchange="blDraft.until=this.value"></div>
+      <div class="field-item"><div class="field-label">До какой даты и минуты</div><input type="datetime-local" value="${blDraft.until||""}" onchange="blDraft.until=this.value"></div>
       <button class="task-add" style="flex:0 0 44px" onclick="saveBlocker()">+</button>
     </div>
   </div>`;
