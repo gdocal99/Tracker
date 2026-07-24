@@ -312,6 +312,15 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .np-dot.on{background:#818CF8;box-shadow:0 0 6px rgba(129,140,248,.7)}
 .np-dot.next{background:#FB923C;box-shadow:0 0 5px rgba(251,146,60,.55)}
 .np-sub{font-size:12.5px;color:#A1A1AA;font-weight:600}
+/* Чекины прямо в шапке (дашборде): две быстрые кнопки с временем. Отмечают тот же пункт,
+   что и в блоке — источник данных один, просто доступ ещё и из шапки. */
+.dash-checkins{display:flex;gap:8px;margin-top:10px}
+.ci-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 8px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:background .2s,border-color .2s}
+.ci-chip.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14);color:#F5F5F7}
+.ci-box{width:18px;height:18px;border-radius:6px;border:1.5px solid #3A3A45;display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:12px;font-weight:700;flex:0 0 auto}
+.ci-chip.on .ci-box{border-color:#818CF8}
+.ci-tm{font-size:11px;color:#6B6B75;font-weight:700}
+.ci-chip.on .ci-tm{color:#818CF8}
 .dash-guard-status{width:100%;margin-top:10px;padding:10px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .gd-ic{font-size:13px;flex:0 0 auto}
 .gd-chips{display:flex;gap:10px;flex-wrap:wrap}
@@ -401,7 +410,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.69.0";
+const VERSION="0.70.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -720,6 +729,7 @@ function buildExport(days){
     if(d.sliderTime)s+="  Самооценка (энергия/фокус/иман) выставлена в "+d.sliderTime+"\n";
     s+="  Сон "+sleep+phoneR+" · Энергия "+(sliderSet(d.energy)?norm5(d.energy)+"/5":"—")+" · Рассеянность "+(sliderSet(d.drift)?norm5(d.drift)+"/5":"—")+"\n";
     const wx=weatherTxt(k);if(wx)s+="  Погода: "+wx+"\n";
+    const wxd=weatherSummaryTxt(getWeather(k));if(wxd)s+="  Погода-детали: "+wxd+"\n";
     const sl3=[["Фокус","focus"],["Иман","spirit"],["Самоконтроль","control"]].filter(([,f])=>sliderSet(d[f])).map(([n,f])=>n+" "+norm5(d[f])+"/5");
     if(sl3.length)s+="  "+sl3.join(" · ")+"\n";
     const waterTxt=d.water?((d.water/1000).toFixed(1)+"/"+(wt/1000).toFixed(1)+" л ("+wz[0]+")"):"—";
@@ -1032,25 +1042,47 @@ function ensureWeather(dk){
   if(weatherPending[dk]||weatherFailed[dk]||weatherTried[dk])return;
   if(typeof fetch!=="function"){weatherFailed[dk]=1;return;}
   weatherPending[dk]=1;
-  const url=`https://api.open-meteo.com/v1/forecast?latitude=${PT_LAT}&longitude=${PT_LNG}&hourly=temperature_2m,weather_code&timezone=Europe%2FUzhgorod&start_date=${dk}&end_date=${dk}`;
+  // Тянем не только температуру и код погоды, но и то, что реально влияет на самочувствие:
+  // влажность, атм. давление, ветер, осадки. Всё по 4 точкам дня (утро/день/вечер/ночь).
+  const hourly="temperature_2m,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,precipitation";
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${PT_LAT}&longitude=${PT_LNG}&hourly=${hourly}&timezone=Europe%2FUzhgorod&start_date=${dk}&end_date=${dk}`;
   let req;
   try{req=fetch(url);}catch(e){weatherFailed[dk]=1;delete weatherPending[dk];return;}
   if(!req||typeof req.then!=="function"){weatherFailed[dk]=1;delete weatherPending[dk];return;}
   req.then(r=>r.json()).then(j=>{
     if(j&&j.hourly&&Array.isArray(j.hourly.time)){
-      const times=j.hourly.time,temp=j.hourly.temperature_2m||[],code=j.hourly.weather_code||[];
-      const out={h:WEATHER_HOURS.slice(),t:[],c:[],done:dk<todayKey()};
+      const H=j.hourly,times=H.time,temp=H.temperature_2m||[],code=H.weather_code||[];
+      const rhA=H.relative_humidity_2m||[],pA=H.surface_pressure||[],wsA=H.wind_speed_10m||[],prA=H.precipitation||[];
+      const out={h:WEATHER_HOURS.slice(),t:[],c:[],rh:[],p:[],ws:[],pr:[],done:dk<todayKey()};
       let got=0;
       for(const hh of WEATHER_HOURS){
         const idx=times.findIndex(t=>String(t).slice(11,16)===hh);
-        const tv=(idx>=0&&temp[idx]!=null)?Math.round(temp[idx]):null;
-        const cv=(idx>=0&&code[idx]!=null)?code[idx]:null;
+        const pick=(arr,round)=>(idx>=0&&arr[idx]!=null)?(round?Math.round(arr[idx]):arr[idx]):null;
+        const tv=pick(temp,true);
         if(tv!=null)got++;
-        out.t.push(tv);out.c.push(cv);
+        out.t.push(tv);
+        out.c.push((idx>=0&&code[idx]!=null)?code[idx]:null);
+        out.rh.push(pick(rhA,true));
+        out.p.push(pick(pA,true));
+        out.ws.push(pick(wsA,true));
+        out.pr.push((idx>=0&&prA[idx]!=null)?Math.round(prA[idx]*10)/10:null);
       }
       if(got>0){weatherTried[dk]=1;putWeather(dk,out);}else{weatherFailed[dk]=1;}
     }else{weatherFailed[dk]=1;}
   }).catch(()=>{weatherFailed[dk]=1;}).finally(()=>{delete weatherPending[dk];render();});
+}
+// Компактная сводка дополнительных параметров: влажность (диапазон), давление (среднее),
+// максимальный ветер, суммарные осадки. Старые дни без этих полей — просто пустая строка.
+function weatherSummaryTxt(w){
+  if(!w)return "";
+  const nums=a=>(Array.isArray(a)?a:[]).map(Number).filter(Number.isFinite);
+  const rh=nums(w.rh),p=nums(w.p),ws=nums(w.ws),pr=nums(w.pr);
+  const parts=[];
+  if(rh.length)parts.push("💧 "+(Math.min(...rh)===Math.max(...rh)?Math.max(...rh):Math.min(...rh)+"–"+Math.max(...rh))+"%");
+  if(p.length)parts.push("🔽 "+Math.round(p.reduce((a,x)=>a+x,0)/p.length)+" гПа");
+  if(ws.length)parts.push("🌬 до "+Math.max(...ws)+" км/ч");
+  if(pr.length){const s=pr.reduce((a,x)=>a+x,0);parts.push(s>0.05?("🌧 "+s.toFixed(1)+" мм осадков"):"☂️ без осадков");}
+  return parts.join(" · ");
 }
 function weatherRefresh(k){delete weatherFailed[k];delete weatherPending[k];delete weatherTried[k];if(days[k]&&days[k].weather){const d={...days[k]};delete d.weather;days[k]=d;save();}ensureWeather(k);render();}
 function weatherTxt(k){const w=getWeather(k);if(!w)return null;return w.h.map((hh,i)=>hh+" "+(w.t[i]!=null?w.t[i]+"°":"—")+" "+wmoLabel(w.c[i])).join(" · ");}
@@ -1060,6 +1092,8 @@ function setWx(i,f,v){
   const d=days[sel]||blankDay();
   const cur=(d.weather&&Array.isArray(d.weather.h))?d.weather:{h:WEATHER_HOURS.slice(),t:[null,null,null,null],c:[null,null,null,null],done:false};
   const w={h:WEATHER_HOURS.slice(),t:[...cur.t],c:[...cur.c],done:cur.done,manual:true};
+  // Сохраняем автозагруженные детали (влажность/давление/ветер/осадки) при ручной правке t/кода.
+  if(cur.rh)w.rh=[...cur.rh];if(cur.p)w.p=[...cur.p];if(cur.ws)w.ws=[...cur.ws];if(cur.pr)w.pr=[...cur.pr];
   if(f==="t")w.t[i]=(v===""?null:Math.round(Number(v)));
   else w.c[i]=(v===""?null:Number(v));
   days[sel]={...d,weather:w};
@@ -1076,8 +1110,10 @@ function wxManualHTML(k){
 function weatherLineHTML(k){
   const t=weatherTxt(k),w=getWeather(k);
   const editBtn=`<u style="color:#6B6B75;cursor:pointer;margin-left:6px" onclick="wxManual=!wxManual;render()">✎ вписать вручную</u>`;
+  const summary=weatherSummaryTxt(w);
+  const sumLine=summary?`<div style="font-size:11px;color:#8B8B95;padding:1px 2px 4px;line-height:1.6">${summary}</div>`:"";
   let line;
-  if(t)line=`<div style="font-size:11px;color:#A1A1AA;padding:4px 2px;line-height:1.7">🌡 ${t}${(w&&w.manual)?' <span style="color:#FBBF24">· вручную</span>':(w&&!w.done)?' <span style="color:#6B6B75">· уточнится к вечеру</span>':""} <u style="color:#6B6B75;cursor:pointer" onclick="weatherRefresh('${k}')">↻</u>${editBtn}</div>`;
+  if(t)line=`<div style="font-size:11px;color:#A1A1AA;padding:4px 2px 1px;line-height:1.7">🌡 ${t}${(w&&w.manual)?' <span style="color:#FBBF24">· вручную</span>':(w&&!w.done)?' <span style="color:#6B6B75">· уточнится к вечеру</span>':""} <u style="color:#6B6B75;cursor:pointer" onclick="weatherRefresh('${k}')">↻</u>${editBtn}</div>${sumLine}`;
   else if(k>todayKey())line=`<div style="font-size:11px;color:#6B6B75;padding:4px 2px">🌡 Погода: —</div>`;
   else if(weatherPending[k])line=`<div style="font-size:11px;color:#6B6B75;padding:4px 2px">🌡 Погода: загрузка…${editBtn}</div>`;
   else if(weatherFailed[k])line=`<div style="font-size:11px;color:#FBBF24;padding:4px 2px;line-height:1.6">🌡 Погода не загрузилась. <u style="cursor:pointer" onclick="weatherRefresh('${k}')">повторить</u>${editBtn}</div>`;
@@ -1162,6 +1198,16 @@ function namazStatusHTML(day){
   return `<button class="dash-namaz-status" onclick="jumpToDin()"><span class="np-dots">${dots}</span><span class="np-sub">${sub}</span></button>`;
 }
 function jumpToDin(){catOpen.din=true;animBlock="din";render();setTimeout(()=>{const el=document.getElementById("blk-din");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
+// Чекины в шапке: две быстрые кнопки (дневной/вечерний) с временем. Отмечают тот же пункт
+// items[checkin_*] — данные не дублируются, просто отметить можно сразу из дашборда.
+function checkinStatusHTML(day){
+  const list=[["checkin_day","☀️ День",meta.checkinDay||"12:00"],["checkin_eve","🌙 Вечер",meta.checkinEve||"22:30"]];
+  const chips=list.map(([id,lbl,tm])=>{
+    const on=!!day.items?.[id];
+    return `<button class="ci-chip${on?" on":""}" onclick="toggleItem('${id}')"><span class="ci-box">${on?"✓":""}</span>${lbl} <span class="ci-tm">${tm}</span></button>`;
+  }).join("");
+  return `<div class="dash-checkins">${chips}</div>`;
+}
 // Компактный статус блокировок в шапке — по тому же принципу, что и намаз: полное
 // управление (продление/снятие с причиной/каталог) живёт только в блоке «Защита»,
 // здесь — только «сколько осталось», без дублирования интерактива. Пусто — не показываем.
@@ -1207,6 +1253,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
       </div>
     </div>
     ${namazStatusHTML(day)}
+    ${checkinStatusHTML(day)}
     ${guardStatusHTML()}
     ${weekBarsHTML(r)}
   </div>`;
@@ -2163,7 +2210,41 @@ function copyViaTextarea(text,onOk,onFail){
 function doCopy(){const btn=document.getElementById("copy-btn");copyToClipboard(exportText,()=>{btn.textContent="Скопировано ✓";vib(15);},()=>{btn.textContent="Вручную скопируй в окне";});}
 // В бэкап кладём и meta-данные (цели/задачи, кастомные БАДы, курсы) — иначе они бы не сохранялись.
 function backupMeta(){return {customTasks:meta.customTasks||[],customItems:meta.customItems||[],userSups:meta.userSups||[],supPeriods:meta.supPeriods||{},blockers:meta.blockers||[],blockerLog:meta.blockerLog||[],checkinDay:meta.checkinDay||"12:00",checkinEve:meta.checkinEve||"22:30",lifeTarget:meta.lifeTarget||40,metaUpdated:meta.metaUpdated||0};}
-function copyBackup(){const payload=JSON.stringify({_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()});copyToClipboard(payload,()=>{meta.lastBackup=Date.now();saveMeta();vib(15);toast("📋 Скопировано");render();},()=>{toast("Буфер не сработал — скопируй вручную");});}function saveBackup(auto){const payload={_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()};const text=JSON.stringify(payload);const fname=`block3-backup-${todayKey()}${auto?"-auto":""}.json`;meta.lastBackup=Date.now();saveMeta();if(!auto&&navigator.canShare){try{const file=new File([text],fname,{type:"application/json"});if(navigator.canShare({files:[file]})){navigator.share({files:[file],title:fname}).catch(()=>{}).finally(()=>render());return;}}catch(e){}}try{const blob=new Blob([text],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=fname;document.body.appendChild(a);a.click();setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},100);}catch(e){}if(!auto)render();}
+function copyBackup(){const payload=JSON.stringify({_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()});copyToClipboard(payload,()=>{meta.lastBackup=Date.now();saveMeta();vib(15);toast("📋 Скопировано");render();},()=>{toast("Буфер не сработал — скопируй вручную");});}// Надёжное скачивание копии: сначала обычная загрузка файла (работает на компе и Android).
+// На iOS, где download-атрибут игнорируется, — запасной путь через «Поделиться». Всегда даём
+// понятный отклик тостом, чтобы кнопка не казалась «мёртвой».
+function saveBackup(auto){
+  const payload={_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()};
+  const text=JSON.stringify(payload);
+  const fname=`block3-backup-${todayKey()}${auto?"-auto":""}.json`;
+  meta.lastBackup=Date.now();saveMeta();
+  const iOS=/iP(hone|ad|od)/.test(navigator.platform||"")||(/Mac/.test(navigator.platform||"")&&navigator.maxTouchPoints>1);
+  // На iOS скачивание файла ненадёжно — сразу пробуем «Поделиться» (можно сохранить в Файлы).
+  if(!auto&&iOS&&navigator.share){
+    try{const file=new File([text],fname,{type:"application/json"});
+      if(navigator.canShare&&navigator.canShare({files:[file]})){
+        navigator.share({files:[file],title:fname}).then(()=>toast("💾 Копия сохранена")).catch(()=>{});
+        return;
+      }
+    }catch(e){}
+  }
+  let ok=false;
+  try{
+    const blob=new Blob([text],{type:"application/json"});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement("a");a.href=url;a.download=fname;a.rel="noopener";
+    document.body.appendChild(a);a.click();
+    setTimeout(()=>{try{document.body.removeChild(a);URL.revokeObjectURL(url);}catch(e){}},150);
+    ok=true;
+  }catch(e){logError("backup-download",e);}
+  if(!auto){
+    if(ok){vib(12);toast("💾 Копия скачана в «Загрузки»");}
+    else{ // совсем не вышло — спасаем в буфер, чтобы данные точно не потерялись
+      copyToClipboard(text,()=>{vib(12);toast("💾 Скачать не вышло — копия в буфере");},()=>toast("Не удалось сохранить копию"));
+    }
+    render();
+  }
+}
 
 function togglePaste(){pasteOpen=!pasteOpen;pasteText="";render();}
 function importPaste(){let obj;try{obj=JSON.parse(pasteText);}catch(e){importErr="Это не JSON. Скопируй копию целиком.";render();return;}if(!obj||obj._app!=="block3"||!obj.days){importErr="Формат не совпал.";render();return;}const s=sanitizeImportDays(obj.days);if(Object.keys(s.out).length===0){importErr="В копии нет дней с датами.";render();return;}pendingImport={days:s.out,meta:obj.meta&&typeof obj.meta==="object"?obj.meta:null,dropped:s.dropped,from:s.from,to:s.to,source:"paste"};render();}
