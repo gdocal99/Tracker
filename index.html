@@ -256,9 +256,22 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 /* Мягкое свечение из точки касания — тёплый «выдох», не вспышка. */
 .fx-glow{position:absolute;inset:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),var(--c,#818CF8),transparent 68%);opacity:0;animation:fxGlow var(--d,1s) ease-out forwards}
 @keyframes fxGlow{0%{opacity:0}28%{opacity:.22}100%{opacity:0}}
-/* Отклик на «плохое» действие (срыв, провал) — тихий приглушённый рубиновый вдох, НЕ награда. */
+/* Отклик на «плохое» действие (срыв, провал, сладкое, игры) — тихий приглушённый рубиновый вдох. */
 .fx-neg{position:absolute;inset:0;background:var(--c,#F87171);opacity:0;animation:fxNeg .55s ease-out forwards}
 @keyframes fxNeg{0%{opacity:0}35%{opacity:.16}100%{opacity:0}}
+/* РАЗНЫЕ отклики под разные категории — чтобы не однотипно. Все спокойные и клипуются пунктом. */
+/* Цветение (намаз, общение): лепестки мягко распускаются из точки и тают. */
+.fx-petal{position:absolute;width:8px;height:8px;border-radius:64% 0 64% 0;background:var(--c,#FBBF24);transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg));opacity:0;animation:fxPetal 1s cubic-bezier(.2,.7,.3,1) forwards}
+@keyframes fxPetal{0%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg))}30%{opacity:.9;transform:translate(calc(-50% + var(--dx,0px)*.5),calc(-50% + var(--dy,0px)*.5)) scale(1) rotate(var(--r,0deg))}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,0px))) scale(.7) rotate(var(--r,0deg))}}
+/* Рябь (вода): несколько тонких колец, помедленнее — «капля упала». */
+.fx-ripple{position:absolute;border-radius:50%;border:1.5px solid var(--c,#38BDF8);transform:translate(-50%,-50%) scale(.1);opacity:0;animation:fxRipple var(--d,1.1s) cubic-bezier(.15,.6,.3,1) forwards}
+@keyframes fxRipple{0%{transform:translate(-50%,-50%) scale(.1);opacity:0}18%{opacity:.5}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+/* Пульс (тело/здоровье): мягкий энергичный «удар сердца». */
+.fx-pulse{position:absolute;border-radius:50%;background:radial-gradient(circle,var(--c,#34D399),transparent 62%);transform:translate(-50%,-50%) scale(.2);opacity:0;animation:fxPulse .7s ease-out forwards}
+@keyframes fxPulse{0%{opacity:0;transform:translate(-50%,-50%) scale(.2)}25%{opacity:.45}100%{opacity:0;transform:translate(-50%,-50%) scale(1)}}
+/* Скольжение блика (быт): мягкий луч проходит по пункту. */
+.fx-sweep{position:absolute;inset:0;background:linear-gradient(115deg,transparent 32%,var(--c,#2DD4BF) 50%,transparent 68%);opacity:0;transform:translateX(-45%);animation:fxSweep .85s ease-out forwards;mix-blend-mode:screen}
+@keyframes fxSweep{0%{opacity:0;transform:translateX(-45%)}25%{opacity:.5}100%{opacity:0;transform:translateX(45%)}}
 /* Постоянные цветы на выполненном намазе — остаются, пока намаз отмечен, внутри кнопки */
 .pbloom-wrap{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;border-radius:11px}
 .pbloom{position:absolute}.pbloom.pet{border-radius:64% 0 64% 0}
@@ -444,7 +457,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.76.0";
+const VERSION="0.77.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -545,10 +558,8 @@ const CATEGORIES=[
    {id:"swear",label:"Мат / сквернословие",type:"fact",opts:[{k:"amt",o:[["little","редко"],["much","часто"]]},{k:"ctx",o:[["reward","в сердцах"],["slipc","при людях"]]}]},
  ]},
  {id:"social",name:"Социализация",items:[
-   {id:"outing",label:"Выход в люди / людное место",type:"des",pts:1},
-   {id:"talk",label:"Живое общение (разговор)",type:"des",pts:1},
-   {id:"talk_m",label:"Общение: мужчины",type:"fact",pts:0.5},
-   {id:"talk_f",label:"Общение: женщины",type:"fact"},
+   {id:"outing",label:"Выход в люди / людное место",type:"des",pts:1,opts:[{k:"who",o:[["m","мужчины"],["f","женщины"],["both","оба"]]}]},
+   {id:"talk",label:"Живое общение (разговор)",type:"des",pts:1,opts:[{k:"who",o:[["m","мужчины"],["f","женщины"],["both","оба"]]}]},
  ]},
  {id:"edu",name:"Обучение",items:[
    {id:"math",label:"Математика",type:"ob",pts:3},
@@ -813,7 +824,9 @@ function buildExport(days){
   const blLine=BL.length?"\nБлокировки: "+BL.map(b=>{const ms=blockerMsLeft(b.until),dl=ms/86400000;return String(b.name||"?").replace(/</g,"&lt;")+" ("+(PLATFORM_NAME[b.platform]||"?")+") — "+(ms>=0?"осталось "+blockerFmtLeft(ms):"ИСТЕКЛА "+blockerFmtLeft(ms)+" назад")+(dl<5?" ⚠":"");}).join(" · ")+"\n":"";
   const BLOG=meta.blockerLog||[];
   const blLogLine=BLOG.length?"Журнал причин снятия защиты: "+BLOG.slice(0,10).map(x=>x.t.slice(0,10)+" "+String(x.name).replace(/</g,"&lt;")+" — "+x.action+": «"+String(x.reason).replace(/</g,"&lt;")+"»").join(" · ")+"\n":"";
-  return "═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(Date.now())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
+  const _fb=(meta.feedback||"").trim();
+  const _fbLine=_fb?"‼️ ОБРАТНАЯ СВЯЗЬ ОТ ПОЛЬЗОВАТЕЛЯ — пожелания/проблемы (учти в первую очередь):\n"+_fb+"\n\n":"";
+  return _fbLine+"═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(Date.now())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
 }
 
 let saveState={ok:true,err:"",quota:false};
@@ -1207,7 +1220,8 @@ function weekBarsHTML(r){
     const k=addDays(t,-i);const d=days[k];
     const pct=d?computeRing(d,k).obPct:0;
     const h=pct<=0?0:Math.max(3,Math.round(pct/100*22));
-    const col=pct>=80?"#818CF8":pct>=40?"#FBBF24":"#6B6B75";
+    // Тот же «травяной» цвет, что и у дней в календаре: хороший день — зелёный.
+    const col=pct<=0?"#26301F":dayColor(k);
     bars+=`<div class="wk-bar" title="${k}: ${pct}%"><div class="wk-fill" style="height:${h}px;background:${col}"></div></div>`;
     lbls+=`<span class="wk-lbl${k===t?" today":""}">${DOW[weekdayOf(k)][0]}</span>`;
   }
@@ -1620,7 +1634,7 @@ const FX_COLORS=["#10B981","#0EA5E9","#C084FC","#F59E0B","#2DD4BF","#A1A1AA","#F
 function _softColor(){return FX_COLORS[(Math.random()*FX_COLORS.length)|0];}
 // Запоминаем точку касания И прямоугольник задетого пункта — чтобы волна шла из ЦЕНТРА пункта.
 let _lastTap=null;
-try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn,.toggle-track");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
+try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn,.toggle-track,.wbtn,.step-btn,.q-btn");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
 // Ядро отклика: одна-три медленные волны + мягкое свечение из точки касания. Всё полупрозрачно
 // и гаснет за ~1с, поэтому НИКОГДА не перекрывает название/время. Клипуется границами пункта.
 function fxWave(rect,tapX,tapY,opts){
@@ -1664,12 +1678,47 @@ function negFx(){
   const n=document.createElement("div");n.className="fx-neg";n.style.setProperty("--c","#F87171");box.appendChild(n);
   document.body.appendChild(box);setTimeout(()=>{try{box.remove();}catch(_){}},700);
 }
-// Намаз в отмеченном состоянии — чистый вид: цветного мусора поверх текста больше нет.
-// Приятный отклик даёт волна при нажатии, а «включённое» состояние — спокойная заливка (CSS).
+// ==== РАЗНЫЕ отклики под РАЗНЫЕ действия (не однотипно!) ====
+// У каждой категории — свой стиль эффекта и своя палитра. Плохие пункты — рубиновый «вдох» (не награда).
+function _fxBox(rect){const b=document.createElement("div");b.className="fx-box";b.style.left=rect.left+"px";b.style.top=rect.top+"px";b.style.width=rect.width+"px";b.style.height=rect.height+"px";document.body.appendChild(b);return b;}
+function _fxGlow(box,rect,lx,ly,color,dur){const g=document.createElement("div");g.className="fx-glow";g.style.setProperty("--c",color);g.style.setProperty("--d",(dur||1)+"s");g.style.setProperty("--gx",(lx/rect.width*100).toFixed(0)+"%");g.style.setProperty("--gy",(ly/rect.height*100).toFixed(0)+"%");box.appendChild(g);return g;}
+function _rm(box,ms){setTimeout(()=>{try{box.remove();}catch(_){}},ms);}
+// Цветение — намаз/общение: лепестки распускаются и тают (то, что ты и хотел для намаза).
+function bloomFx(rect,x,y,st){const box=_fxBox(rect);const lx=x!=null?x-rect.left:rect.width/2,ly=y!=null?y-rect.top:rect.height/2;_fxGlow(box,rect,lx,ly,st.color,1);const n=7;for(let i=0;i<n;i++){const ang=(i/n)*6.283+Math.random()*0.5,dist=9+Math.random()*15;const p=document.createElement("div");p.className="fx-petal";p.style.left=lx+"px";p.style.top=ly+"px";p.style.setProperty("--dx",(Math.cos(ang)*dist).toFixed(1)+"px");p.style.setProperty("--dy",(Math.sin(ang)*dist).toFixed(1)+"px");p.style.setProperty("--c",i%2?st.color:st.color2);p.style.setProperty("--r",((Math.random()*360)|0)+"deg");p.style.animationDelay=(Math.random()*0.12).toFixed(2)+"s";box.appendChild(p);}_rm(box,1300);}
+// Рябь — вода: тонкие кольца, «капля упала».
+function rippleFx(rect,x,y,st){const box=_fxBox(rect);const lx=x!=null?x-rect.left:rect.width/2,ly=y!=null?y-rect.top:rect.height/2;_fxGlow(box,rect,lx,ly,st.color,1.1);const dia=Math.max(rect.width,rect.height)*2;for(let i=0;i<3;i++){const w=document.createElement("div");w.className="fx-ripple";const sz=dia*(1-i*0.12);w.style.left=lx+"px";w.style.top=ly+"px";w.style.width=sz+"px";w.style.height=sz+"px";w.style.setProperty("--c",st.color);w.style.setProperty("--d",(1.1+i*0.15).toFixed(2)+"s");w.style.animationDelay=(i*0.16).toFixed(2)+"s";box.appendChild(w);}_rm(box,1700);}
+// Пульс — тело/здоровье: энергичный мягкий «удар сердца».
+function pulseFx(rect,x,y,st){const box=_fxBox(rect);const lx=x!=null?x-rect.left:rect.width/2,ly=y!=null?y-rect.top:rect.height/2;const dia=Math.max(rect.width,rect.height)*1.8;const p=document.createElement("div");p.className="fx-pulse";p.style.left=lx+"px";p.style.top=ly+"px";p.style.width=dia+"px";p.style.height=dia+"px";p.style.setProperty("--c",st.color);box.appendChild(p);const w=document.createElement("div");w.className="fx-wave";w.style.left=lx+"px";w.style.top=ly+"px";w.style.width=dia+"px";w.style.height=dia+"px";w.style.setProperty("--c",st.color2||st.color);w.style.setProperty("--o",".55");w.style.setProperty("--d",".6s");box.appendChild(w);_rm(box,1000);}
+// Скольжение блика — быт: мягкий луч по пункту.
+function sweepFx(rect,st){const box=_fxBox(rect);const s=document.createElement("div");s.className="fx-sweep";s.style.setProperty("--c",st.color);box.appendChild(s);_rm(box,950);}
+// Стиль эффекта на каждую категорию (ключ = cat.id). Разные виды и цвета — отклик не повторяется.
+const FX_STYLE={
+  din:{kind:"bloom",color:"#FBBF24",color2:"#A5B4FC"},
+  regime:{kind:"wave",color:"#FB923C",color2:"#FBBF24"},
+  work:{kind:"wave",color:"#818CF8",color2:"#C084FC"},
+  body:{kind:"pulse",color:"#34D399",color2:"#4ADE80"},
+  health:{kind:"pulse",color:"#4ADE80",color2:"#86EFAC"},
+  home:{kind:"sweep",color:"#2DD4BF",color2:"#5EEAD4"},
+  selfctrl:{kind:"wave",color:"#818CF8",color2:"#22D3EE"},
+  social:{kind:"bloom",color:"#F472B6",color2:"#C084FC"},
+  edu:{kind:"wave",color:"#60A5FA",color2:"#93C5FD"},
+  sunnah:{kind:"wave",color:"#A78BFA",color2:"#C4B5FD"},
+  water:{kind:"ripple",color:"#38BDF8",color2:"#22D3EE"},
+  def:{kind:"wave",color:"#818CF8",color2:"#22D3EE"}
+};
+// Пункты, отметка которых = фиксация ПЛОХОГО (не награждаем — рубиновый «вдох»).
+const BAD_ITEMS=new Set(["sweets","games","hairpull","swear"]);
+function fxByKind(rect,x,y,st){if(reduceMotion())return;if(st.kind==="bloom")bloomFx(rect,x,y,st);else if(st.kind==="ripple")rippleFx(rect,x,y,st);else if(st.kind==="pulse")pulseFx(rect,x,y,st);else if(st.kind==="sweep")sweepFx(rect,st);else fxWave(rect,x,y,{color:st.color,color2:st.color2,waves:2,dur:1.0});}
+// Главная точка входа: отклик зависит от того, ЧТО отметили.
+function itemFx(catId){const st=FX_STYLE[catId]||FX_STYLE.def;vib(st.kind==="pulse"?[7,18]:9);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
+function waterFx(){const st=FX_STYLE.water;vib(9);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
+// prayerBloomHTML больше не рисует постоянных лепестков (текст намаза чист); отклик даёт bloomFx.
 function prayerBloomHTML(id){return "";}
 // Свечение серии на рубежах (было в CSS, но не подключено): 3 → пульс, 7 → вспышка, 30 → золото.
 function streakTier(n){return n>=30?"streak-tag tier3":n>=7?"streak-tag tier2":n>=3?"streak-tag tier1":"";}
-function dayColor(k){const d=days[k];const MC={crown:"#A5B4FC",mid:"#FBBF24",fail:"#F87171"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([16,16,20],[99,102,241],hp/100):"#16161C";}
+// Цвет дня по проценту обязательного: чем лучше день, тем «зеленее/салатовее» (травяной, приятный).
+// Раньше был синий — по просьбе заменён на зелень: сразу видно, что день прошёл хорошо.
+function dayColor(k){const d=days[k];const MC={crown:"#A5B4FC",mid:"#FBBF24",fail:"#F87171"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([18,22,18],[74,222,128],hp/100):"#16161C";}
 function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#6B6B75;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
 function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
 function stripHTML(){const t=todayKey();let h="";for(let i=13;i>=0;i--){const k=addDays(t,-i);const d=days[k];const crown=d&&d.mark==="crown";h+=`<button class="dcell${k===sel?" sel":""}" style="background:${dayColor(k)}" onclick="selDay('${k}')" title="${k}">${crown?"👑":""}</button>`;}return h;}
@@ -2012,8 +2061,20 @@ function settingsHTML(){
     <div style="font-size:11px;color:#6B6B75;margin-top:22px;text-align:center">v${VERSION} · ${BUILD} · дней: ${Object.keys(days).length} · занято: ${fmtBytes(storageBytes())}</div>
   </div>`;
 }
+// Поле обратной связи: пользователь пишет пожелания/проблемы, они уходят в отчёт для Claude.
+function setFeedback(v){meta.feedback=v;saveMeta();}
+function feedbackHTML(){
+  const v=meta.feedback||"";
+  return `<div class="meas-card" style="margin-top:2px;border-color:#4A3821;background:#101017">
+    <div class="side-title" style="display:block;margin:0 0 6px;color:#FBBF24;font-size:13px;font-weight:700">💬 Пожелания и проблемы — для Claude</div>
+    <div style="font-size:11.5px;color:#A1A1AA;margin-bottom:8px;line-height:1.5">Пиши сюда, что не так и что хочешь добавить/изменить. Это уходит в отчёт для Claude — я увижу и учту.</div>
+    <textarea class="field-ta" style="min-height:96px" placeholder="напр.: хочу разные анимации на разные действия; добавить график веса; кнопка X не работает…" oninput="setFeedback(this.value)">${escH(v)}</textarea>
+    ${v.trim()?`<div style="font-size:11px;color:#4ADE80;margin-top:6px">✓ Сохранено — попадёт в начало следующего отчёта для Claude</div>`:""}
+  </div>`;
+}
 function settingsTab1HTML(day){
   return `
+    ${feedbackHTML()}
     ${cloudAuthHTML()}
     <div class="side-title" style="display:block;margin:16px 0 8px">Отчёт и резервная копия</div>
     <button class="export-btn" onclick="copyReport()">📋 Копировать отчёт для Claude</button>
@@ -2179,7 +2240,7 @@ function diagHTML(){
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];if(catOpen[id])animBlock=id;render();}
-function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(on&&PRAYERS.every(([p])=>np[p])){milestoneFx();const st=calcStreak(days,sel);toast(st>1?("Все 5 намазов · серия "+st+" дн ✓"):"Все 5 намазов ✓ ماشاء الله");}else if(on)goodFx();else vib(4);}
+function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(on&&PRAYERS.every(([p])=>np[p])){milestoneFx();const st=calcStreak(days,sel);toast(st>1?("Все 5 намазов · серия "+st+" дн ✓"):"Все 5 намазов ✓ ماشاء الله");}else if(on)itemFx("din");else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
   if(longTask){
@@ -2204,12 +2265,14 @@ function toggleItem(id){
   const obBefore=computeRing(d,sel).obPct;
   const obAfter=computeRing({...d,items:nItems},sel).obPct;
   const hit100=on&&obBefore<100&&obAfter===100;
-  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);}
+  const bad=BAD_ITEMS.has(id);
+  if(on&&!bad){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);}
   setDay({items:nItems,itemTimes:nTimes,itemRecTimes:nRec});
-  // Отклик: веха дня (100% обязательного) — золотая; иначе хорошее действие — спокойная волна;
-  // снятие галочки — награды нет, только лёгкий тик.
+  // Отклик РАЗНЫЙ по категории: намаз — цветение, вода — рябь, тело — пульс, быт — блик и т.д.
+  // Плохой пункт (сладкое/игры) — рубиновый «вдох», НЕ награда. Веха дня (100%) — золотая.
   if(hit100){milestoneFx();toast("100% обязательного за день ✓");}
-  else if(on)goodFx();
+  else if(on&&bad)negFx();
+  else if(on)itemFx(cat?cat.id:"def");
   else vib(4);
 }
 function editItemTime(id){editTimeId=(editTimeId===id?"":id);render();}
@@ -2235,6 +2298,7 @@ function changeWater(n){
   }
   const sum=L.reduce((s,x)=>s+(Number(x.ml)||0),0);
   setDay({waterLog:L,water:sum});
+  if(n>0)waterFx();else vib(4);
 }
 function setWaterTime(i,v){const d=getDay();const L=[...(d.waterLog||[])];if(!L[i])return;L[i]={...L[i],t:v};setDay({waterLog:L});}
 function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];L.splice(i,1);setDay({waterLog:L,water:L.reduce((a,x)=>a+(Number(x.ml)||0),0)});}
