@@ -317,10 +317,14 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .db-ring-pct-u{font-size:14px;color:#6B6B75;font-weight:700;margin-left:1px}
 .db-ring-cap{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B75;margin-top:4px;font-weight:700}
 .dash-namaz-status{width:100%;margin-top:16px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
+.np-top{display:flex;align-items:center;gap:9px;width:100%}
+.np-ic{font-size:17px;flex:0 0 auto;line-height:1}
 .np-dots{display:flex;gap:7px}
 .np-dot{width:9px;height:9px;border-radius:50%;background:#1B1B26;flex:0 0 auto;transition:all .2s}
 .np-dot.on{background:#818CF8;box-shadow:0 0 6px rgba(129,140,248,.7)}
 .np-dot.next{background:#FB923C;box-shadow:0 0 5px rgba(251,146,60,.55)}
+.np-count{margin-left:auto;font-weight:800;font-size:15px;font-family:ui-monospace,Menlo,monospace;flex:0 0 auto}
+.np-count-u{font-size:11px;color:#6B6B75;font-weight:700}
 .np-sub{font-size:12.5px;color:#A1A1AA;font-weight:600}
 /* Чекины прямо в шапке (дашборде): две быстрые кнопки с временем. Отмечают тот же пункт,
    что и в блоке — источник данных один, просто доступ ещё и из шапки. */
@@ -422,7 +426,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.73.0";
+const VERSION="0.74.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1205,10 +1209,14 @@ function namazStatusHTML(day){
     return `<span class="np-dot${on?" on":""}${(!on&&id===nx)?" next":""}"></span>`;
   }).join("");
   let sub;
-  if(pn===5)sub="Все 5 совершены ✓";
+  if(pn===5)sub="Все 5 совершены ✓ ماشاء الله";
   else if(nx){const nm=(PRAYERS.find(([id])=>id===nx)||[])[1];const tm=pt[PT_MAP[nx]]||"";sub=`Следующий: ${nm}${tm?" "+tm:""}`;}
-  else sub=`${pn}/5 намазов`;
-  return `<button class="dash-namaz-status" onclick="jumpToDin()"><span class="np-dots">${dots}</span><span class="np-sub">${sub}</span></button>`;
+  else sub=`Отметь совершённые намазы`;
+  const cnt=pn===5?"#4ADE80":pn>0?"#818CF8":"#6B6B75";
+  return `<button class="dash-namaz-status" onclick="jumpToDin()">
+    <div class="np-top"><span class="np-ic">🕌</span><span class="np-dots">${dots}</span><span class="np-count" style="color:${cnt}">${pn}<span class="np-count-u">/5</span></span></div>
+    <span class="np-sub">${sub}</span>
+  </button>`;
 }
 function jumpToDin(){catOpen.din=true;animBlock="din";render();setTimeout(()=>{const el=document.getElementById("blk-din");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
 // Чекины в шапке: две быстрые кнопки (дневной/вечерний) с временем. Отмечают тот же пункт
