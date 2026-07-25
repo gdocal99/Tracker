@@ -247,15 +247,18 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,.5)}70%{box-shadow:0 0 0 16px rgba(129,140,248,0)}100%{box-shadow:0 0 0 0 rgba(129,140,248,0)}}
 @keyframes cfFall{to{transform:translateY(108vh) rotate(720deg)}}
-/* === Микро-эффекты: контрастные, КЛИПУЮТСЯ границами пункта (не вылезают наружу) === */
+/* === Отклик на действие: МЕДЛЕННЫЕ, плавные, приятные волны + мягкое свечение. Клипуются
+   границами пункта (overflow:hidden по rect), НЕ перекрывают текст (лежат в fx-box поверх, но
+   полупрозрачны и быстро гаснут). Награда — только за хорошее; за плохое — отдельный тихий отклик. === */
 .fx-box{position:fixed;overflow:hidden;pointer-events:none;z-index:80;border-radius:12px}
-.fx-wave{position:absolute;border-radius:50%;border:2.5px solid var(--c,#10B981);transform:translate(-50%,-50%) scale(.08);opacity:.95;animation:fxWave var(--d,.58s) cubic-bezier(.2,.7,.3,1) forwards}
-@keyframes fxWave{0%{transform:translate(-50%,-50%) scale(.08);opacity:var(--o,.95)}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
-.fx-flash{position:absolute;border-radius:11px;background:var(--c,#10B981);opacity:0;transform:translate(-50%,-50%);mix-blend-mode:screen;animation:fxFlash .5s ease-out forwards}
-@keyframes fxFlash{0%{opacity:0}22%{opacity:.32}100%{opacity:0}}
-.fx-p{position:absolute;width:var(--sz,7px);height:var(--sz,7px);background:var(--c,#10B981);transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg));opacity:0;animation:fxP var(--d,.82s) cubic-bezier(.2,.8,.3,1) forwards}
-.fx-p.pet{border-radius:64% 0 64% 0}.fx-p.dotp{border-radius:50%}
-@keyframes fxP{0%{opacity:0;transform:translate(-50%,-50%) scale(0) rotate(var(--r,0deg))}32%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(var(--r,0deg))}72%{opacity:.95}100%{opacity:0;transform:translate(calc(-50% + var(--dx,0px)),calc(-50% + var(--dy,-4px))) scale(1.05) rotate(var(--r,0deg))}}
+.fx-wave{position:absolute;border-radius:50%;border:2px solid var(--c,#818CF8);transform:translate(-50%,-50%) scale(.18);opacity:0;animation:fxWave var(--d,1s) cubic-bezier(.22,.61,.36,1) forwards}
+@keyframes fxWave{0%{transform:translate(-50%,-50%) scale(.18);opacity:0}20%{opacity:var(--o,.65)}100%{transform:translate(-50%,-50%) scale(1);opacity:0}}
+/* Мягкое свечение из точки касания — тёплый «выдох», не вспышка. */
+.fx-glow{position:absolute;inset:0;background:radial-gradient(circle at var(--gx,50%) var(--gy,50%),var(--c,#818CF8),transparent 68%);opacity:0;animation:fxGlow var(--d,1s) ease-out forwards}
+@keyframes fxGlow{0%{opacity:0}28%{opacity:.22}100%{opacity:0}}
+/* Отклик на «плохое» действие (срыв, провал) — тихий приглушённый рубиновый вдох, НЕ награда. */
+.fx-neg{position:absolute;inset:0;background:var(--c,#F87171);opacity:0;animation:fxNeg .55s ease-out forwards}
+@keyframes fxNeg{0%{opacity:0}35%{opacity:.16}100%{opacity:0}}
 /* Постоянные цветы на выполненном намазе — остаются, пока намаз отмечен, внутри кнопки */
 .pbloom-wrap{position:absolute;inset:0;pointer-events:none;z-index:0;overflow:hidden;border-radius:11px}
 .pbloom{position:absolute}.pbloom.pet{border-radius:64% 0 64% 0}
@@ -426,7 +429,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.74.0";
+const VERSION="0.75.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -905,7 +908,8 @@ function loadDays(){
 let days=loadDays();
 if(loadState.ok&&!loadState.corrupt&&Object.keys(days).length)makeSnapshot();
 let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="",offSchedOpen=false;
-let catOpen={din:1,regime:1,health:1,delo:1,home:1,state:1,guard:1,reflect:0};
+// По умолчанию ВСЕ блоки свёрнуты — чище, меньше визуального шума, пользователь открывает нужное сам.
+let catOpen={din:0,regime:0,health:0,delo:0,home:0,state:0,guard:0,reflect:0};
 let taOpen={};
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
@@ -1042,7 +1046,7 @@ function stampDayTimes(before,after,ts){
   for(const f in after){if(MERGE_SKIP.has(f)||grouped.has(f))continue;if(je(before[f],after[f]))t[f]=ts;}
   return t;
 }
-function setMark(v){const d=getDay();const nv=(d.mark===v&&v!=="")?"":v;setDay({mark:nv,markTime:nv?nowHM():""});if(nv==="crown"){vibNice();tapFx();bigCelebration();toast("👑 Идеальный день");}else vib(4);}
+function setMark(v){const d=getDay();const nv=(d.mark===v&&v!=="")?"":v;setDay({mark:nv,markTime:nv?nowHM():""});if(nv==="crown"){milestoneFx();toast("👑 Идеальный день");}else if(nv==="fail"){negFx();toast("Отмечено: провал");}else vib(4);}
 function currentMode(){if(meta.view==="mobile")return "mobile";if(meta.view==="desktop")return "desktop";return window.innerWidth>=900?"desktop":"mobile";}
 const PT_METHODS=[[3,"MWL"],[13,"Турция"],[5,"Египет"],[4,"Мекка"],[2,"ISNA"]];
 const PT_MAP={fajr:"Fajr",dhuhr:"Dhuhr",asr:"Asr",maghrib:"Maghrib",isha:"Isha"};
@@ -1589,54 +1593,53 @@ const FX_COLORS=["#10B981","#0EA5E9","#C084FC","#F59E0B","#2DD4BF","#A1A1AA","#F
 function _softColor(){return FX_COLORS[(Math.random()*FX_COLORS.length)|0];}
 // Запоминаем точку касания И прямоугольник задетого пункта — чтобы волна шла из ЦЕНТРА пункта.
 let _lastTap=null;
-try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
-function _boxChild(box,x,y,cls,styl){const e=document.createElement("div");e.className=cls;e.style.left=x+"px";e.style.top=y+"px";if(styl)for(const k in styl)e.style.setProperty(k,styl[k]);box.appendChild(e);}
-// Эффект КЛИПУЕТСЯ границами пункта: контейнер точно по rect, overflow:hidden — ничего не вылезает.
-// Контрастно и «задевает только сам пункт»: вспышка-заливка + волна + лепестки/искры внутри.
-function fxBurst(rect,tapX,tapY){
+try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn,.toggle-track");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
+// Ядро отклика: одна-три медленные волны + мягкое свечение из точки касания. Всё полупрозрачно
+// и гаснет за ~1с, поэтому НИКОГДА не перекрывает название/время. Клипуется границами пункта.
+function fxWave(rect,tapX,tapY,opts){
   if(reduceMotion()||!rect||rect.width<8)return;
+  opts=opts||{};
+  const waves=opts.waves||2,dur=opts.dur||1.0;
   const box=document.createElement("div");box.className="fx-box";
   box.style.left=rect.left+"px";box.style.top=rect.top+"px";box.style.width=rect.width+"px";box.style.height=rect.height+"px";
-  document.body.appendChild(box);setTimeout(()=>{try{box.remove();}catch(_){}},1150);
+  document.body.appendChild(box);
   const lx=(tapX!=null?tapX-rect.left:rect.width/2),ly=(tapY!=null?tapY-rect.top:rect.height/2);
-  const col=_softColor();
-  _boxChild(box,rect.width/2,rect.height/2,"fx-flash",{"width":rect.width+"px","height":rect.height+"px","--c":col});
-  const dia=Math.max(rect.width,rect.height)*2.2;
-  // Двойная волна: первая индиго сразу, вторая лазурная и прозрачнее — на 80мс позже.
-  // Обе строго в границах пункта (.fx-box уже clip-нут overflow:hidden по его rect).
-  _boxChild(box,lx,ly,"fx-wave",{"width":dia+"px","height":dia+"px","--c":"#818CF8"});
-  _boxChild(box,lx,ly,"fx-wave",{"width":(dia*0.85)+"px","height":(dia*0.85)+"px","--c":"#22D3EE","--o":".55","animation-delay":".08s"});
-  const n=8+((Math.random()*6)|0);
-  for(let i=0;i<n;i++){const px=6+Math.random()*Math.max(2,rect.width-12),py=5+Math.random()*Math.max(2,rect.height-10);const pet=Math.random()<0.6;_boxChild(box,px,py,"fx-p "+(pet?"pet":"dotp"),{"--c":_softColor(),"--sz":((pet?6:4)+((Math.random()*4)|0))+"px","--r":((Math.random()*360)|0)+"deg","--dx":(((Math.random()*10)|0)-5)+"px","--dy":(-(2+((Math.random()*7)|0)))+"px","--d":(0.68+Math.random()*0.3).toFixed(2)+"s","animation-delay":(Math.random()*0.14).toFixed(2)+"s"});}
-}
-// Вызывать при отметке «выполнено»: контрастный отклик внутри самого пункта + микровибрация.
-function tapFx(){const lt=_lastTap&&(Date.now()-_lastTap.t)<1500?_lastTap:null;if(lt&&lt.rect)fxBurst(lt.rect,lt.x,lt.y);}
-// Полноэкранный дофаминовый салют для крупных вех (все намазы, 100% обязательного, «идеальный день»,
-// рост серии). Быстрый, лёгкий, сам убирается; при prefers-reduced-motion — тихо пропускается.
-function bigCelebration(){
-  if(reduceMotion())return;
-  const n=26;
-  for(let i=0;i<n;i++){
-    const e=document.createElement("div");e.className="cf";
-    e.style.left=(Math.random()*100)+"vw";
-    e.style.background=_softColor();
-    e.style.animationDuration=(1.5+Math.random()*1.3).toFixed(2)+"s";
-    e.style.animationDelay=(Math.random()*0.45).toFixed(2)+"s";
-    e.style.transform="rotate("+((Math.random()*360)|0)+"deg)";
-    document.body.appendChild(e);
-    setTimeout(()=>{try{e.remove();}catch(_){}},3400);
+  const glow=document.createElement("div");glow.className="fx-glow";
+  glow.style.setProperty("--c",opts.color||"#818CF8");glow.style.setProperty("--d",dur+"s");
+  glow.style.setProperty("--gx",(lx/rect.width*100).toFixed(0)+"%");glow.style.setProperty("--gy",(ly/rect.height*100).toFixed(0)+"%");
+  box.appendChild(glow);
+  const dia=Math.max(rect.width,rect.height)*2.1;
+  for(let i=0;i<waves;i++){
+    const w=document.createElement("div");w.className="fx-wave";const sz=dia*(1-i*0.13);
+    w.style.left=lx+"px";w.style.top=ly+"px";w.style.width=sz+"px";w.style.height=sz+"px";
+    w.style.setProperty("--c", i===0?(opts.color||"#818CF8"):(opts.color2||opts.color||"#22D3EE"));
+    w.style.setProperty("--o",(0.6-i*0.18).toFixed(2));
+    w.style.setProperty("--d",(dur+i*0.12).toFixed(2)+"s");
+    w.style.animationDelay=(i*0.14).toFixed(2)+"s";
+    box.appendChild(w);
   }
+  setTimeout(()=>{try{box.remove();}catch(_){}},(dur+waves*0.14+0.4)*1000);
 }
-// «Все намазы» — контрастный отклик на кнопке + салют + отметка серии (духовный день закрыт).
-function confetti(){vibNice();const lt=_lastTap&&(Date.now()-_lastTap.t)<2000?_lastTap:null;if(lt&&lt.rect)fxBurst(lt.rect,lt.x,lt.y);bigCelebration();const st=calcStreak(days,sel);toast(st>1?("🕌 Все 5 намазов · серия "+st+" дн"):"🕌 Все 5 намазов ✓");}
-// Постоянные цветы/лепестки на выполненном намазе — стабильные позиции (seed из id), внутри кнопки.
-function prayerBloomHTML(id){
-  let s=0;for(let i=0;i<id.length;i++)s=((s*31)+id.charCodeAt(i))>>>0;
-  const rnd=()=>{s=(s*1664525+1013904223)>>>0;return s/4294967296;};
-  const cols=["#10B981","#0EA5E9","#C084FC","#F59E0B","#2DD4BF","#F43F5E"];
-  let h="";for(let i=0;i<15;i++){const x=(5+rnd()*90).toFixed(1),y=(6+rnd()*86).toFixed(1),sz=(3.5+rnd()*3.5).toFixed(1),rot=(rnd()*360)|0,c=cols[(rnd()*cols.length)|0],op=(0.4+rnd()*0.45).toFixed(2),pet=rnd()<0.6;h+=`<span class="pbloom${pet?" pet":""}" style="left:${x}%;top:${y}%;width:${sz}px;height:${sz}px;background:${c};opacity:${op};transform:translate(-50%,-50%) rotate(${rot}deg)"></span>`;}
-  return `<span class="pbloom-wrap">${h}</span>`;
+function _lastRect(win){const lt=_lastTap&&(Date.now()-_lastTap.t)<(win||1500)?_lastTap:null;return (lt&&lt.rect)?lt:null;}
+// Вторичные цвета из спокойной палитры — чтобы отклик не был однотипным (каждый раз чуть иной).
+const CALM2=["#22D3EE","#A5B4FC","#2DD4BF","#93C5FD"];
+// Хорошее действие: две медленные волны (индиго + случайный спокойный оттенок) + лёгкая вибрация.
+function goodFx(){const lt=_lastRect();if(lt)fxWave(lt.rect,lt.x,lt.y,{color:"#818CF8",color2:CALM2[(Math.random()*CALM2.length)|0],waves:2,dur:1.0});vib(9);}
+// Веха (все 5 намазов, 100% обязательного, «идеальный день»): три золотые волны, плавно, чуть
+// дольше, мягкая тройная вибрация. Никаких салютов и конфетти.
+function milestoneFx(){const lt=_lastRect(2400);if(lt)fxWave(lt.rect,lt.x,lt.y,{color:"#FBBF24",color2:"#A5B4FC",waves:3,dur:1.3});vib([10,34,14]);}
+// Плохое действие (срыв, провал): тихий приглушённый рубиновый вдох + один короткий толчок.
+// Это НЕ награда — приложение не поощряет плохое.
+function negFx(){
+  vib(24);const lt=_lastRect();if(!lt||reduceMotion())return;
+  const box=document.createElement("div");box.className="fx-box";
+  box.style.left=lt.rect.left+"px";box.style.top=lt.rect.top+"px";box.style.width=lt.rect.width+"px";box.style.height=lt.rect.height+"px";
+  const n=document.createElement("div");n.className="fx-neg";n.style.setProperty("--c","#F87171");box.appendChild(n);
+  document.body.appendChild(box);setTimeout(()=>{try{box.remove();}catch(_){}},700);
 }
+// Намаз в отмеченном состоянии — чистый вид: цветного мусора поверх текста больше нет.
+// Приятный отклик даёт волна при нажатии, а «включённое» состояние — спокойная заливка (CSS).
+function prayerBloomHTML(id){return "";}
 // Свечение серии на рубежах (было в CSS, но не подключено): 3 → пульс, 7 → вспышка, 30 → золото.
 function streakTier(n){return n>=30?"streak-tag tier3":n>=7?"streak-tag tier2":n>=3?"streak-tag tier1":"";}
 function dayColor(k){const d=days[k];const MC={crown:"#A5B4FC",mid:"#FBBF24",fail:"#F87171"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([16,16,20],[99,102,241],hp/100):"#16161C";}
@@ -2155,12 +2158,12 @@ function diagHTML(){
   </div>`;
 }
 function toggleCat(id){catOpen[id]=!catOpen[id];if(catOpen[id])animBlock=id;render();}
-function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(PRAYERS.every(([p])=>np[p]))confetti();else if(on)tapFx();else vib(4);}
+function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(on&&PRAYERS.every(([p])=>np[p])){milestoneFx();const st=calcStreak(days,sel);toast(st>1?("Все 5 намазов · серия "+st+" дн ✓"):"Все 5 намазов ✓ ماشاء الله");}else if(on)goodFx();else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
   if(longTask){
     longTask.done=!longTask.done;
-    if(longTask.done){justChecked=id;tapFx();vib(4);}else vib(4);
+    if(longTask.done){justChecked=id;goodFx();}else vib(4);
     pushLog((longTask.done?"🎯 цель выполнена: ":"↩ снял цель: ")+longTask.label);
     saveMeta();render();
     return;
@@ -2180,10 +2183,13 @@ function toggleItem(id){
   const obBefore=computeRing(d,sel).obPct;
   const obAfter=computeRing({...d,items:nItems},sel).obPct;
   const hit100=on&&obBefore<100&&obAfter===100;
-  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);tapFx();}
+  if(on){justChecked=id;const it=cat?.items.find(i=>i.id===id);if(it&&it.pts)popPoints(it.pts);}
   setDay({items:nItems,itemTimes:nTimes,itemRecTimes:nRec});
-  if(hit100){vibNice();bigCelebration();toast("🎯 100% обязательного за день!");}
-  else if(milestone)vibNice();else vib(4);
+  // Отклик: веха дня (100% обязательного) — золотая; иначе хорошее действие — спокойная волна;
+  // снятие галочки — награды нет, только лёгкий тик.
+  if(hit100){milestoneFx();toast("100% обязательного за день ✓");}
+  else if(on)goodFx();
+  else vib(4);
 }
 function editItemTime(id){editTimeId=(editTimeId===id?"":id);render();}
 function setItemTime(id,v){const d=getDay();setDay({itemTimes:{...(d.itemTimes||{}),[id]:v}});}
@@ -2212,7 +2218,7 @@ function changeWater(n){
 function setWaterTime(i,v){const d=getDay();const L=[...(d.waterLog||[])];if(!L[i])return;L[i]={...L[i],t:v};setDay({waterLog:L});}
 function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];L.splice(i,1);setDay({waterLog:L,water:L.reduce((a,x)=>a+(Number(x.ml)||0),0)});}
 function setWaterTotal(v){const ml=clampNum(Math.round(num(v,0)*1000),0,30000);const d=getDay();const L=d.waterLog||[];if(L.length){setDay({water:Math.max(ml,waterSum(d))});}else{setDay({water:ml});}}
-function toggleField(f){const d=getDay();setDay({[f]:!d[f]});vib(4);}
+function toggleField(f){const d=getDay();const nv=!d[f];setDay({[f]:nv});if((f==="slip"||f==="urge")&&nv)negFx();else vib(4);}
 function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}setDay({[f]:v});}
 function toggleDetails(){detailsOpen=!detailsOpen;render();}
 function openExport(){exportText=buildExport(days);modalOpen=true;render();}
