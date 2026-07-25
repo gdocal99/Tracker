@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.83.0";
+const VERSION="0.84.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1783,11 +1783,11 @@ const CALM2=["#22D3EE","#A5B4FC","#2DD4BF","#93C5FD"];
 function goodFx(){const lt=_lastRect();if(lt)fxWave(lt.rect,lt.x,lt.y,{color:"#818CF8",color2:CALM2[(Math.random()*CALM2.length)|0],waves:2,dur:1.0});vib(9);}
 // Веха (все 5 намазов, 100% обязательного, «идеальный день»): три золотые волны, плавно, чуть
 // дольше, мягкая тройная вибрация. Никаких салютов и конфетти.
-function milestoneFx(){const lt=_lastRect(2400);if(lt)fxWave(lt.rect,lt.x,lt.y,{color:"#FBBF24",color2:"#A5B4FC",waves:3,dur:1.3});vib([10,34,14]);}
+function milestoneFx(){const lt=_lastRect(2400);if(lt)fxWave(lt.rect,lt.x,lt.y,{color:"#FBBF24",color2:"#A5B4FC",waves:3,dur:1.3});vib([20,40,20,40,30]);}
 // Плохое действие (срыв, провал): тихий приглушённый рубиновый вдох + один короткий толчок.
 // Это НЕ награда — приложение не поощряет плохое.
 function negFx(){
-  vib(24);const lt=_lastRect();if(!lt||reduceMotion())return;
+  vib([80,40,100]);const lt=_lastRect();if(!lt||reduceMotion())return;
   const box=document.createElement("div");box.className="fx-box";
   box.style.left=lt.rect.left+"px";box.style.top=lt.rect.top+"px";box.style.width=lt.rect.width+"px";box.style.height=lt.rect.height+"px";
   const n=document.createElement("div");n.className="fx-neg";n.style.setProperty("--c","#F87171");box.appendChild(n);
@@ -1807,29 +1807,30 @@ function pulseFx(rect,x,y,st){const box=_fxBox(rect);const lx=x!=null?x-rect.lef
 // Скольжение блика — быт: мягкий луч по пункту.
 function sweepFx(rect,st){const box=_fxBox(rect);const s=document.createElement("div");s.className="fx-sweep";s.style.setProperty("--c",st.color);box.appendChild(s);_rm(box,950);}
 // Стиль эффекта на каждую категорию (ключ = cat.id). Разные виды и цвета — отклик не повторяется.
-// Разные КИНДЫ эффектов раскиданы по категориям, чтобы соседние действия ощущались по-разному.
+// Матрица ADHD-хаптики: у каждой категории свой ВИД эффекта, ЦВЕТ и ПАТТЕРН ВИБРАЦИИ.
+// Так отклик перестаёт быть однотипным — рука и глаз сразу «узнают» тип действия.
 const FX_STYLE={
-  din:{kind:"bloom",color:"#FBBF24",color2:"#A5B4FC"},   // намаз — цветение золото/лаванда
-  regime:{kind:"sweep",color:"#FB923C",color2:"#FBBF24"},// ритуалы — тёплый блик
-  work:{kind:"wave",color:"#60A5FA",color2:"#818CF8"},   // работа — сфокусированная волна
-  body:{kind:"pulse",color:"#34D399",color2:"#4ADE80"},  // тело — пульс изумруд
-  health:{kind:"ripple",color:"#4ADE80",color2:"#86EFAC"},// здоровье — рябь зелень
-  home:{kind:"sweep",color:"#2DD4BF",color2:"#5EEAD4"},  // быт — блик тиффани
-  selfctrl:{kind:"wave",color:"#C084FC",color2:"#A78BFA"},// самоконтроль — волна фиолет
-  social:{kind:"bloom",color:"#F472B6",color2:"#C084FC"},// общение — цветение розовое
-  edu:{kind:"pulse",color:"#60A5FA",color2:"#93C5FD"},   // обучение — пульс голубой
-  sunnah:{kind:"ripple",color:"#A78BFA",color2:"#C4B5FD"},// сунна — рябь лаванда
-  water:{kind:"ripple",color:"#38BDF8",color2:"#22D3EE"},// вода — рябь голубая
-  def:{kind:"wave",color:"#818CF8",color2:"#22D3EE"}
+  din:{kind:"bloom",color:"#FBBF24",color2:"#A5B4FC",vib:[15,30,20,30,25]}, // намаз — цветение
+  regime:{kind:"sweep",color:"#FB923C",color2:"#FBBF24",vib:[8]},           // ритуалы — блик
+  work:{kind:"wave",color:"#818CF8",color2:"#A5B4FC",vib:[10]},             // работа — волна
+  edu:{kind:"wave",color:"#818CF8",color2:"#93C5FD",vib:[10]},              // обучение — волна
+  body:{kind:"pulse",color:"#34D399",color2:"#4ADE80",vib:[25]},           // тело — пульс сердца
+  health:{kind:"pulse",color:"#34D399",color2:"#86EFAC",vib:[25]},         // здоровье — пульс
+  home:{kind:"sweep",color:"#2DD4BF",color2:"#5EEAD4",vib:[8]},            // быт — блик
+  selfctrl:{kind:"wave",color:"#C084FC",color2:"#A78BFA",vib:[12]},        // самоконтроль — волна
+  social:{kind:"bloom",color:"#F472B6",color2:"#C084FC",vib:[15,20,15]},   // общение — цветение
+  sunnah:{kind:"ripple",color:"#A78BFA",color2:"#C4B5FD",vib:[12,20,12]},  // сунна — рябь
+  water:{kind:"ripple",color:"#38BDF8",color2:"#22D3EE",vib:[12,20,12]},   // вода — рябь капли
+  def:{kind:"wave",color:"#818CF8",color2:"#22D3EE",vib:[10]}
 };
 // Пункты, отметка которых = фиксация ПЛОХОГО (не награждаем — рубиновый «вдох»).
 const BAD_ITEMS=new Set(["sweets","games","hairpull","swear"]);
 function fxByKind(rect,x,y,st){if(reduceMotion())return;if(st.kind==="bloom")bloomFx(rect,x,y,st);else if(st.kind==="ripple")rippleFx(rect,x,y,st);else if(st.kind==="pulse")pulseFx(rect,x,y,st);else if(st.kind==="sweep")sweepFx(rect,st);else fxWave(rect,x,y,{color:st.color,color2:st.color2,waves:2,dur:1.0});}
 // Главная точка входа: отклик зависит от того, ЧТО отметили.
-function itemFx(catId){const st=FX_STYLE[catId]||FX_STYLE.def;vib(st.kind==="pulse"?[7,18]:9);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
+function itemFx(catId){const st=FX_STYLE[catId]||FX_STYLE.def;vib(st.vib||10);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
 // Уровень 2: закрыта ВСЯ категория — усиленная двойная волна её цвета + мягкая тройная вибрация + тост.
 function catDoneFx(catId,catName){const st=FX_STYLE[catId]||FX_STYLE.def;vibNice();const lt=_lastRect();if(lt&&!reduceMotion())fxWave(lt.rect,lt.x,lt.y,{color:st.color,color2:st.color2,waves:2,dur:1.2});if(catName)toast("✓ "+catName+" — закрыто");}
-function waterFx(){const st=FX_STYLE.water;vib(9);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
+function waterFx(){const st=FX_STYLE.water;vib(st.vib||[12,20,12]);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
 // prayerBloomHTML больше не рисует постоянных лепестков (текст намаза чист); отклик даёт bloomFx.
 function prayerBloomHTML(id){return "";}
 // Свечение серии на рубежах (было в CSS, но не подключено): 3 → пульс, 7 → вспышка, 30 → золото.
