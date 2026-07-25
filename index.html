@@ -458,7 +458,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.78.0";
+const VERSION="0.79.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -581,7 +581,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",complaints:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -800,6 +800,7 @@ function buildExport(days){
     if(d.seq)s+="  События (пр/обр): "+String(d.seq).replace(/</g,"&lt;")+"\n";
     if(d.extract)s+="  Извлёк: "+String(d.extract).replace(/</g,"&lt;")+"\n";
     if(d.analysis)s+="  Анализ: "+String(d.analysis).replace(/</g,"&lt;")+"\n";
+    if(d.complaints)s+="  🐞 ЖАЛОБА НА ПРИЛОЖЕНИЕ: "+String(d.complaints).replace(/</g,"&lt;")+"\n";
     if(d.main)s+="  Главное: "+String(d.main).replace(/</g,"&lt;")+"\n";
     if(d.block)s+="  Помеха: "+String(d.block).replace(/</g,"&lt;")+"\n";
     if(d.waterLog&&d.waterLog.length){s+="  Вода по времени: "+d.waterLog.map(x=>x.t+" +"+(x.ml>=1000?(x.ml/1000).toFixed(1)+"л":x.ml+"мл")).join(" · ")+((d.water||0)>waterSum(d)?" · +"+(((d.water||0)-waterSum(d))/1000).toFixed(1)+"л итогом без времени":"")+"\n";}
@@ -837,7 +838,9 @@ function buildExport(days){
   const blLogLine=BLOG.length?"Журнал причин снятия защиты: "+BLOG.slice(0,10).map(x=>x.t.slice(0,10)+" "+String(x.name).replace(/</g,"&lt;")+" — "+x.action+": «"+String(x.reason).replace(/</g,"&lt;")+"»").join(" · ")+"\n":"";
   const _fb=(meta.feedback||"").trim();
   const _fbLine=_fb?"‼️ ОБРАТНАЯ СВЯЗЬ ОТ ПОЛЬЗОВАТЕЛЯ — пожелания/проблемы (учти в первую очередь):\n"+_fb+"\n\n":"";
-  return _fbLine+"═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(Date.now())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
+  const _cd=keys.filter(k=>String((days[k]||{}).complaints||"").trim());
+  const _cLine=_cd.length?"🐞 ЖАЛОБЫ НА ПРИЛОЖЕНИЕ ПО ДНЯМ (собрать в обновление):\n"+_cd.map(k=>"  • "+k+": "+String(days[k].complaints).replace(/</g,"&lt;")).join("\n")+"\n\n":"";
+  return _fbLine+_cLine+"═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(Date.now())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
 }
 
 let saveState={ok:true,err:"",quota:false};
@@ -1011,7 +1014,7 @@ function optLabelOf(itemId,gk,v){
 function labelOf(id){for(const c of CATEGORIES)for(const it of c.items)if(it.id===id)return it.label.replace(/\s*\(\+\d+\)\s*$/,"");const t=(meta.customTasks||[]).find(x=>x.id===id);return t?t.label:id;}
 function supLabel(id){const s=allSups().find(x=>x[0]===id);return s?s[1]:id;}
 const OPT_RU={own:"своё место",all:"весь стол",self:"сам",asked:"попросили",good:"качественно",meh:"так себе",little:"мало",mid:"средне",much:"много",reward:"в награду",slipc:"срыв",shower:"душ",bath:"ванна",short:"менее часа",long:"час и больше",athome:"дома",atwork:"на работе"};
-const LOG_FIELDS={income:"доход ₴",weight:"вес",height:"рост",pulse:"пульс",bpSys:"давление верх",bpDia:"давление низ",temp:"температура",sleepDown:"лёг спать",sleepUp:"проснулся",onTime:"встал вовремя",slip:"срыв",slipTrigger:"триггер срыва",bounced:"отбился после срыва",drift:"рассеянность",energy:"энергия",focus:"фокус",spirit:"иман",control:"самоконтроль",urge:"тяга перед сном",main:"главное за день",block:"помеха дня",seq:"события дня",extract:"что извлёк",analysis:"мысли и анализ",poop:"стул",phoneOut:"телефон убрал (вечер)",phoneBack:"телефон забрал (утро)"};
+const LOG_FIELDS={income:"доход ₴",weight:"вес",height:"рост",pulse:"пульс",bpSys:"давление верх",bpDia:"давление низ",temp:"температура",sleepDown:"лёг спать",sleepUp:"проснулся",onTime:"встал вовремя",slip:"срыв",slipTrigger:"триггер срыва",bounced:"отбился после срыва",drift:"рассеянность",energy:"энергия",focus:"фокус",spirit:"иман",control:"самоконтроль",urge:"тяга перед сном",main:"главное за день",block:"помеха дня",seq:"события дня",extract:"что извлёк",analysis:"мысли и анализ",complaints:"🐞 жалоба на приложение",poop:"стул",phoneOut:"телефон убрал (вечер)",phoneBack:"телефон забрал (утро)"};
 function logDiff(b,a){
   const t=nowHM(),out=[],push=e=>out.push({t,e}),ks=o=>Object.keys(o||{});
   for(const id of new Set([...ks(b.items),...ks(a.items)])){const w=!!(b.items||{})[id],n=!!(a.items||{})[id];if(w!==n)push((n?"✓ ":"↩ снял: ")+labelOf(id));}
@@ -2017,6 +2020,7 @@ function render(){
         ${tasksHTML(day)}
         ${cats}
         ${markHTML(day)}
+        <div style="margin-top:16px;opacity:.85">${collapTa("complaints","🐞 Жалобы на приложение / баги","что бесит, что сломалось, что добавить — по этому дню. Я это увижу в отчёте и выкачу обновление.",day)}</div>
         <div style="font-size:11px;color:#6B6B75;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
       </div>
     </div>
