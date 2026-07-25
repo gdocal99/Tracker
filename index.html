@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.81.0";
+const VERSION="0.82.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2070,8 +2070,10 @@ function render(){
   let topBanner="";
   if(Object.keys(days).length===0){topBanner=`<div class="banner banner-empty">Данных нет. Если это не первый запуск — сначала загрузи последнюю копию.<div class="backup-row" style="margin-top:10px"><button class="backup-btn" onclick="loadBackup()">📂 Загрузить копию</button></div></div>`;}
 
-  const firstKey=Object.keys(days).sort()[0]||todayKey();
-  const periodStart=[firstKey,addDays(todayKey(),-60)].sort()[0];
+  // Календарь начинается РОВНО с начала отслеживания (TRACK_START = 26 июля 2026), а не с самых
+  // ранних старых данных и не «сегодня−60». Старые дни до этой даты в сетке не показываются.
+  // (Если сегодня почему-то раньше TRACK_START — включаем и сегодня, чтобы оно не пропало.)
+  const periodStart=[TRACK_START,todayKey()].sort()[0];
   const periodEnd=addDays(todayKey(),45);
   let histHTML="",curMonth=-1,kk=periodStart;
   while(kk<=periodEnd){
@@ -2110,7 +2112,7 @@ function render(){
       </div>
     </div>
     <div class="col-full">
-      <div class="section-label">Июнь — Август</div>
+      <div class="section-label">${MON[Number(periodStart.split("-")[1])-1]} — ${MON[Number(periodEnd.split("-")[1])-1]}</div>
       ${histHTML}
       <div class="auto-save">v${VERSION} · ${BUILD} · Данные живут в этом браузере.</div>
     </div>
