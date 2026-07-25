@@ -321,6 +321,15 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .dash-dow{font-size:13px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
 .dash-date-txt{font-size:20px;font-weight:800;color:#F5F5F7;line-height:1.1}
 .dash-lunar{font-size:11px;color:#A78BFA;font-weight:600;margin-top:3px;line-height:1.3}
+/* Детальная погода: строка на каждую из 4 точек дня. */
+.wx-grid{display:flex;flex-direction:column;gap:4px}
+.wx-row{padding:6px 0;border-top:1px solid #16161C}
+.wx-row:first-child{border-top:none}
+.wx-top{display:flex;align-items:center;gap:10px}
+.wx-h{flex:0 0 46px;color:#38BDF8;font-weight:700;font-family:ui-monospace,Menlo,monospace;font-size:12.5px}
+.wx-t{flex:0 0 44px;color:#F5F5F7;font-weight:800;font-size:14px}
+.wx-c{flex:1;color:#A1A1AA;font-size:12.5px}
+.wx-det{padding-left:56px;margin-top:2px;font-size:11.5px;color:#8B8B95;line-height:1.5}
 .dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
 .dash-stat-block{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .dash-stat-block.right{align-items:flex-end;text-align:right}
@@ -458,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.79.0";
+const VERSION="0.80.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -951,7 +960,7 @@ let days=loadDays();
 if(loadState.ok&&!loadState.corrupt&&Object.keys(days).length)makeSnapshot();
 let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="",offSchedOpen=false;
 // По умолчанию ВСЕ блоки свёрнуты — чище, меньше визуального шума, пользователь открывает нужное сам.
-let catOpen={din:0,regime:0,health:0,delo:0,home:0,state:0,guard:0,reflect:0};
+let catOpen={din:0,regime:0,health:0,delo:0,home:0,state:0,weather:0,guard:0,reflect:0};
 let taOpen={};
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
@@ -1188,18 +1197,35 @@ function wxManualHTML(k){
   }).join("");
   return `<div class="meas-card" style="margin-top:6px"><div style="font-size:11.5px;color:#A1A1AA;margin-bottom:4px">Впиши погоду сам — 4 точки дня. Работает без интернета.</div>${rows}</div>`;
 }
-function weatherLineHTML(k){
-  const t=weatherTxt(k),w=getWeather(k);
-  const editBtn=`<u style="color:#6B6B75;cursor:pointer;margin-left:6px" onclick="wxManual=!wxManual;render()">✎ вписать вручную</u>`;
-  const summary=weatherSummaryTxt(w);
-  const sumLine=summary?`<div style="font-size:11px;color:#8B8B95;padding:1px 2px 4px;line-height:1.6">${summary}</div>`:"";
-  let line;
-  if(t)line=`<div style="font-size:11px;color:#A1A1AA;padding:4px 2px 1px;line-height:1.7">🌡 ${t}${(w&&w.manual)?' <span style="color:#FBBF24">· вручную</span>':(w&&!w.done)?' <span style="color:#6B6B75">· уточнится к вечеру</span>':""} <u style="color:#6B6B75;cursor:pointer" onclick="weatherRefresh('${k}')">↻</u>${editBtn}</div>${sumLine}`;
-  else if(k>todayKey())line=`<div style="font-size:11px;color:#6B6B75;padding:4px 2px">🌡 Погода: —</div>`;
-  else if(weatherPending[k])line=`<div style="font-size:11px;color:#6B6B75;padding:4px 2px">🌡 Погода: загрузка…${editBtn}</div>`;
-  else if(weatherFailed[k])line=`<div style="font-size:11px;color:#FBBF24;padding:4px 2px;line-height:1.6">🌡 Погода не загрузилась. <u style="cursor:pointer" onclick="weatherRefresh('${k}')">повторить</u>${editBtn}</div>`;
-  else line=`<div style="font-size:11px;color:#6B6B75;padding:4px 2px">🌡 Погода: пока не загрузилась ${editBtn}</div>`;
-  return line+(wxManual?wxManualHTML(k):"");
+// Короткая «шапка-плашка» для свёрнутого блока погоды: диапазон температур + иконка дня.
+function weatherChip(k){
+  const w=getWeather(k);if(!w||!Array.isArray(w.t))return "";
+  const ts=w.t.filter(x=>x!=null).map(Number).filter(Number.isFinite);
+  if(!ts.length)return weatherPending[k]?"загрузка…":"";
+  const mn=Math.min(...ts),mx=Math.max(...ts);
+  const codes=(w.c||[]).filter(x=>x!=null);const worst=codes.length?Math.max(...codes):null;
+  return (mn===mx?mn:mn+"–"+mx)+"° "+(worst!=null?wmoLabel(worst).replace(/[а-яё]+/gi,"").trim():"");
+}
+// Детальная погода: по 4 точкам дня — t°, состояние, влажность, облачность, ветер, давление, осадки.
+function weatherDetailHTML(k){
+  const w=getWeather(k);
+  const editBtn=`<u style="color:#6B6B75;cursor:pointer" onclick="wxManual=!wxManual;render()">✎ вручную</u>`;
+  const refBtn=`<u style="color:#6B6B75;cursor:pointer;margin-right:8px" onclick="weatherRefresh('${k}')">↻ обновить</u>`;
+  if(!w){
+    let msg="пока не загрузилась";
+    if(k>todayKey())msg="—";
+    else if(weatherPending[k])msg="загрузка…";
+    else if(weatherFailed[k])msg=`не загрузилась · <u style="cursor:pointer;color:#FBBF24" onclick="weatherRefresh('${k}')">повторить</u>`;
+    return `<div style="font-size:12.5px;color:#A1A1AA;padding:2px">🌡 Погода: ${msg} &nbsp;${editBtn}</div>${wxManual?wxManualHTML(k):""}`;
+  }
+  const rows=w.h.map((hh,i)=>{
+    const t=w.t[i],c=w.c[i],rh=w.rh?w.rh[i]:null,cc=w.cc?w.cc[i]:null,p=w.p?w.p[i]:null,ws=w.ws?w.ws[i]:null,pr=w.pr?w.pr[i]:null;
+    const det=[rh!=null?"💧"+rh+"%":"",cc!=null?"☁️"+cc+"%":"",ws!=null?"🌬"+ws+"км/ч":"",p!=null?"🔽"+p+"гПа":"",(pr!=null&&pr>0)?"🌧"+pr+"мм":""].filter(Boolean).join(" · ");
+    return `<div class="wx-row"><div class="wx-top"><span class="wx-h">${hh}</span><span class="wx-t">${t!=null?t+"°":"—"}</span><span class="wx-c">${wmoLabel(c)}</span></div>${det?`<div class="wx-det">${det}</div>`:""}</div>`;
+  }).join("");
+  const flag=(w.manual)?' · <span style="color:#FBBF24;font-size:11px">вручную</span>':(!w.done)?' <span style="color:#6B6B75;font-size:11px">· уточнится к вечеру</span>':"";
+  return `<div><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px"><span style="font-size:12px;color:#A1A1AA">Ужгород${flag}</span><span style="font-size:11px">${refBtn}${editBtn}</span></div>
+    <div class="wx-grid">${rows}</div>${wxManual?wxManualHTML(k):""}</div>`;
 }
 function qualityHTML(it,day){const q=day.quality?.[it.id];return `<div class="q-row"><button class="q-btn good${q==="good"?" on":""}" onclick="setQuality('${it.id}','good')">Качественно</button><button class="q-btn meh${q==="meh"?" on":""}" onclick="setQuality('${it.id}','meh')">Так себе</button></div>`;}
 function setQuality(id,v){const d=getDay();const cur=d.quality?.[id];setDay({quality:{...d.quality,[id]:cur===v?undefined:v}});}
@@ -1607,9 +1633,16 @@ function changeSup(id,n){
 function setSupTime(id,i,v){const d=getDay();const L=[...(d.supsLog||[])];const idx=L.map((x,j)=>[x,j]).filter(([x])=>x.id===id)[i];if(!idx)return;L[idx[1]]={...L[idx[1]],t:v};setDay({supsLog:L});}
 function delSupDose(id,i){const d=getDay();const L=[...(d.supsLog||[])];const idx=L.map((x,j)=>[x,j]).filter(([x])=>x.id===id)[i];if(!idx)return;L.splice(idx[1],1);setDay({supsLog:L,sups:supSums(L)});}
 function setSupTotal(id,v,step){
+  // «Итог за день» = ВСЕГО за день. Отметки по времени НЕ удаляем — они остаются, а «итогом без
+  // времени» пишем только остаток (итог − сумма по времени). Так точечные приёмы не затираются.
   const total=clampNum(v,0,100000);const d=getDay();
-  const L=(d.supsLog||[]).filter(x=>x.id!==id);
-  if(total>0)L.push({t:"",id,n:total});
+  const all=d.supsLog||[];
+  const timed=all.filter(x=>x.id===id&&x.t);          // приёмы по времени — сохраняем
+  const others=all.filter(x=>x.id!==id);              // записи других БАДов
+  const sumTimed=timed.reduce((a,x)=>a+(Number(x.n)||0),0);
+  const rem=Math.max(0,total-sumTimed);               // остаток без времени
+  const L=[...others,...timed];
+  if(rem>0)L.push({t:"",id,n:rem});
   setDay({supsLog:L,sups:supSums(L)});
 }
 function supTimesHTML(day,id,unit){
@@ -1864,7 +1897,7 @@ function collapTa(f,label,ph,day){
   return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
-const BLOCK_ACCENT={din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",guard:"#F87171",reflect:"#86EFAC"};
+const BLOCK_ACCENT={din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
   const ac=BLOCK_ACCENT[id]||"#1B1B26";
@@ -1946,8 +1979,10 @@ function blocksHTML(day,wd){
       return h;
     }));
   }
-  // 7) 🛡️ Защита (блокировки) теперь целиком в шапке (guardWidgetHTML) — отдельного блока нет.
-  // 8) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
+  // 7) 🌡 Погода — детальная (t°, влажность, облачность, ветер, давление, осадки) по 4 точкам дня.
+  push("weather",blockShell("weather","🌡 Погода",weatherChip(sel),()=>weatherDetailHTML(sel)));
+  // 8) 🛡️ Защита (блокировки) теперь целиком в шапке (guardWidgetHTML) — отдельного блока нет.
+  // 9) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
   push("reflect",blockShell("reflect","📒 Дневник","",()=>{
     return collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
       +collapTa("analysis","Анализ (мысли, эмоции, наблюдения)","что чувствовал и заметил",day)
@@ -1959,7 +1994,7 @@ function blocksHTML(day,wd){
 }
 // Раскладка блоков: мобайл — один поток в порядке; десктоп — два фиксированных столбца,
 // каждый блок всегда на своём месте (левый: вера/здоровье/быт; правый: ритуалы/дело/состояние/дневник).
-const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","reflect"];
+const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","weather","reflect"];
 function layoutBlocks(blocks,mode){
   if(mode!=="desktop")return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
   const pick=ids=>ids.map(id=>{const b=blocks.find(x=>x[0]===id);return b?b[1]:"";}).join("");
@@ -2427,6 +2462,17 @@ function fieldTimes(d){
   for(const f in b){if(MERGE_SKIP.has(f)||grouped.has(f))continue;if(JSON.stringify(d[f])!==JSON.stringify(b[f]))setIf(f);}
   return t;
 }
+// Объединение массивов-логов при слиянии устройств. Ключ — ПОЛНОЕ содержимое записи (у логов нет
+// уникального row-id: поле id у БАДов = тип БАДа, а не строки). Одинаковые записи схлопываются в
+// одну, разные — сохраняются ОБЕ. Так обед с телефона и ужин с ноута оба живут, ничего не теряется.
+function mergeArr(a,b){
+  const A=Array.isArray(a)?a:[],B=Array.isArray(b)?b:[];
+  const key=x=>{try{return JSON.stringify(x);}catch(e){return String(x);}};
+  const seen=new Set(),out=[];
+  for(const x of A){const k=key(x);if(seen.has(k))continue;seen.add(k);out.push(x);}
+  for(const x of B){const k=key(x);if(seen.has(k))continue;seen.add(k);out.push(x);}
+  return out;
+}
 function mergeDayDeep(local,imp){
   if(!local)return imp||blankDay();
   if(!imp)return local;
@@ -2454,8 +2500,33 @@ function mergeDayDeep(local,imp){
   for(const id of new Set([...K(L.quality),...K(I.quality)])){const S=win("q:"+id)==='I'?I:L;if(S.quality&&id in S.quality)out.quality[id]=S.quality[id];}
   out.opts={};
   for(const id of new Set([...K(L.opts),...K(I.opts)])){const S=win("o:"+id)==='I'?I:L;if(S.opts&&id in S.opts)out.opts[id]=S.opts[id];}
-  // Группы (water, meas, sups, …): вся группа едет от одного победителя.
-  for(const g in MERGE_GROUPS){const S=win(g)==='I'?I:L;for(const f of MERGE_GROUPS[g])out[f]=S[f];}
+  // Группы. Массивы-логи (еда, замеры, БАДы, вода, смены, траты, прокрастинация) ОБЪЕДИНЯЕМ по
+  // записям, а не перезаписываем целиком: обед с телефона + ужин с ноута теперь оба сохраняются.
+  // Производные скаляры (water, sups, замеры) пересчитываются из объединённого лога.
+  for(const g in MERGE_GROUPS){
+    const wI=win(g)==='I',S=wI?I:L,O=wI?L:I;
+    if(g==="meals"){out.meals=mergeArr(L.meals,I.meals,wI);}
+    else if(g==="spends"){out.spends=mergeArr(L.spends,I.spends,wI);}
+    else if(g==="work"){out.workLog=mergeArr(L.workLog,I.workLog,wI);}
+    else if(g==="proc"){out.procLog=mergeArr(L.procLog,I.procLog,wI);}
+    else if(g==="water"){
+      out.waterLog=mergeArr(L.waterLog,I.waterLog,wI);
+      const sum=(out.waterLog||[]).reduce((a,x)=>a+(Number(x.ml)||0),0);
+      out.water=Math.max(sum,Number(L.water)||0,Number(I.water)||0);
+    }
+    else if(g==="sups"){
+      out.supsLog=mergeArr(L.supsLog,I.supsLog,wI);
+      const fromLog=supSums(out.supsLog),res={},ids=new Set([...Object.keys(L.sups||{}),...Object.keys(I.sups||{}),...Object.keys(fromLog)]);
+      for(const id of ids){const v=Math.max(Number((L.sups||{})[id])||0,Number((I.sups||{})[id])||0,Number(fromLog[id])||0);if(v>0)res[id]=v;}
+      out.sups=res;
+    }
+    else if(g==="meas"){
+      out.measLog=mergeArr(L.measLog,I.measLog,wI);
+      const sc=measScalars(out.measLog);
+      for(const f of MERGE_GROUPS.meas){if(f==="measLog")continue;const scv=sc?sc[f]:"";out[f]=(scv!==""&&scv!=null)?scv:((S[f]!==""&&S[f]!=null)?S[f]:O[f]);}
+    }
+    else{for(const f of MERGE_GROUPS[g])out[f]=S[f];} // charge, weather — целиком от победителя
+  }
   // Хронология (log): берём более длинную сторону — записи только добавляются.
   out.log=((I.log||[]).length>=(L.log||[]).length)?I.log:L.log;
   // Остальные скалярные поля — по своей метке.
