@@ -340,8 +340,23 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .ci-chip.on .ci-tm{color:#818CF8}
 .dash-guard-status{width:100%;margin-top:10px;padding:10px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .gd-ic{font-size:13px;flex:0 0 auto}
-.gd-chips{display:flex;gap:10px;flex-wrap:wrap}
+.gd-chips{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .gd-chip{font-size:12.5px;font-weight:700;white-space:nowrap}
+/* Развёрнутая панель управления защитой прямо в шапке. */
+.guard-panel{margin-top:8px;padding:11px 12px;border-radius:12px;background:#101017;border:1px solid #1B1B26;display:flex;flex-direction:column;gap:8px}
+.guard-row{display:flex;align-items:center;gap:9px;padding:8px 0;border-top:1px solid #1B1B26;flex-wrap:wrap}
+.guard-row:first-child{border-top:none}
+.guard-row.exp{background:rgba(224,121,91,.06);border-radius:8px;padding:8px 8px}
+.gr-ic{font-size:16px;flex:0 0 auto}
+.gr-main{flex:1 1 120px;min-width:120px;font-size:13.5px;color:#F5F5F7;line-height:1.35}
+.gr-sub{font-size:11px;font-weight:700}
+.gr-btns{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.gr-b{padding:6px 9px;border-radius:9px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12px;font-weight:700}
+.gr-dt{flex:0 0 auto;width:150px;font-size:11.5px;padding:6px 7px}
+.gr-x{width:32px;height:32px;border-radius:9px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:13px;flex:0 0 auto}
+.gr-x.armed{background:#F87171;border-color:#F87171;color:#fff}
+.guard-add{border-top:1px solid #1B1B26;padding-top:9px}
+.guard-reason{background:rgba(224,121,91,.08);border:1px solid #4A2020;border-radius:11px;padding:11px}
 .dash-week{margin-top:16px}
 .dash-week-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
 .wk-row{display:flex;align-items:flex-end;gap:5px;height:26px}
@@ -429,7 +444,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.75.0";
+const VERSION="0.76.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1233,19 +1248,87 @@ function checkinStatusHTML(day){
   }).join("");
   return `<div class="dash-checkins">${chips}</div>`;
 }
-// Компактный статус блокировок в шапке — по тому же принципу, что и намаз: полное
-// управление (продление/снятие с причиной/каталог) живёт только в блоке «Защита»,
-// здесь — только «сколько осталось», без дублирования интерактива. Пусто — не показываем.
-function guardStatusHTML(){
-  const list=meta.blockers||[];
-  if(!list.length)return "";
-  const chips=list.map(b=>{
-    const ms=blockerMsLeft(b.until);const st=blockerStatus(ms/86400000);
-    return `<span class="gd-chip" style="color:${st.c}">${String(b.name||"?").replace(/</g,"&lt;")} ${blockerFmtShort(ms)}</span>`;
-  }).join("");
-  return `<button class="dash-guard-status" onclick="jumpToGuard()"><span class="gd-ic">🛡</span><span class="gd-chips">${chips}</span></button>`;
+// === Защита (блокировки) — целиком в шапке, отдельного блока «Защита» больше нет. ===
+// Компактно: чипы с именем и остатком; тап разворачивает управление (продлить/дата/снять/добавить).
+// «Журнал причин» пользователю НЕ показывается — причина молча пишется в meta.blockerLog и уходит
+// в отчёт (её вижу я). При снятии/истечении спрашивается ОДНА общая причина на все затронутые.
+let guardOpen=0,blockersToRemove=[],removeReason="";
+function escH(s){return String(s==null?"":s).replace(/</g,"&lt;");}
+function escA(s){return String(s==null?"":s).replace(/"/g,"&quot;");}
+function guardToggle(){guardOpen=!guardOpen;render();}
+function armRemove(id){if(!blockersToRemove.includes(id))blockersToRemove=[...blockersToRemove,id];guardOpen=1;render();}
+function cancelRemoveAll(){blockersToRemove=[];removeReason="";render();}
+function confirmRemoveAll(){
+  const r=(removeReason||"").trim();
+  if(!r){toast("Напиши коротко причину — в этом весь смысл");return;}
+  const affected=blockersToRemove.map(id=>(meta.blockers||[]).find(x=>x.id===id)).filter(Boolean);
+  if(affected.length){
+    const anyExp=affected.some(b=>blockerMsLeft(b.until)<=0);
+    // Одна общая запись на все затронутые блокировки (как и просил пользователь).
+    const rec={t:new Date().toISOString().slice(0,19).replace("T"," "),name:affected.map(b=>b.name||"(без названия)").join(", "),action:anyExp?"истекла / не продлена":"снята раньше времени",reason:r};
+    meta.blockerLog=[rec,...(meta.blockerLog||[])].slice(0,80);
+    const ids=new Set(blockersToRemove);
+    meta.blockers=(meta.blockers||[]).filter(x=>!ids.has(x.id));
+    saveMeta();
+  }
+  blockersToRemove=[];removeReason="";vib(12);toast("Записано");render();
 }
-function jumpToGuard(){catOpen.guard=true;animBlock="guard";render();setTimeout(()=>{const el=document.getElementById("blk-guard");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
+function guardReasonHTML(){
+  if(!blockersToRemove.length)return "";
+  const names=blockersToRemove.map(id=>{const b=(meta.blockers||[]).find(x=>x.id===id);return b?b.name:"";}).filter(Boolean).join(", ");
+  return `<div class="guard-reason">
+    <div class="field-label" style="color:#F87171;margin-bottom:6px">Снимаешь защиту: <b>${escH(names)}</b>. Почему? Это важно — уйдёт в отчёт.</div>
+    <textarea class="field-ta" style="min-height:64px" placeholder="коротко: что произошло, почему снимаешь / не продлеваешь" oninput="removeReason=this.value">${escH(removeReason)}</textarea>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="backup-btn" style="border-color:#F87171;color:#F87171" onclick="confirmRemoveAll()">Записать и снять</button><button class="backup-btn" onclick="cancelRemoveAll()">Отмена</button></div>
+  </div>`;
+}
+function guardRowsHTML(){
+  const list=meta.blockers||[];
+  if(!list.length)return `<div class="muted-note" style="padding:4px 2px">Активной защиты нет. Добавь ниже.</div>`;
+  return list.map(b=>{
+    const ms=blockerMsLeft(b.until);const st=blockerStatus(ms/86400000);const armed=blockersToRemove.includes(b.id);
+    const icon=PLATFORM_ICON[b.platform]||"🛡";
+    const dlTxt=ms>=0?`осталось ${blockerFmtLeft(ms)}`:`истекла ${blockerFmtLeft(ms)} назад`;
+    return `<div class="guard-row${ms<=0?" exp":""}">
+      <span class="gr-ic">${icon}</span>
+      <span class="gr-main"><b>${escH(b.name||"без названия")}</b><br><span class="gr-sub" style="color:${st.c}">${st.lbl} · ${dlTxt}</span></span>
+      <div class="gr-btns">
+        <button class="gr-b" onclick="extendBlocker('${b.id}',7)">+7д</button>
+        <button class="gr-b" onclick="extendBlocker('${b.id}',30)">+30д</button>
+        <input type="datetime-local" class="gr-dt" value="${escA(b.until||'')}" onchange="setBlocker('${b.id}','until',this.value)" title="Точная дата и время окончания">
+        <button class="gr-x${armed?' armed':''}" onclick="armRemove('${b.id}')" title="Снять защиту">✕</button>
+      </div>
+    </div>`;
+  }).join("");
+}
+function guardAddHTML(){
+  const isOther=(blDraft.app||"appblock")==="other";
+  return `<div class="guard-add">
+    <div class="field-label" style="margin-bottom:4px">Добавить защиту</div>
+    <div class="field-row">
+      <div class="field-item"><select class="pt-sel" onchange="blDraft.app=this.value;render()">${BLOCKER_APPS.map(([id,name,,icon])=>`<option value="${id}"${blDraft.app===id?" selected":""}>${icon} ${name}</option>`).join("")}</select></div>
+      ${isOther?`<div class="field-item"><input placeholder="название" value="${escA(blDraft.customName||"")}" oninput="blDraft.customName=this.value"></div>`:""}
+    </div>
+    <div class="field-row" style="align-items:flex-end;margin-top:6px">
+      <div class="field-item"><div class="field-label">До какой даты и времени</div><input type="datetime-local" value="${escA(blDraft.until||"")}" onchange="blDraft.until=this.value"></div>
+      <button class="task-add" style="flex:0 0 44px" onclick="saveBlocker()">+</button>
+    </div>
+  </div>`;
+}
+function guardWidgetHTML(){
+  const list=meta.blockers||[];
+  const expired=list.filter(b=>blockerMsLeft(b.until)<=0);
+  // Если что-то истекло или ждёт причины — держим панель раскрытой, чтобы человек принял решение.
+  const open=!!guardOpen||expired.length>0||blockersToRemove.length>0;
+  if(!list.length&&!open){
+    return `<button class="dash-guard-status" onclick="guardOpen=1;render()"><span class="gd-ic">🛡</span><span class="np-sub">Защита — добавить</span><span style="margin-left:auto;color:#6B6B75;font-size:18px">＋</span></button>`;
+  }
+  const chips=list.map(b=>{const ms=blockerMsLeft(b.until);const st=blockerStatus(ms/86400000);return `<span class="gd-chip" style="color:${st.c}">${escH(b.name||"?")} ${blockerFmtShort(ms)}</span>`;}).join("");
+  const warn=expired.length?' <span style="color:#F87171">· истекла</span>':"";
+  const header=`<button class="dash-guard-status" onclick="guardToggle()"><span class="gd-ic">🛡</span><span class="gd-chips">${chips||'<span class="np-sub">Защита</span>'}${warn}</span><span style="margin-left:auto;color:#6B6B75">${open?"▲":"▼"}</span></button>`;
+  if(!open)return header;
+  return header+`<div class="guard-panel">${guardReasonHTML()}${guardRowsHTML()}${guardAddHTML()}</div>`;
+}
 function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
   // Два концентрических кольца: внешнее — % обязательного (главная метрика, крупная
   // цифра в центре), внутреннее — % желательного. Раньше было одно кольцо с декоративным
@@ -1280,7 +1363,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
     </div>
     ${namazStatusHTML(day)}
     ${checkinStatusHTML(day)}
-    ${guardStatusHTML()}
+    ${guardWidgetHTML()}
     ${weekBarsHTML(r)}
   </div>`;
 }
@@ -1411,7 +1494,6 @@ function blockerFmtShort(ms){
 function addDaysDT(dtStr,n){const d=new Date(dtStr);d.setDate(d.getDate()+n);const p=x=>String(x).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
 function nowDT(){const d=new Date();const p=x=>String(x).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
 let blDraft={app:"appblock",customName:"",until:""};
-let delBlockerId="",delBlockerReason="",blockerLogOpen=0;
 function saveBlocker(){
   const app=BLOCKER_APPS.find(([id])=>id===(blDraft.app||"appblock"))||BLOCKER_APPS[0];
   const isOther=app[0]==="other";
@@ -1431,63 +1513,8 @@ function extendBlocker(id,days){
   });
   saveMeta();vibNice();toast("Продлено на "+days+" дн.");render();
 }
-function askDelBlocker(id){delBlockerId=id;delBlockerReason="";render();}
-function cancelDelBlocker(){delBlockerId="";delBlockerReason="";render();}
-function confirmDelBlocker(){
-  const id=delBlockerId;const b=(meta.blockers||[]).find(x=>x.id===id);
-  if(!b)return;
-  const reason=(delBlockerReason||"").trim();
-  if(!reason){toast("Напиши коротко причину — в этом весь смысл");return;}
-  const dl=blockerDaysLeft(b.until);
-  const rec={t:new Date().toISOString().slice(0,19).replace("T"," "),name:b.name||"(без названия)",action:dl>0?"снята раньше времени":"не продлена вовремя",reason};
-  meta.blockerLog=[rec,...(meta.blockerLog||[])].slice(0,60);
-  meta.blockers=(meta.blockers||[]).filter(x=>x.id!==id);
-  saveMeta();delBlockerId="";delBlockerReason="";vib(10);render();
-}
-function blockerLogHTML(){
-  const L=meta.blockerLog||[];
-  const head=`<button class="log-head" style="padding:9px 2px" onclick="blockerLogOpen=!blockerLogOpen;render()"><span>🗒 Журнал причин</span><span style="color:#6B6B75;font-weight:600">${L.length} · ${blockerLogOpen?"▾":"▸"}</span></button>`;
-  if(!blockerLogOpen)return head;
-  const cap=`<div style="font-size:11px;color:#6B6B75;padding:2px 2px 6px">Пишется само, когда снимаешь защиту раньше срока (кнопка ✕ у блокировки) — сюда вписывать ничего не нужно.</div>`;
-  const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t" style="flex:0 0 84px;font-size:11px">${x.t.slice(5,16)}</span><span class="log-e"><b>${String(x.name).replace(/</g,"&lt;")}</b> — ${x.action}: ${String(x.reason).replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Пока пусто — и пусть будет пусто.</div>`;
-  return head+cap+rows;
-}
-function blockersHTML(){
-  const list=meta.blockers||[];
-  const rows=list.map(b=>{
-    if(delBlockerId===b.id){
-      return `<div class="meas-card" style="margin-top:8px;border:1px solid #4A2020">
-        <div class="field-label">Почему снимаешь защиту «${String(b.name||"").replace(/</g,"&lt;")}» раньше срока?</div>
-        <textarea class="field-ta" style="min-height:70px" placeholder="напр. показалось, что уже всё под контролем" oninput="delBlockerReason=this.value">${(delBlockerReason||"").replace(/</g,"&lt;")}</textarea>
-        <div style="display:flex;gap:8px;margin-top:8px"><button class="backup-btn" style="border-color:#F87171;color:#F87171" onclick="confirmDelBlocker()">Снять и записать</button><button class="backup-btn" onclick="cancelDelBlocker()">Отмена</button></div>
-      </div>`;
-    }
-    const ms=blockerMsLeft(b.until);const st=blockerStatus(ms/86400000);
-    const plIcon=PLATFORM_ICON[b.platform]||"🛡";
-    const dlTxt=ms>=0?`Осталось: ${blockerFmtLeft(ms)}`:`Истекла ${blockerFmtLeft(ms)} назад`;
-    return `<div class="mrow" style="align-items:center;flex-wrap:wrap">
-      <span style="flex:0 0 22px;font-size:15px">${plIcon}</span>
-      <span class="mlog-v" style="flex:1;min-width:120px"><b style="color:#F5F5F7">${String(b.name||"без названия").replace(/</g,"&lt;")}</b><br><span style="font-size:11px;color:#6B6B75">${dlTxt}</span></span>
-      <span style="font-size:11.5px;font-weight:700;color:${st.c};flex:0 0 auto">${st.lbl}</span>
-      <button class="backup-btn" style="flex:0 0 auto;padding:6px 10px;font-size:12px" onclick="extendBlocker('${b.id}',7)">+7 дн</button>
-      <button class="task-del" style="flex:0 0 34px" onclick="askDelBlocker('${b.id}')">✕</button>
-    </div>`;
-  }).join("");
-  const soon=list.filter(b=>{const dl=blockerDaysLeft(b.until);return dl>=1&&dl<=2;});
-  const alertLine=soon.length?`<div class="banner banner-warn"><b>⚠ Через ${soon.map(b=>blockerFmtShort(blockerMsLeft(b.until))).join("/")} истекает защита: ${soon.map(b=>String(b.name||"блок").replace(/</g,"&lt;")).join(", ")}.</b><div style="font-size:12px;margin-top:4px">Продли сейчас, пока есть самоконтроль.</div></div>`:"";
-  const isOther=(blDraft.app||"appblock")==="other";
-  const form=`<div style="border-top:1px solid #1B1B26;margin-top:10px;padding-top:10px;display:flex;flex-direction:column;gap:8px">
-    <div class="field-row">
-      <div class="field-item"><div class="field-label">Приложение</div><select class="pt-sel" onchange="blDraft.app=this.value;render()">${BLOCKER_APPS.map(([id,name,,icon])=>`<option value="${id}"${blDraft.app===id?" selected":""}>${icon} ${name}</option>`).join("")}</select></div>
-      ${isOther?`<div class="field-item"><div class="field-label">Название</div><input placeholder="напр. Freedom" value="${String(blDraft.customName||"").replace(/"/g,"&quot;")}" oninput="blDraft.customName=this.value"></div>`:""}
-    </div>
-    <div class="field-row" style="align-items:flex-end">
-      <div class="field-item"><div class="field-label">До какой даты и минуты</div><input type="datetime-local" value="${blDraft.until||""}" onchange="blDraft.until=this.value"></div>
-      <button class="task-add" style="flex:0 0 44px" onclick="saveBlocker()">+</button>
-    </div>
-  </div>`;
-  return `${alertLine}${rows||'<div class="muted-note" style="padding:4px 0">Блокировок нет. Добавь, если используешь AppBlock / Blocker Hero / Cold Turkey — правило безопасной зоны 5+ дней.</div>'}${form}${blockerLogHTML()}`;
-}
+// Управление блокировками полностью переехало в шапку (guardWidgetHTML и его помощники выше).
+// Старый блок «Защита» и видимый «журнал причин» удалены; причина пишется в meta.blockerLog скрыто.
 // Главный экран: сворачиваемый блок, активные БАДы + свёрнутый архив «на паузе». Без формы/удаления.
 function supsLoggingHTML(day){
   const all=[...SUPS.map(([id,label,step,unit])=>({id,label,step,unit,sub:""})),...(meta.userSups||[]).map(u=>({id:u.id,label:u.name,step:Number(u.step)||1,unit:u.unit||"мг",sub:[u.brand,u.time&&("приём "+u.time),u.comp].filter(Boolean).join(" · ")}))];
@@ -1834,13 +1861,7 @@ function blocksHTML(day,wd){
       return h;
     }));
   }
-  // 7) 🛡️ Защита — трекер блокировок (не по дням, длящееся состояние; см. блок выше функции).
-  {
-    const bl=meta.blockers||[];
-    const greenN=bl.filter(b=>blockerDaysLeft(b.until)>=5).length;
-    const warnGuard=bl.some(b=>blockerDaysLeft(b.until)<5);
-    push("guard",blockShell("guard","🛡️ Защита",bl.length?cntChip(greenN,bl.length,warnGuard):"",()=>blockersHTML(),warnGuard));
-  }
+  // 7) 🛡️ Защита (блокировки) теперь целиком в шапке (guardWidgetHTML) — отдельного блока нет.
   // 8) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
   push("reflect",blockShell("reflect","📒 Дневник","",()=>{
     return collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
@@ -1853,7 +1874,7 @@ function blocksHTML(day,wd){
 }
 // Раскладка блоков: мобайл — один поток в порядке; десктоп — два фиксированных столбца,
 // каждый блок всегда на своём месте (левый: вера/здоровье/быт; правый: ритуалы/дело/состояние/дневник).
-const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","guard","reflect"];
+const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","reflect"];
 function layoutBlocks(blocks,mode){
   if(mode!=="desktop")return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
   const pick=ids=>ids.map(id=>{const b=blocks.find(x=>x[0]===id);return b?b[1]:"";}).join("");
