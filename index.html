@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.80.0";
+const VERSION="0.81.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -526,8 +526,10 @@ const CATEGORIES=[
  ]},
  {id:"work",name:"Работа",items:[
    {id:"crypto",label:"Криптопроект (+3)",type:"ob",q:true,pts:3},
-   {id:"bizacc",label:"🏢 Работа (+3)",type:"ob",q:true,pts:3,opts:[{k:"what",o:[["drive","вождение"],["acc","учёт бизнеса отца"],["repair","ремонт машины"]]}]},
+   {id:"bizacc",label:"Учёт бизнеса отца (+3)",type:"ob",q:true,pts:3},
    {id:"accounting",label:"Бухгалтерия (+3)",type:"ob",q:true,pts:3},
+   {id:"drive",label:"🚗 Вождение",type:"fact",pts:1},
+   {id:"repair",label:"🔧 Ремонт машины",type:"fact",pts:2},
  ]},
  {id:"body",name:"Тело",items:[
    {id:"workout",label:"ММА / тренировка (+5)",type:"ob",sched:[1,3,5],pts:5,pen:1},
@@ -571,7 +573,9 @@ const CATEGORIES=[
    {id:"talk",label:"Живое общение (разговор)",type:"des",pts:1,opts:[{k:"who",o:[["m","мужчины"],["f","женщины"],["both","оба"]]}]},
  ]},
  {id:"edu",name:"Обучение",items:[
-   {id:"math",label:"Математика",type:"ob",pts:3},
+   {id:"math_logic",label:"Математика: Логика",type:"des",pts:1},
+   {id:"math_calc",label:"Математика: Вычисления",type:"des",pts:1},
+   {id:"math_theory",label:"Математика: Теория и концепты",type:"des",pts:1},
    {id:"arabic",label:"Арабский",type:"des",pts:3},
    {id:"islamedu",label:"Исламское образование",type:"des",pts:3},
    {id:"grammar",label:"Грамматика",type:"des",pts:2},
@@ -590,7 +594,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",complaints:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipCount:0,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",mainTime:"",block:"",blockTime:"",seq:"",seqTime:"",extract:"",extractTime:"",analysis:"",analysisTime:"",complaints:"",complaintsTime:"",healthComplaints:"",healthComplaintsTime:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -629,7 +633,7 @@ function dayComplete(day){if(!day)return false;for(const p of PRAYERS){if(!day.p
 function dayTouched(d){if(!d)return false;if(d.items&&Object.values(d.items).some(Boolean))return true;if(d.prayers&&Object.values(d.prayers).some(Boolean))return true;if(d.water>0)return true;if(d.slip||d.onTime||d.bounced||d.urge)return true;if(d.energy!==""&&d.energy!=null)return true;if(d.drift!==""&&d.drift!=null)return true;if(d.main||d.block||d.seq||d.extract||d.analysis||d.mark||d.poop||d.income||d.weight||d.pulse||d.bpSys||d.sleepDown||d.sleepUp)return true;if(d.sups&&Object.values(d.sups).some(v=>v>0))return true;if((d.workLog&&d.workLog.length)||(d.meals&&d.meals.length))return true;return false;}
 const PENALTY_FROM="2026-07-09";
 const HIST_FLOOR="2026-06-01";
-const TRACK_START="2026-06-25";
+const TRACK_START="2026-07-26";
 // Пропущенный день = ПРОШЛЫЙ день (строго до сегодня) в диапазоне ведения, где заполнено
 // МЕНЬШЕ 5 ОТДЕЛЬНЫХ ОТВЕТОВ (галочки, намазы, ползунки, поля, записи логов — поштучно).
 // Текущий и будущие дни НИКОГДА не помечаются — чтобы не ломать ввод за сегодня.
@@ -683,7 +687,13 @@ function dayMoney(day,k){
   // Никакой завязки на days[k+1] и штрафов задним числом — это плодило баги LWW-синхронизации.
   let m=0;
   if(!day)return r2(m);
-  if(day.slip&&day.bounced)m+=2;else if(!day.slip&&dayTouched(day))m+=1;
+  // Психология: бонус дисциплины (+1) — ТОЛЬКО за день без срывов. За каждый срыв — штраф −2.
+  // Никакого поощрения «отбился/исправился» (это было дофаминовой ловушкой). Планового вечернего
+  // срыва (осознанный шаг) штраф не касается.
+  const sc=Math.max(Number(day.slipCount)||0, day.slip?1:0);
+  const realSlips=(day.slipType==="planned")?0:sc;
+  if(sc===0&&dayTouched(day))m+=1;
+  if(realSlips>0)m-=2*realSlips;
   const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
   if(pn){m+=pn*PRAYER_PTS;if(pn===5)m+=ALL5_BONUS;}
   const closed=k&&k<todayKey()&&k>=PENALTY_FROM&&loggedSections(day)>=3;
@@ -693,7 +703,7 @@ function dayMoney(day,k){
     if(day.items?.[it.id])m+=it.pts;
     else if(closed&&it.pen&&isDue(it,wd))m-=it.pts;
   }
-  const WORK=["crypto","bizacc","accounting"];
+  const WORK=["crypto","bizacc","accounting","drive","repair"];
   if(closed&&!WORK.some(id=>day.items?.[id]))m-=3;
   m+=Number(day.bonus)||0; // бонусные баллы (напр. за продление блокировки)
   return r2(m);
@@ -760,16 +770,18 @@ function buildExport(days){
     const sleep=(d.sleepDown||d.sleepUp)?"ночь на "+k.split("-")[2].replace(/^0/,"")+"-е: "+(d.sleepDown||"?")+"–"+(d.sleepUp||"?"):"—";
     const phoneR=(d.phoneOut||d.phoneBack)?" · телефон вне комнаты "+(d.phoneOut||"?")+"–"+(d.phoneBack||"?"):"";
     let slip;
+    const _sc=Math.max(Number(d.slipCount)||0, d.slip?1:0);
     if(!dayTouched(d))slip="—";
-    else if(!d.slip)slip="нет";
+    else if(_sc===0)slip="нет";
     else{
-      if(d.slipType==="planned")slip="плановый вечерний срыв (осознанный шаг)"+(d.bounced?", отбился":"");
+      const cnt=_sc+"× срыв"+(d.slipTime?" (последний "+d.slipTime+")":"");
+      if(d.slipType==="planned")slip=cnt+" — плановый вечерний (осознанный шаг)";
       else{
         const TYP={fantasy:"Фантазии",porn:"Порно",both:"Порно + Фантазии"};
         const FIRST={porn_first:"первым: порно",fantasy_first:"первым: фантазии"};
         let det=TYP[d.slipType]||"";
         if(d.slipType==="both"&&FIRST[d.slipFirst])det+=", "+FIRST[d.slipFirst];
-        slip=(d.bounced?"был, отбился":"был → каскад")+(det?" ("+det+")":"");
+        slip=cnt+(det?" ("+det+")":"");
       }
       // B1: подтягиваем старую текстовую запись триггера, если она была заполнена до перехода на кнопки.
       const tr=String(d.slipTrigger||"").trim();
@@ -806,12 +818,14 @@ function buildExport(days){
     if(supsLine)s+="  БАДы: "+supsLine+"\n";
     const chargeLine=CHARGE_EX.filter(([k])=>Number(d.charge?.[k])>0).map(([k,l])=>l+" "+d.charge[k]).join(", ");
     if(chargeLine)s+="  Зарядка (повторения): "+chargeLine+"\n";
-    if(d.seq)s+="  События (пр/обр): "+String(d.seq).replace(/</g,"&lt;")+"\n";
-    if(d.extract)s+="  Извлёк: "+String(d.extract).replace(/</g,"&lt;")+"\n";
-    if(d.analysis)s+="  Анализ: "+String(d.analysis).replace(/</g,"&lt;")+"\n";
-    if(d.complaints)s+="  🐞 ЖАЛОБА НА ПРИЛОЖЕНИЕ: "+String(d.complaints).replace(/</g,"&lt;")+"\n";
-    if(d.main)s+="  Главное: "+String(d.main).replace(/</g,"&lt;")+"\n";
-    if(d.block)s+="  Помеха: "+String(d.block).replace(/</g,"&lt;")+"\n";
+    const tt=f=>d[f+"Time"]?" [в "+d[f+"Time"]+"]":"";
+    if(d.healthComplaints)s+="  🩺 Жалобы по здоровью"+tt("healthComplaints")+": "+String(d.healthComplaints).replace(/</g,"&lt;")+"\n";
+    if(d.seq)s+="  События (пр/обр)"+tt("seq")+": "+String(d.seq).replace(/</g,"&lt;")+"\n";
+    if(d.extract)s+="  Извлёк"+tt("extract")+": "+String(d.extract).replace(/</g,"&lt;")+"\n";
+    if(d.analysis)s+="  Анализ"+tt("analysis")+": "+String(d.analysis).replace(/</g,"&lt;")+"\n";
+    if(d.complaints)s+="  🐞 ЖАЛОБА НА ПРИЛОЖЕНИЕ"+tt("complaints")+": "+String(d.complaints).replace(/</g,"&lt;")+"\n";
+    if(d.main)s+="  Главное"+tt("main")+": "+String(d.main).replace(/</g,"&lt;")+"\n";
+    if(d.block)s+="  Помеха"+tt("block")+": "+String(d.block).replace(/</g,"&lt;")+"\n";
     if(d.waterLog&&d.waterLog.length){s+="  Вода по времени: "+d.waterLog.map(x=>x.t+" +"+(x.ml>=1000?(x.ml/1000).toFixed(1)+"л":x.ml+"мл")).join(" · ")+((d.water||0)>waterSum(d)?" · +"+(((d.water||0)-waterSum(d))/1000).toFixed(1)+"л итогом без времени":"")+"\n";}
     if(d.supsLog&&d.supsLog.length){s+="  БАДы по времени: "+d.supsLog.filter(x=>x.n>0).map(x=>(x.t?x.t:"итогом")+" "+supLabel(x.id)+" +"+x.n).join(" · ")+"\n";}
     if(d.measLog&&d.measLog.length){s+="  Замеры по времени: "+d.measLog.map(x=>x.t+" "+(MEAS_RU[x.type]||x.type)+" "+String(x.v).replace(/</g,"&lt;")+(MEAS_UNIT[x.type]||"")).join(" · ")+"\n";}
@@ -960,7 +974,7 @@ let days=loadDays();
 if(loadState.ok&&!loadState.corrupt&&Object.keys(days).length)makeSnapshot();
 let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="",offSchedOpen=false;
 // По умолчанию ВСЕ блоки свёрнуты — чище, меньше визуального шума, пользователь открывает нужное сам.
-let catOpen={din:0,regime:0,health:0,delo:0,home:0,state:0,weather:0,guard:0,reflect:0};
+let catOpen={din:0,regime:0,health:0,delo:0,home:0,state:0,guard:0,reflect:0};
 let taOpen={};
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
@@ -1102,7 +1116,7 @@ function currentMode(){if(meta.view==="mobile")return "mobile";if(meta.view==="d
 const PT_METHODS=[[3,"MWL"],[13,"Турция"],[5,"Египет"],[4,"Мекка"],[2,"ISNA"]];
 const PT_MAP={fajr:"Fajr",dhuhr:"Dhuhr",asr:"Asr",maghrib:"Maghrib",isha:"Isha"};
 let weatherPending={},weatherFailed={},weatherTried={};
-const WEATHER_HOURS=["06:00","12:00","16:00","20:00"];
+const WEATHER_HOURS=["00:00","04:00","08:00","12:00","16:00","20:00"];
 function wmoLabel(c){if(c==null)return "—";if(c===0)return "☀️ясно";if(c<=2)return "🌤малооблач";if(c===3)return "☁️пасмурно";if(c<=48)return "🌫туман";if(c<=57)return "🌦морось";if(c<=67)return "🌧дождь";if(c<=77)return "🌨снег";if(c<=82)return "🌧ливень";if(c<=86)return "🌨снег";return "⛈гроза";}
 function getWeather(k){const w=(days[k]||{}).weather;return (w&&Array.isArray(w.h)&&Array.isArray(w.t)&&Array.isArray(w.c))?w:null;}
 function putWeather(k,w){if(!days[k]&&k!==todayKey())return;const d=days[k]||blankDay();days[k]={...d,weather:w};save();}
@@ -1116,7 +1130,7 @@ function ensureWeather(dk){
   weatherPending[dk]=1;
   // Тянем не только температуру и код погоды, но и то, что реально влияет на самочувствие:
   // влажность, атм. давление, ветер, осадки. Всё по 4 точкам дня (утро/день/вечер/ночь).
-  const hourly="temperature_2m,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,precipitation,cloud_cover";
+  const hourly="temperature_2m,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,precipitation,cloud_cover,uv_index";
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${PT_LAT}&longitude=${PT_LNG}&hourly=${hourly}&timezone=Europe%2FUzhgorod&start_date=${dk}&end_date=${dk}`;
   let req;
   try{req=fetch(url);}catch(e){weatherFailed[dk]=1;delete weatherPending[dk];return;}
@@ -1124,8 +1138,8 @@ function ensureWeather(dk){
   req.then(r=>r.json()).then(j=>{
     if(j&&j.hourly&&Array.isArray(j.hourly.time)){
       const H=j.hourly,times=H.time,temp=H.temperature_2m||[],code=H.weather_code||[];
-      const rhA=H.relative_humidity_2m||[],pA=H.surface_pressure||[],wsA=H.wind_speed_10m||[],prA=H.precipitation||[],ccA=H.cloud_cover||[];
-      const out={h:WEATHER_HOURS.slice(),t:[],c:[],rh:[],p:[],ws:[],pr:[],cc:[],done:dk<todayKey()};
+      const rhA=H.relative_humidity_2m||[],pA=H.surface_pressure||[],wsA=H.wind_speed_10m||[],prA=H.precipitation||[],ccA=H.cloud_cover||[],uvA=H.uv_index||[];
+      const out={h:WEATHER_HOURS.slice(),t:[],c:[],rh:[],p:[],ws:[],pr:[],cc:[],uv:[],done:dk<todayKey()};
       let got=0;
       for(const hh of WEATHER_HOURS){
         const idx=times.findIndex(t=>String(t).slice(11,16)===hh);
@@ -1139,6 +1153,7 @@ function ensureWeather(dk){
         out.ws.push(pick(wsA,true));
         out.pr.push((idx>=0&&prA[idx]!=null)?Math.round(prA[idx]*10)/10:null);
         out.cc.push(pick(ccA,true));
+        out.uv.push((idx>=0&&uvA[idx]!=null)?Math.round(uvA[idx]*10)/10:null);
       }
       if(got>0){weatherTried[dk]=1;putWeather(dk,out);}else{weatherFailed[dk]=1;}
     }else{weatherFailed[dk]=1;}
@@ -1180,17 +1195,17 @@ const WMO_OPTS=[[0,"☀️ ясно"],[2,"🌤 малооблачно"],[3,"☁�
 function setWx(i,f,v){
   if(!dayEditable(sel)&&sel!==todayKey()){toast("День закрыт");return;}
   const d=days[sel]||blankDay();
-  const cur=(d.weather&&Array.isArray(d.weather.h))?d.weather:{h:WEATHER_HOURS.slice(),t:[null,null,null,null],c:[null,null,null,null],done:false};
+  const cur=(d.weather&&Array.isArray(d.weather.h))?d.weather:{h:WEATHER_HOURS.slice(),t:WEATHER_HOURS.map(()=>null),c:WEATHER_HOURS.map(()=>null),done:false};
   const w={h:WEATHER_HOURS.slice(),t:[...cur.t],c:[...cur.c],done:cur.done,manual:true};
   // Сохраняем автозагруженные детали (влажность/давление/ветер/осадки) при ручной правке t/кода.
-  if(cur.rh)w.rh=[...cur.rh];if(cur.p)w.p=[...cur.p];if(cur.ws)w.ws=[...cur.ws];if(cur.pr)w.pr=[...cur.pr];if(cur.cc)w.cc=[...cur.cc];
+  if(cur.rh)w.rh=[...cur.rh];if(cur.p)w.p=[...cur.p];if(cur.ws)w.ws=[...cur.ws];if(cur.pr)w.pr=[...cur.pr];if(cur.cc)w.cc=[...cur.cc];if(cur.uv)w.uv=[...cur.uv];
   if(f==="t")w.t[i]=(v===""?null:Math.round(Number(v)));
   else w.c[i]=(v===""?null:Number(v));
   days[sel]={...d,weather:w};
   save();weatherTried[sel]=1;render(true);
 }
 function wxManualHTML(k){
-  const w=getWeather(k)||{h:WEATHER_HOURS.slice(),t:[null,null,null,null],c:[null,null,null,null]};
+  const w=getWeather(k)||{h:WEATHER_HOURS.slice(),t:WEATHER_HOURS.map(()=>null),c:WEATHER_HOURS.map(()=>null)};
   const rows=WEATHER_HOURS.map((hh,i)=>{
     const opts=`<option value="">—</option>`+WMO_OPTS.map(([code,lbl])=>`<option value="${code}"${w.c[i]===code?" selected":""}>${lbl}</option>`).join("");
     return `<div class="mrow"><span class="log-t" style="flex:0 0 46px">${hh}</span><input class="mval" type="number" inputmode="numeric" placeholder="°C" value="${w.t[i]!=null?w.t[i]:""}" onchange="setWx(${i},'t',this.value)"><select class="msel" style="flex:1" onchange="setWx(${i},'c',this.value)">${opts}</select></div>`;
@@ -1219,8 +1234,8 @@ function weatherDetailHTML(k){
     return `<div style="font-size:12.5px;color:#A1A1AA;padding:2px">🌡 Погода: ${msg} &nbsp;${editBtn}</div>${wxManual?wxManualHTML(k):""}`;
   }
   const rows=w.h.map((hh,i)=>{
-    const t=w.t[i],c=w.c[i],rh=w.rh?w.rh[i]:null,cc=w.cc?w.cc[i]:null,p=w.p?w.p[i]:null,ws=w.ws?w.ws[i]:null,pr=w.pr?w.pr[i]:null;
-    const det=[rh!=null?"💧"+rh+"%":"",cc!=null?"☁️"+cc+"%":"",ws!=null?"🌬"+ws+"км/ч":"",p!=null?"🔽"+p+"гПа":"",(pr!=null&&pr>0)?"🌧"+pr+"мм":""].filter(Boolean).join(" · ");
+    const t=w.t[i],c=w.c[i],rh=w.rh?w.rh[i]:null,cc=w.cc?w.cc[i]:null,p=w.p?w.p[i]:null,ws=w.ws?w.ws[i]:null,pr=w.pr?w.pr[i]:null,uv=w.uv?w.uv[i]:null;
+    const det=[rh!=null?"💧"+rh+"%":"",cc!=null?"☁️"+cc+"%":"",ws!=null?"🌬"+ws+"км/ч":"",p!=null?"🔽"+p+"гПа":"",(uv!=null&&uv>0)?"☀️UV"+uv:"",(pr!=null&&pr>0)?"🌧"+pr+"мм":""].filter(Boolean).join(" · ");
     return `<div class="wx-row"><div class="wx-top"><span class="wx-h">${hh}</span><span class="wx-t">${t!=null?t+"°":"—"}</span><span class="wx-c">${wmoLabel(c)}</span></div>${det?`<div class="wx-det">${det}</div>`:""}</div>`;
   }).join("");
   const flag=(w.manual)?' · <span style="color:#FBBF24;font-size:11px">вручную</span>':(!w.done)?' <span style="color:#6B6B75;font-size:11px">· уточнится к вечеру</span>':"";
@@ -1239,9 +1254,10 @@ function dayQualification(day,k){
   if(!dayTouched(day))return {mark:"",tier:"none",label:"нет данных",reason:""};
   const r=computeRing(day,k);
   const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
-  const anySlip=!!day.slip&&day.slipType!=="planned";
-  const badSlip=anySlip&&!day.bounced;
-  const bits=[r.obPct+"% обязат.",pn+"/5 намазов",day.slip?(badSlip?"срыв-каскад":"срыв, отбился"):"без срывов"];
+  const sc=Math.max(Number(day.slipCount)||0, day.slip?1:0);
+  const anySlip=sc>0&&day.slipType!=="planned";
+  const badSlip=anySlip&&sc>=2;
+  const bits=[r.obPct+"% обязат.",pn+"/5 намазов",sc>0?(sc+"× срыв"+(day.slipType==="planned"?" (плановый)":"")):"без срывов"];
   let tier="mid",mark="",label="🟡 Средний";
   if(badSlip){tier="fail";mark="fail";label="🔴 Провал";}
   else if(r.obPct>=90&&pn===5&&!anySlip){tier="ideal";mark="crown";label="👑 Идеальный";}
@@ -1656,7 +1672,19 @@ function supTimesHTML(day,id,unit){
 }
 function lastWeight(k){const ks=Object.keys(days).filter(d=>d<=k).sort();for(let i=ks.length-1;i>=0;i--){const w=Number(days[ks[i]]?.weight);if(w)return w;}return 63;}
 function dayAvgTemp(k){const wx=getWeather(k);if(!wx||!Array.isArray(wx.t))return null;const ts=wx.t.filter(x=>x!=null&&x!=="").map(Number).filter(Number.isFinite);if(!ts.length)return null;return ts.reduce((a,x)=>a+x,0)/ts.length;}
-function waterTarget(day,k){const w=Number(day.weight)||lastWeight(k)||63;let ml=w*32;const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];const n=act.filter(id=>day.items?.[id]).length;ml+=n*300;const m=Number((k||todayKey()).split("-")[1]);if(m>=6&&m<=8)ml+=500;else if(m===5||m===9)ml+=250;const avg=dayAvgTemp(k);if(avg!=null&&avg>25)ml+=500;return Math.max(1500,Math.round(ml/250)*250);}
+function dayAvgHum(k){const wx=getWeather(k);if(!wx||!Array.isArray(wx.rh))return null;const hs=wx.rh.filter(x=>x!=null&&x!=="").map(Number).filter(Number.isFinite);if(!hs.length)return null;return hs.reduce((a,x)=>a+x,0)/hs.length;}
+// Динамическая цель воды: вес·32 + активность·300 + поправки по фактической погоде (t° и влажность).
+// Без погоды — сезонный фолбэк по месяцу. Округление до 250 мл, минимум 1500.
+function waterTarget(day,k){
+  const w=Number(day.weight)||lastWeight(k)||63;let ml=w*32;
+  const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];
+  const n=act.filter(id=>day.items?.[id]).length;ml+=n*300;
+  const avg=dayAvgTemp(k),hum=dayAvgHum(k);
+  if(avg!=null){if(avg>25)ml+=500;else if(avg>20)ml+=250;}
+  else{const m=Number((k||todayKey()).split("-")[1]);if(m>=6&&m<=8)ml+=500;else if(m===5||m===9)ml+=250;}
+  if(hum!=null&&hum<40)ml+=250; // сухой воздух — пьём больше
+  return Math.max(1500,Math.round(ml/250)*250);
+}
 function waterZone(ml,target){if(!ml)return["не отмечено","#6B6B75"];const p=target?ml/target:0;if(p<0.5)return["мало","#F87171"];if(p<0.8)return["маловато","#FBBF24"];if(p<=1.1)return["в норме","#818CF8"];if(p<=1.4)return["многовато","#FBBF24"];return["перебор","#F87171"];}
 function waterHTML(day){const ml=day.water||0;const target=waterTarget(day,sel);const z=waterZone(ml,target);const disp=ml>0?`${(ml/1000).toFixed(1)} / ${(target/1000).toFixed(1)} л · ${z[0]}`:"не отмечено";const w=Number(day.weight)||lastWeight(sel)||63;const act=["workout","jumprope","swim","abs","cold","stretch","neck","fastwalk"];const n=act.filter(id=>day.items?.[id]).length;const m=Number(sel.split("-")[1]);const seas=(m>=6&&m<=8)?"лето":(m===5||m===9)?"межсезонье":"зима";const L=day.waterLog||[];const logged=waterSum(day);const timeline=L.length?`<div class="mlog">${L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.t||""}" onchange="setWaterTime(${i},this.value)"><span class="mlog-v">+${x.ml>=1000?(x.ml/1000).toFixed(1)+"л":x.ml+"мл"}${(x.rt&&x.rt!==x.t)?` <span style="color:#FBBF24;font-size:11px">отметил ${x.rt}</span>`:""}</span><button class="mlog-x" onclick="delWater(${i})">✕</button></div>`).join("")}</div>`:"";const lump=(ml>logged)?`<div style="font-size:11px;color:#FBBF24;margin-top:2px">${((ml-logged)/1000).toFixed(1)} л вписано итогом, без времени</div>`:"";return `<div class="row" style="flex-direction:column;align-items:stretch;gap:11px"><div style="display:flex;justify-content:space-between;align-items:center"><span class="row-label">Вода за день</span><span style="font-size:16px;font-weight:700;color:${z[1]}">${disp}</span></div><div style="display:flex;gap:8px"><button class="wbtn" onclick="changeWater(-250)">−250</button><button class="wbtn" onclick="changeWater(250)">+250</button><button class="wbtn" onclick="changeWater(500)">+0.5л</button><button class="wbtn" onclick="changeWater(1000)">+1л</button></div>${timeline}${lump}<div class="field-row" style="align-items:flex-end"><div class="field-item"><div class="field-label">Итог за день, л</div><input type="number" step="0.1" inputmode="decimal" value="${ml>0?(ml/1000).toFixed(1):""}" placeholder="напр. 2.5" onchange="setWaterTotal(this.value)"></div></div><div style="font-size:11px;color:#6B6B75">Цель ${(target/1000).toFixed(1)} л: вес ${w}кг${n?` · +${n} нагрузк.`:""} · ${seas}.</div></div>`;}
 function toggleHTML(label,f,val,danger){return `<div class="toggle-wrap"><span style="font-size:14.5px;color:${val?"#F5F5F7":"#A1A1AA"}">${label}</span><div class="toggle-track${val?" on":""}${danger?" danger":""}" onclick="toggleField('${f}')"><div class="toggle-thumb"></div></div></div>`;}
@@ -1681,7 +1709,25 @@ function slipDetailHTML(day){
     const fbtns=SLIP_FIRSTS.map(([v,l])=>`<button class="q-btn${day.slipFirst===v?" active":""}" onclick="setSlipFirst('${v}')">${l}</button>`).join("");
     firstBlock=`<div class="field-label" style="margin-top:8px">Что возникло первым?</div><div class="q-row" style="flex-wrap:wrap;margin-left:0">${fbtns}</div>`;
   }
-  return `<div class="slip-indent"><div class="field-label">Тип срыва</div><div class="q-row" style="flex-wrap:wrap;margin-left:0">${tbtns}</div>${firstBlock}<div style="margin-top:8px"><div class="field-label">Время</div><input type="time" value="${day.slipTime||""}" onchange="setField('slipTime',this.value)" style="width:110px"></div>${toggleHTML("Отбился в тот же день (+2)","bounced",day.bounced)}</div>`;
+  return `<div class="slip-indent"><div class="field-label">Тип срыва</div><div class="q-row" style="flex-wrap:wrap;margin-left:0">${tbtns}</div>${firstBlock}<div style="margin-top:8px"><div class="field-label">Время (последнего)</div><input type="time" value="${day.slipTime||""}" onchange="setField('slipTime',this.value)" style="width:110px"></div></div>`;
+}
+// Счётчик срывов за день вместо тумблера «отбился». Психология: НЕ поощряем «исправление» срыва —
+// фиксируем факт и число. slip=slipCount>0. Каждый +1 — рубиновый «вдох», не награда.
+function slipCounterHTML(day){
+  const n=day.slipCount||0;
+  return `<div class="toggle-wrap" style="padding:8px 0"><span style="font-size:14.5px;color:${n>0?"#F87171":"#A1A1AA"}">🔴 Срывы за день</span>
+    <div style="display:flex;align-items:center;gap:9px">
+      <button class="step-btn" onclick="setSlipCount(${n-1})">−</button>
+      <span style="min-width:26px;text-align:center;font-weight:800;font-size:16px;color:${n>0?"#F87171":"#6B6B75"}">${n}</span>
+      <button class="step-btn" onclick="setSlipCount(${n+1})">+</button>
+    </div></div>`;
+}
+function setSlipCount(n){
+  n=clampNum(Math.round(n),0,30);const d=getDay();const was=d.slipCount||0;
+  const patch={slipCount:n,slip:n>0};
+  if(n>0&&!d.slipTime)patch.slipTime=nowHM();
+  setDay(patch);
+  if(n>was)negFx();else vib(4);
 }
 function setSlipType(v){const d=getDay();const nv=d.slipType===v?"":v;const patch={slipType:nv};if(nv!=="both")patch.slipFirst="";setDay(patch);vib(4);}
 function setSlipFirst(v){const d=getDay();setDay({slipFirst:d.slipFirst===v?"":v});vib(4);}
@@ -1761,18 +1807,19 @@ function pulseFx(rect,x,y,st){const box=_fxBox(rect);const lx=x!=null?x-rect.lef
 // Скольжение блика — быт: мягкий луч по пункту.
 function sweepFx(rect,st){const box=_fxBox(rect);const s=document.createElement("div");s.className="fx-sweep";s.style.setProperty("--c",st.color);box.appendChild(s);_rm(box,950);}
 // Стиль эффекта на каждую категорию (ключ = cat.id). Разные виды и цвета — отклик не повторяется.
+// Разные КИНДЫ эффектов раскиданы по категориям, чтобы соседние действия ощущались по-разному.
 const FX_STYLE={
-  din:{kind:"bloom",color:"#FBBF24",color2:"#A5B4FC"},
-  regime:{kind:"wave",color:"#FB923C",color2:"#FBBF24"},
-  work:{kind:"wave",color:"#818CF8",color2:"#C084FC"},
-  body:{kind:"pulse",color:"#34D399",color2:"#4ADE80"},
-  health:{kind:"pulse",color:"#4ADE80",color2:"#86EFAC"},
-  home:{kind:"sweep",color:"#2DD4BF",color2:"#5EEAD4"},
-  selfctrl:{kind:"wave",color:"#818CF8",color2:"#22D3EE"},
-  social:{kind:"bloom",color:"#F472B6",color2:"#C084FC"},
-  edu:{kind:"wave",color:"#60A5FA",color2:"#93C5FD"},
-  sunnah:{kind:"wave",color:"#A78BFA",color2:"#C4B5FD"},
-  water:{kind:"ripple",color:"#38BDF8",color2:"#22D3EE"},
+  din:{kind:"bloom",color:"#FBBF24",color2:"#A5B4FC"},   // намаз — цветение золото/лаванда
+  regime:{kind:"sweep",color:"#FB923C",color2:"#FBBF24"},// ритуалы — тёплый блик
+  work:{kind:"wave",color:"#60A5FA",color2:"#818CF8"},   // работа — сфокусированная волна
+  body:{kind:"pulse",color:"#34D399",color2:"#4ADE80"},  // тело — пульс изумруд
+  health:{kind:"ripple",color:"#4ADE80",color2:"#86EFAC"},// здоровье — рябь зелень
+  home:{kind:"sweep",color:"#2DD4BF",color2:"#5EEAD4"},  // быт — блик тиффани
+  selfctrl:{kind:"wave",color:"#C084FC",color2:"#A78BFA"},// самоконтроль — волна фиолет
+  social:{kind:"bloom",color:"#F472B6",color2:"#C084FC"},// общение — цветение розовое
+  edu:{kind:"pulse",color:"#60A5FA",color2:"#93C5FD"},   // обучение — пульс голубой
+  sunnah:{kind:"ripple",color:"#A78BFA",color2:"#C4B5FD"},// сунна — рябь лаванда
+  water:{kind:"ripple",color:"#38BDF8",color2:"#22D3EE"},// вода — рябь голубая
   def:{kind:"wave",color:"#818CF8",color2:"#22D3EE"}
 };
 // Пункты, отметка которых = фиксация ПЛОХОГО (не награждаем — рубиновый «вдох»).
@@ -1780,6 +1827,8 @@ const BAD_ITEMS=new Set(["sweets","games","hairpull","swear"]);
 function fxByKind(rect,x,y,st){if(reduceMotion())return;if(st.kind==="bloom")bloomFx(rect,x,y,st);else if(st.kind==="ripple")rippleFx(rect,x,y,st);else if(st.kind==="pulse")pulseFx(rect,x,y,st);else if(st.kind==="sweep")sweepFx(rect,st);else fxWave(rect,x,y,{color:st.color,color2:st.color2,waves:2,dur:1.0});}
 // Главная точка входа: отклик зависит от того, ЧТО отметили.
 function itemFx(catId){const st=FX_STYLE[catId]||FX_STYLE.def;vib(st.kind==="pulse"?[7,18]:9);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
+// Уровень 2: закрыта ВСЯ категория — усиленная двойная волна её цвета + мягкая тройная вибрация + тост.
+function catDoneFx(catId,catName){const st=FX_STYLE[catId]||FX_STYLE.def;vibNice();const lt=_lastRect();if(lt&&!reduceMotion())fxWave(lt.rect,lt.x,lt.y,{color:st.color,color2:st.color2,waves:2,dur:1.2});if(catName)toast("✓ "+catName+" — закрыто");}
 function waterFx(){const st=FX_STYLE.water;vib(9);const lt=_lastRect();if(lt)fxByKind(lt.rect,lt.x,lt.y,st);}
 // prayerBloomHTML больше не рисует постоянных лепестков (текст намаза чист); отклик даёт bloomFx.
 function prayerBloomHTML(id){return "";}
@@ -1893,7 +1942,8 @@ function sizeTa(el){try{el.style.height="auto";const lh=parseFloat(getComputedSt
 function growTa(el){sizeTa(el);}
 function collapTa(f,label,ph,day){
   const val=String(day[f]||"");const open=!!taOpen[f];const filled=val.trim().length>0;
-  if(!open)return `<button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}${filled?' <span style="color:#818CF8;font-weight:600">· заполнено</span>':""}</span><span style="color:#6B6B75">＋</span></button>`;
+  const tm=(filled&&day[f+"Time"])?` <span style="color:#6B6B75;font-weight:500">· в ${day[f+"Time"]}</span>`:"";
+  if(!open)return `<button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}${filled?' <span style="color:#818CF8;font-weight:600">· заполнено</span>'+tm:""}</span><span style="color:#6B6B75">＋</span></button>`;
   return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
@@ -1938,6 +1988,7 @@ function blocksHTML(day,wd){
       h+=subHTML("🍽","Питание",mealsHTML(day));
       const sleepPoop=`<div style="margin-top:4px"><div class="field-label" style="margin-bottom:6px">😴 Сон — ночь ${dayLabel(addDays(sel,-1)).txt} → ${dayLabel(sel).txt}</div><div class="field-row"><div class="field-item"><div class="field-label">Лёг</div><input type="time" value="${day.sleepDown||""}" onchange="setField('sleepDown',this.value)"></div><div class="field-item"><div class="field-label">Встал</div><input type="time" value="${day.sleepUp||""}" onchange="setField('sleepUp',this.value)"></div></div></div>${toggleHTML("Заснул вовремя","onTime",day.onTime)}<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px"><div class="field-label" style="margin:0">Стул (раз)</div><input type="number" inputmode="numeric" value="${day.poop||""}" placeholder="0" onchange="setField('poop',this.value)" style="width:72px;text-align:center;flex:0 0 72px"></div>`;
       h+=subHTML("📏","Замеры и тело",measurementsHTML(day)+sleepPoop);
+      h+=`<div class="subblock"><div class="sb-head">🩺 Самочувствие</div>${collapTa("healthComplaints","🩺 Жалобы по здоровью / симптомы","головная боль, тошнота, усталость, боль в суставах, давление… — время запишется само",day)}</div>`;
       h+=subHTML("💊","БАДы",supsLoggingHTML(day));
       return h;
     }));
@@ -1971,7 +2022,7 @@ function blocksHTML(day,wd){
       h+=sliderHTML("Фокус / собранность","focus",day.focus);
       h+=sliderHTML("Самоконтроль над импульсами","control",day.control);
       h+=toggleHTML("Перед сном тянуло «ещё что-то»","urge",day.urge);
-      h+=toggleHTML("Срыв","slip",day.slip,true)+(day.slip?slipDetailHTML(day):"");
+      h+=slipCounterHTML(day)+((day.slipCount||day.slip)?slipDetailHTML(day):"");
       h+=procHTML(day);
       h+=subHTML("🎯","Самоконтроль",itemsBlock(selfItems,day,wd));
       if(hasVisible(socialItems,day,wd))h+=subHTML("👥","Общение",itemsBlock(socialItems,day,wd));
@@ -1979,8 +2030,7 @@ function blocksHTML(day,wd){
       return h;
     }));
   }
-  // 7) 🌡 Погода — детальная (t°, влажность, облачность, ветер, давление, осадки) по 4 точкам дня.
-  push("weather",blockShell("weather","🌡 Погода",weatherChip(sel),()=>weatherDetailHTML(sel)));
+  // 7) 🌡 Погода — с главного экрана УБРАНА (не отвлекает). Детали — в ⚙ Настройках и в отчёте.
   // 8) 🛡️ Защита (блокировки) теперь целиком в шапке (guardWidgetHTML) — отдельного блока нет.
   // 9) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
   push("reflect",blockShell("reflect","📒 Дневник","",()=>{
@@ -1994,7 +2044,7 @@ function blocksHTML(day,wd){
 }
 // Раскладка блоков: мобайл — один поток в порядке; десктоп — два фиксированных столбца,
 // каждый блок всегда на своём месте (левый: вера/здоровье/быт; правый: ритуалы/дело/состояние/дневник).
-const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","weather","reflect"];
+const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","reflect"];
 function layoutBlocks(blocks,mode){
   if(mode!=="desktop")return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
   const pick=ids=>ids.map(id=>{const b=blocks.find(x=>x[0]===id);return b?b[1]:"";}).join("");
@@ -2200,7 +2250,7 @@ function settingsTab2HTML(day){
       ${checkinsConfigHTML()}
       ${supsConfigHTML()}
       ${taskManageHTML()}
-      <div><div class="side-title" style="display:block;margin:14px 0 2px">🌡 Погода — ручной ввод (${dayLabel(sel).txt})</div>${wxManualHTML(sel)}</div>
+      <div><div class="side-title" style="display:block;margin:14px 0 6px">🌡 Погода (${dayLabel(sel).txt}) — фон, каждые 4 ч</div><div class="meas-card" style="margin-top:0">${weatherDetailHTML(sel)}</div></div>
     </div>`;
 }
 function settingsTab3HTML(){return `<div class="side-title" style="display:block;margin:0 0 6px">🕓 Хронология дня (${dayLabel(sel).txt})</div>`+logHTML(getDay())+diagHTML()+healthHTML();}
@@ -2344,6 +2394,7 @@ function toggleItem(id){
   // Плохой пункт (сладкое/игры) — рубиновый «вдох», НЕ награда. Веха дня (100%) — золотая.
   if(hit100){milestoneFx();toast("100% обязательного за день ✓");}
   else if(on&&bad)negFx();
+  else if(on&&milestone)catDoneFx(cat?cat.id:"def",cat?cat.name:"");
   else if(on)itemFx(cat?cat.id:"def");
   else vib(4);
 }
@@ -2376,7 +2427,8 @@ function setWaterTime(i,v){const d=getDay();const L=[...(d.waterLog||[])];if(!L[
 function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];L.splice(i,1);setDay({waterLog:L,water:L.reduce((a,x)=>a+(Number(x.ml)||0),0)});}
 function setWaterTotal(v){const ml=clampNum(Math.round(num(v,0)*1000),0,30000);const d=getDay();const L=d.waterLog||[];if(L.length){setDay({water:Math.max(ml,waterSum(d))});}else{setDay({water:ml});}}
 function toggleField(f){const d=getDay();const nv=!d[f];setDay({[f]:nv});if((f==="slip"||f==="urge")&&nv)negFx();else vib(4);}
-function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}setDay({[f]:v});}
+const TEXT_TIME_FIELDS=new Set(["main","seq","analysis","extract","block","complaints","healthComplaints"]);
+function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}const patch={[f]:v};if(TEXT_TIME_FIELDS.has(f)&&String(v||"").trim())patch[f+"Time"]=nowHM();setDay(patch);}
 function toggleDetails(){detailsOpen=!detailsOpen;render();}
 function openExport(){exportText=buildExport(days);modalOpen=true;render();}
 // «Копировать отчёт для Claude» — сразу в буфер. Если буфер недоступен — открываем модалку с текстом.
