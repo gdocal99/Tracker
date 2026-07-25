@@ -320,6 +320,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
 .dash-dow{font-size:13px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
 .dash-date-txt{font-size:20px;font-weight:800;color:#F5F5F7;line-height:1.1}
+.dash-lunar{font-size:11px;color:#A78BFA;font-weight:600;margin-top:3px;line-height:1.3}
 .dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
 .dash-stat-block{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .dash-stat-block.right{align-items:flex-end;text-align:right}
@@ -457,7 +458,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.77.0";
+const VERSION="0.78.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -516,7 +517,7 @@ const CATEGORIES=[
  ]},
  {id:"work",name:"Работа",items:[
    {id:"crypto",label:"Криптопроект (+3)",type:"ob",q:true,pts:3},
-   {id:"bizacc",label:"Учёт бизнеса отца (+3)",type:"ob",q:true,pts:3},
+   {id:"bizacc",label:"🏢 Работа (+3)",type:"ob",q:true,pts:3,opts:[{k:"what",o:[["drive","вождение"],["acc","учёт бизнеса отца"],["repair","ремонт машины"]]}]},
    {id:"accounting",label:"Бухгалтерия (+3)",type:"ob",q:true,pts:3},
  ]},
  {id:"body",name:"Тело",items:[
@@ -540,7 +541,6 @@ const CATEGORIES=[
    {id:"toilet",label:"Убраться в туалете",type:"ob",pts:1.5,opts:HOMEQ},
    {id:"helpkin",label:"Помощь родным",type:"des",pts:0.5,opts:HOMEQ},
    {id:"grass",label:"Косить траву",type:"fact",pts:2},
-   {id:"carrepair",label:"Ремонт машины с отцом",type:"fact",pts:2.5},
    {id:"grandma",label:"Помощь бабушке",type:"fact",pts:0.5},
    {id:"laundry",label:"Постирать бельё",type:"ob",pts:1.5,sched:[6],opts:HOMEQ},
    {id:"clothes",label:"Одежда убрана на место (не на пол)",type:"ob",pts:0.5,opts:HOMEQ},
@@ -581,7 +581,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",block:"",seq:"",extract:"",analysis:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 function todayKey(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;}
 function nowHM(){const d=new Date();return String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
@@ -686,7 +686,17 @@ function dayMoney(day,k){
   }
   const WORK=["crypto","bizacc","accounting"];
   if(closed&&!WORK.some(id=>day.items?.[id]))m-=3;
+  m+=Number(day.bonus)||0; // бонусные баллы (напр. за продление блокировки)
   return r2(m);
+}
+// Начисление бонусных баллов за хорошее действие ВНЕ дневной сетки (продление защиты и т.п.).
+// Пишем в СЕГОДНЯШНИЙ день (поле bonus), метим время для LWW, добавляем в хронологию.
+function awardBonus(pts,note){
+  try{
+    const tk=todayKey();const d=days[tk]||blankDay();const ts=Date.now();
+    days[tk]={...d,bonus:(Number(d.bonus)||0)+pts,lastUpdated:ts,t:{...(d.t||{}),bonus:ts,log:ts},log:[...(d.log||[]),{t:nowHM(),e:note}]};
+    save();
+  }catch(e){logError("bonus",e);}
 }
 function num(v,def){const n=Number(v);return Number.isFinite(n)?n:(def||0);}
 function clampNum(v,lo,hi){const n=num(v,lo);return Math.min(hi,Math.max(lo,n));}
@@ -775,6 +785,7 @@ function buildExport(days){
     s+="  Сон "+sleep+phoneR+" · Энергия "+(sliderSet(d.energy)?norm5(d.energy)+"/5":"—")+" · Рассеянность "+(sliderSet(d.drift)?norm5(d.drift)+"/5":"—")+"\n";
     const wx=weatherTxt(k);if(wx)s+="  Погода: "+wx+"\n";
     const wxd=weatherSummaryTxt(getWeather(k));if(wxd)s+="  Погода-детали: "+wxd+"\n";
+    const lun=lunarLine(k);if(lun)s+="  Луна/хиджра: "+lun+"\n";
     const sl3=[["Фокус","focus"],["Иман","spirit"],["Самоконтроль","control"]].filter(([,f])=>sliderSet(d[f])).map(([n,f])=>n+" "+norm5(d[f])+"/5");
     if(sl3.length)s+="  "+sl3.join(" · ")+"\n";
     const waterTxt=d.water?((d.water/1000).toFixed(1)+"/"+(wt/1000).toFixed(1)+" л ("+wz[0]+")"):"—";
@@ -1093,7 +1104,7 @@ function ensureWeather(dk){
   weatherPending[dk]=1;
   // Тянем не только температуру и код погоды, но и то, что реально влияет на самочувствие:
   // влажность, атм. давление, ветер, осадки. Всё по 4 точкам дня (утро/день/вечер/ночь).
-  const hourly="temperature_2m,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,precipitation";
+  const hourly="temperature_2m,weather_code,relative_humidity_2m,surface_pressure,wind_speed_10m,precipitation,cloud_cover";
   const url=`https://api.open-meteo.com/v1/forecast?latitude=${PT_LAT}&longitude=${PT_LNG}&hourly=${hourly}&timezone=Europe%2FUzhgorod&start_date=${dk}&end_date=${dk}`;
   let req;
   try{req=fetch(url);}catch(e){weatherFailed[dk]=1;delete weatherPending[dk];return;}
@@ -1101,8 +1112,8 @@ function ensureWeather(dk){
   req.then(r=>r.json()).then(j=>{
     if(j&&j.hourly&&Array.isArray(j.hourly.time)){
       const H=j.hourly,times=H.time,temp=H.temperature_2m||[],code=H.weather_code||[];
-      const rhA=H.relative_humidity_2m||[],pA=H.surface_pressure||[],wsA=H.wind_speed_10m||[],prA=H.precipitation||[];
-      const out={h:WEATHER_HOURS.slice(),t:[],c:[],rh:[],p:[],ws:[],pr:[],done:dk<todayKey()};
+      const rhA=H.relative_humidity_2m||[],pA=H.surface_pressure||[],wsA=H.wind_speed_10m||[],prA=H.precipitation||[],ccA=H.cloud_cover||[];
+      const out={h:WEATHER_HOURS.slice(),t:[],c:[],rh:[],p:[],ws:[],pr:[],cc:[],done:dk<todayKey()};
       let got=0;
       for(const hh of WEATHER_HOURS){
         const idx=times.findIndex(t=>String(t).slice(11,16)===hh);
@@ -1115,6 +1126,7 @@ function ensureWeather(dk){
         out.p.push(pick(pA,true));
         out.ws.push(pick(wsA,true));
         out.pr.push((idx>=0&&prA[idx]!=null)?Math.round(prA[idx]*10)/10:null);
+        out.cc.push(pick(ccA,true));
       }
       if(got>0){weatherTried[dk]=1;putWeather(dk,out);}else{weatherFailed[dk]=1;}
     }else{weatherFailed[dk]=1;}
@@ -1125,14 +1137,31 @@ function ensureWeather(dk){
 function weatherSummaryTxt(w){
   if(!w)return "";
   const nums=a=>(Array.isArray(a)?a:[]).map(Number).filter(Number.isFinite);
-  const rh=nums(w.rh),p=nums(w.p),ws=nums(w.ws),pr=nums(w.pr);
+  const rh=nums(w.rh),p=nums(w.p),ws=nums(w.ws),pr=nums(w.pr),cc=nums(w.cc);
   const parts=[];
   if(rh.length)parts.push("💧 "+(Math.min(...rh)===Math.max(...rh)?Math.max(...rh):Math.min(...rh)+"–"+Math.max(...rh))+"%");
+  if(cc.length)parts.push("☁️ "+Math.round(cc.reduce((a,x)=>a+x,0)/cc.length)+"% облачн.");
   if(p.length)parts.push("🔽 "+Math.round(p.reduce((a,x)=>a+x,0)/p.length)+" гПа");
   if(ws.length)parts.push("🌬 до "+Math.max(...ws)+" км/ч");
   if(pr.length){const s=pr.reduce((a,x)=>a+x,0);parts.push(s>0.05?("🌧 "+s.toFixed(1)+" мм осадков"):"☂️ без осадков");}
   return parts.join(" · ");
 }
+// Хиджра (исламская лунная дата) — через встроенный исламский календарь браузера (Умм аль-Кура).
+function hijriStr(k){
+  try{const [y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d,12,0,0);
+    return new Intl.DateTimeFormat("ru-u-ca-islamic-umalqura",{day:"numeric",month:"long",year:"numeric"}).format(dt).replace(/\s*г\..*/,"").trim();
+  }catch(e){return "";}
+}
+// Фаза Луны — по синодическому месяцу от известного новолуния (без интернета).
+const MOON_PH=[["🌑","новолуние"],["🌒","растущий серп"],["🌓","первая четверть"],["🌔","растущая луна"],["🌕","полнолуние"],["🌖","убывающая луна"],["🌗","последняя четверть"],["🌘","убывающий серп"]];
+function moonPhase(k){
+  const [y,m,d]=k.split("-").map(Number);
+  const dayNum=Date.UTC(y,m-1,d,12)/86400000, knownNew=Date.UTC(2000,0,6,18,14)/86400000, syn=29.530588853;
+  const age=((dayNum-knownNew)%syn+syn)%syn;
+  const idx=Math.floor(age/syn*8+0.5)%8;
+  return {emoji:MOON_PH[idx][0],name:MOON_PH[idx][1],age:Math.round(age)};
+}
+function lunarLine(k){const h=hijriStr(k),mp=moonPhase(k);return (h?("☪ "+h):"")+(h&&mp?" · ":"")+(mp?(mp.emoji+" "+mp.name):"");}
 function weatherRefresh(k){delete weatherFailed[k];delete weatherPending[k];delete weatherTried[k];if(days[k]&&days[k].weather){const d={...days[k]};delete d.weather;days[k]=d;save();}ensureWeather(k);render();}
 function weatherTxt(k){const w=getWeather(k);if(!w)return null;return w.h.map((hh,i)=>hh+" "+(w.t[i]!=null?w.t[i]+"°":"—")+" "+wmoLabel(w.c[i])).join(" · ");}
 const WMO_OPTS=[[0,"☀️ ясно"],[2,"🌤 малооблачно"],[3,"☁️ пасмурно"],[45,"🌫 туман"],[53,"🌦 морось"],[63,"🌧 дождь"],[81,"🌧 ливень"],[73,"🌨 снег"],[95,"⛈ гроза"]];
@@ -1142,7 +1171,7 @@ function setWx(i,f,v){
   const cur=(d.weather&&Array.isArray(d.weather.h))?d.weather:{h:WEATHER_HOURS.slice(),t:[null,null,null,null],c:[null,null,null,null],done:false};
   const w={h:WEATHER_HOURS.slice(),t:[...cur.t],c:[...cur.c],done:cur.done,manual:true};
   // Сохраняем автозагруженные детали (влажность/давление/ветер/осадки) при ручной правке t/кода.
-  if(cur.rh)w.rh=[...cur.rh];if(cur.p)w.p=[...cur.p];if(cur.ws)w.ws=[...cur.ws];if(cur.pr)w.pr=[...cur.pr];
+  if(cur.rh)w.rh=[...cur.rh];if(cur.p)w.p=[...cur.p];if(cur.ws)w.ws=[...cur.ws];if(cur.pr)w.pr=[...cur.pr];if(cur.cc)w.cc=[...cur.cc];
   if(f==="t")w.t[i]=(v===""?null:Math.round(Number(v)));
   else w.c[i]=(v===""?null:Number(v));
   days[sel]={...d,weather:w};
@@ -1352,7 +1381,7 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
   return `<div class="dash">
     <div class="dash-datebar">
       <button class="nav-btn" onclick="navDay(-1)">‹</button>
-      <div style="text-align:center"><div class="dash-dow">${sl.dow}</div><div class="dash-date-txt">${sl.txt}</div></div>
+      <div style="text-align:center"><div class="dash-dow">${sl.dow}</div><div class="dash-date-txt">${sl.txt}</div><div class="dash-lunar">${lunarLine(sel)}</div></div>
       <button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button>
     </div>
     ${!isToday?`<button class="today-btn" onclick="goToday()">↩ Сегодня</button>`:""}
@@ -1519,13 +1548,17 @@ function saveBlocker(){
   saveMeta();vibNice();toast("Блокировка добавлена");render();
 }
 function setBlocker(id,f,v){meta.blockers=(meta.blockers||[]).map(b=>b.id===id?{...b,[f]:v}:b);saveMeta();render();}
-function extendBlocker(id,days){
+function extendBlocker(id,dn){
+  let nm="";
   meta.blockers=(meta.blockers||[]).map(b=>{
     if(b.id!==id)return b;
+    nm=b.name||"защита";
     const base=(b.until&&blockerMsLeft(b.until)>0)?b.until:nowDT();
-    return{...b,until:addDaysDT(base,days)};
+    return{...b,until:addDaysDT(base,dn)};
   });
-  saveMeta();vibNice();toast("Продлено на "+days+" дн.");render();
+  saveMeta();
+  awardBonus(2,"🛡 продлил защиту: "+nm+" (+2)"); // продление защиты — хорошее действие, +2 балла
+  vibNice();toast("Продлено на "+dn+" дн. · +2 балла");render();
 }
 // Управление блокировками полностью переехало в шапку (guardWidgetHTML и его помощники выше).
 // Старый блок «Защита» и видимый «журнал причин» удалены; причина пишется в meta.blockerLog скрыто.
