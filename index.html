@@ -454,7 +454,7 @@ const KEY="journal_block3";
 const ERR_KEY="journal_block3_errors";
 const SNAP_PREFIX="journal_block3_snap_";
 const SCHEMA=2;
-const BUILD="24 июля 2026";
+const BUILD="28 июля 2026";
 let errLog=[];
 try{const e=localStorage.getItem(ERR_KEY);if(e){const p=JSON.parse(e);if(Array.isArray(p))errLog=p.slice(0,40);}}catch(e){}
 // Чистим ранее накопленные «merge-tabs» — это не ошибки, а обычные слияния между вкладками.
@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.84.0";
+const VERSION="0.85.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -713,7 +713,7 @@ function dayMoney(day,k){
 function awardBonus(pts,note){
   try{
     const tk=todayKey();const d=days[tk]||blankDay();const ts=Date.now();
-    days[tk]={...d,bonus:(Number(d.bonus)||0)+pts,lastUpdated:ts,t:{...(d.t||{}),bonus:ts,log:ts},log:[...(d.log||[]),{t:nowHM(),e:note}]};
+    days[tk]={...d,bonus:(Number(d.bonus)||0)+pts,lastUpdated:ts,t:{...(d.t||{}),bonus:ts,log:ts},log:[...(d.log||[]),{t:nowHM(),ts,e:note}]};
     save();
   }catch(e){logError("bonus",e);}
 }
@@ -723,6 +723,11 @@ function r2(n){const v=num(n,0);return Math.round(v*100)/100;}
 function fmtNum(n){const v=r2(n);return Number.isInteger(v)?String(v):String(v);}
 function fmtPts(n){const v=r2(n);return (v>0?"+":"")+fmtNum(v);}
 function fmtTs(ms){const d=new Date(Number(ms)||0);if(!ms||isNaN(d.getTime()))return "—";const p=n=>String(n).padStart(2,"0");return p(d.getDate())+"."+p(d.getMonth()+1)+"."+d.getFullYear()+" "+p(d.getHours())+":"+p(d.getMinutes());}
+// Ключ-дата (ГГГГ-ММ-ДД) реального момента записи по epoch-метке. Нужен, чтобы в хронологии
+// отличить действие, сделанное в тот же день, от вписанного задним числом (в другой день).
+function tsKey(ms){const d=new Date(Number(ms)||0);if(!ms||isNaN(d.getTime()))return "";const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
+// Короткая дата «ДД.ММ.ГГГГ» без времени — для бейджа даты в хронологии.
+function fmtDate(ms){const d=new Date(Number(ms)||0);if(!ms||isNaN(d.getTime()))return "";const p=n=>String(n).padStart(2,"0");return p(d.getDate())+"."+p(d.getMonth()+1)+"."+d.getFullYear();}
 function totalSpent(days){let s=0;for(const k in days){for(const x of (days[k].spends||[]))s+=Number(x.n)||0;}return s;}
 function calcBalance(days){
   const keys=Object.keys(days).sort();let total=0,run=0;for(const k of keys){total+=dayMoney(days[k],k);if(dayComplete(days[k])){run++;if(run%7===0)total+=5;}else run=0;}return Math.max(0,r2(total-totalSpent(days)));}
@@ -848,7 +853,7 @@ function buildExport(days){
         else verdict="отмечалось кусками";
         s+="  Как вёлся день: "+ts.length+" отметок, "+ts[0]+"–"+ts[ts.length-1]+" ("+verdict+")\n";
       }
-      s+="  Хронология:\n";for(const x of d.log)s+="    "+(x.t||"")+"  "+String(x.e||"").replace(/</g,"&lt;")+"\n";
+      s+="  Хронология:\n";for(const x of d.log){const rk=x.ts?tsKey(x.ts):"";const late=(rk&&rk!==k)?" [вписано "+fmtTs(x.ts)+"]":"";s+="    "+(x.t||"")+"  "+String(x.e||"").replace(/</g,"&lt;")+late+"\n";}
     }
     return s.replace(/\n$/,"");
   });
@@ -1039,7 +1044,7 @@ function supLabel(id){const s=allSups().find(x=>x[0]===id);return s?s[1]:id;}
 const OPT_RU={own:"своё место",all:"весь стол",self:"сам",asked:"попросили",good:"качественно",meh:"так себе",little:"мало",mid:"средне",much:"много",reward:"в награду",slipc:"срыв",shower:"душ",bath:"ванна",short:"менее часа",long:"час и больше",athome:"дома",atwork:"на работе"};
 const LOG_FIELDS={income:"доход ₴",weight:"вес",height:"рост",pulse:"пульс",bpSys:"давление верх",bpDia:"давление низ",temp:"температура",sleepDown:"лёг спать",sleepUp:"проснулся",onTime:"встал вовремя",slip:"срыв",slipTrigger:"триггер срыва",bounced:"отбился после срыва",drift:"рассеянность",energy:"энергия",focus:"фокус",spirit:"иман",control:"самоконтроль",urge:"тяга перед сном",main:"главное за день",block:"помеха дня",seq:"события дня",extract:"что извлёк",analysis:"мысли и анализ",complaints:"🐞 жалоба на приложение",poop:"стул",phoneOut:"телефон убрал (вечер)",phoneBack:"телефон забрал (утро)"};
 function logDiff(b,a){
-  const t=nowHM(),out=[],push=e=>out.push({t,e}),ks=o=>Object.keys(o||{});
+  const t=nowHM(),ts=Date.now(),out=[],push=e=>out.push({t,ts,e}),ks=o=>Object.keys(o||{});
   for(const id of new Set([...ks(b.items),...ks(a.items)])){const w=!!(b.items||{})[id],n=!!(a.items||{})[id];if(w!==n)push((n?"✓ ":"↩ снял: ")+labelOf(id));}
   for(const id of new Set([...ks(b.prayers),...ks(a.prayers)])){const w=!!(b.prayers||{})[id],n=!!(a.prayers||{})[id];if(w!==n){const p=PRAYERS.find(x=>x[0]===id);push((n?"🕌 намаз: ":"↩ снял намаз: ")+(p?p[1]:id));}}
   for(const id of new Set([...ks(b.sups),...ks(a.sups)])){const w=(b.sups||{})[id]||0,n=(a.sups||{})[id]||0;if(w!==n)push("💊 "+supLabel(id)+": "+n+" доз");}
@@ -1064,7 +1069,7 @@ function startWriting(f){
   writeStarted[key]=true;
   pushLog("✍ начал писать: "+(LOG_FIELDS[f]||f));
 }
-function pushLog(e){if(!dayEditable(sel))return;const d=getDay();days[sel]={...d,log:[...(d.log||[]),{t:nowHM(),e}]};save();}
+function pushLog(e){if(!dayEditable(sel))return;const d=getDay();days[sel]={...d,log:[...(d.log||[]),{t:nowHM(),ts:Date.now(),e}]};save();}
 function dayEditable(k){const t=todayKey();if(k>t)return false;if(k===t)return true;return unlockedDay===k;}
 function tapLock(){const t=todayKey();if(sel>=t)return;lockTaps++;vib(6);if(lockTaps>=3){unlockedDay=sel;lockTaps=0;vibNice();toast("Прошлый день открыт для правки");}render();}
 function relock(){unlockedDay="";lockTaps=0;vib(8);render();}
@@ -1838,7 +1843,15 @@ function streakTier(n){return n>=30?"streak-tag tier3":n>=7?"streak-tag tier2":n
 // Цвет дня по проценту обязательного: чем лучше день, тем «зеленее/салатовее» (травяной, приятный).
 // Раньше был синий — по просьбе заменён на зелень: сразу видно, что день прошёл хорошо.
 function dayColor(k){const d=days[k];const MC={crown:"#A5B4FC",mid:"#FBBF24",fail:"#F87171"};if(d&&MC[d.mark])return MC[d.mark];const hp=d?computeRing(d,k).obPct:0;return hp>0?mixRGB([18,22,18],[74,222,128],hp/100):"#16161C";}
-function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>`<div class="log-row"><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span><span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#6B6B75;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
+function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>{
+    // Реальная дата действия из epoch-метки. Если она НЕ совпадает с днём, к которому относится
+    // запись (sel) — значит отметку поставили задним числом: показываем полную дату, чтобы через
+    // полгода было ясно «галочка стоит на этом дне, но нажата такого-то числа».
+    const rk=x.ts?tsKey(x.ts):"";const late=rk&&rk!==sel;
+    const badge=late?`<span class="log-date" style="color:#FBBF24;font-size:11px;font-weight:600;margin-right:6px">📅 ${fmtDate(x.ts)}</span>`:"";
+    const ttl=x.ts?` title="${fmtTs(x.ts)}"`:"";
+    return `<div class="log-row"${ttl}><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span>${badge}<span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`;
+  }).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#6B6B75;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
 function phoneRangeHTML(day){const pv=dayLabel(addDays(sel,-1)),cu=dayLabel(sel);return `<div class="slip-indent"><div class="field-label" style="margin-bottom:6px">Ночь: ${pv.txt} вечер → ${cu.txt} утро</div><div class="field-row"><div class="field-item"><div class="field-label">Убрал — вечер ${pv.txt}</div><input type="time" value="${day.phoneOut||""}" onchange="setField('phoneOut',this.value)"></div><div class="field-item"><div class="field-label">Забрать — утро ${cu.txt}</div><input type="time" value="${day.phoneBack||""}" onchange="setField('phoneBack',this.value)"></div></div></div>`;}
 function stripHTML(){const t=todayKey();let h="";for(let i=13;i>=0;i--){const k=addDays(t,-i);const d=days[k];const crown=d&&d.mark==="crown";h+=`<button class="dcell${k===sel?" sel":""}" style="background:${dayColor(k)}" onclick="selDay('${k}')" title="${k}">${crown?"👑":""}</button>`;}return h;}
 function catRowHTML(it,day,wd,plain){
@@ -1945,7 +1958,7 @@ function collapTa(f,label,ph,day){
   const val=String(day[f]||"");const open=!!taOpen[f];const filled=val.trim().length>0;
   const tm=(filled&&day[f+"Time"])?` <span style="color:#6B6B75;font-weight:500">· в ${day[f+"Time"]}</span>`:"";
   if(!open)return `<button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}${filled?' <span style="color:#818CF8;font-weight:600">· заполнено</span>'+tm:""}</span><span style="color:#6B6B75">＋</span></button>`;
-  return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
+  return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this);taInput('${f}',this.value)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
 const BLOCK_ACCENT={din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
@@ -2432,6 +2445,44 @@ function setWaterTotal(v){const ml=clampNum(Math.round(num(v,0)*1000),0,30000);c
 function toggleField(f){const d=getDay();const nv=!d[f];setDay({[f]:nv});if((f==="slip"||f==="urge")&&nv)negFx();else vib(4);}
 const TEXT_TIME_FIELDS=new Set(["main","seq","analysis","extract","block","complaints","healthComplaints"]);
 function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}const patch={[f]:v};if(TEXT_TIME_FIELDS.has(f)&&String(v||"").trim())patch[f+"Time"]=nowHM();setDay(patch);}
+// ЖИВОЕ СОХРАНЕНИЕ ТЕКСТА (защита от потери данных на телефоне).
+// Проблема была: textarea сохранялся только по onchange, а он срабатывает при потере фокуса
+// (blur). На телефоне пользователь набирает текст и сворачивает/закрывает приложение, НЕ снимая
+// фокус — blur не происходит, onchange не срабатывает, текст пропадает. Классика: на ноутбуке
+// (кликнул мимо → blur) сохранялось, на телефоне — нет.
+// Теперь пишем КАЖДОЕ нажатие клавиши сразу в память + (с небольшой задержкой) на диск, БЕЗ
+// ре-рендера, чтобы не сбить набор текста и курсор. Плюс commitFocused() ниже досбрасывает всё
+// синхронно, когда приложение уходит в фон.
+let _taSaveT=null;
+function taInput(f,v){
+  try{
+    if(!dayEditable(sel))return;
+    const before=getDay();
+    if(String(before[f]??"")===String(v??""))return;
+    const ts=Date.now();
+    const patch={[f]:v,lastUpdated:ts};
+    if(TEXT_TIME_FIELDS.has(f)&&String(v||"").trim()&&!before[f+"Time"])patch[f+"Time"]=nowHM();
+    const after={...before,...patch};
+    after.t=stampDayTimes(before,after,ts);
+    days[sel]=after; // в память — мгновенно, поэтому любой рендер покажет актуальный текст
+    clearTimeout(_taSaveT);
+    // save() пишет на диск (тем же путём со слиянием чужих вкладок) и ставит день в очередь
+    // облака, но НЕ рендерит — курсор и набор текста не сбиваются.
+    _taSaveT=setTimeout(()=>{try{save();}catch(e){}},350);
+  }catch(e){}
+}
+// Досбрасывает то, что сейчас в фокусе, ПЕРЕД тем как экран уйдёт в фон/закроется. Универсально:
+// подходит для любого поля (замеры, время, селекты) — просто «доводим» его onchange, а затем
+// синхронно пишем всё на диск. Это и чинит «замеры не сохраняются с телефона» и т.п.
+function commitFocused(){
+  try{
+    const a=document.activeElement;
+    if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){
+      try{a.dispatchEvent(new Event("change",{bubbles:true}));}catch(e){}
+    }
+  }catch(e){}
+  try{clearTimeout(_taSaveT);save();}catch(e){} // синхронный сброс всей памяти на диск
+}
 function toggleDetails(){detailsOpen=!detailsOpen;render();}
 function openExport(){exportText=buildExport(days);modalOpen=true;render();}
 // «Копировать отчёт для Claude» — сразу в буфер. Если буфер недоступен — открываем модалку с текстом.
@@ -2908,7 +2959,10 @@ function parseFirebaseConfig(text){
 
 let _rz;window.addEventListener("resize",()=>{if(meta.view!=="auto")return;clearTimeout(_rz);_rz=setTimeout(render,150);});
 // Досинхронизация при сворачивании/закрытии вкладки — чтобы облако получило свежие правки.
-document.addEventListener("visibilitychange",()=>{try{if(document.visibilityState==="hidden"){if(cloud)cloud.flushNow();}else{checkForUpdate();}}catch(e){}});
+document.addEventListener("visibilitychange",()=>{try{if(document.visibilityState==="hidden"){commitFocused();if(cloud)cloud.flushNow();}else{checkForUpdate();}}catch(e){}});
+// Телефон замораживает/выгружает вкладку без надёжного blur — досбрасываем на диск ЗАРАНЕЕ.
+window.addEventListener("pagehide",()=>{try{commitFocused();if(cloud)cloud.flushNow();}catch(e){}});
+window.addEventListener("beforeunload",()=>{try{commitFocused();}catch(e){}});
 window.addEventListener("online",()=>{try{if(cloud){cloud.paintDot();cloud.flushNow();}checkForUpdate();}catch(e){}});
 window.addEventListener("offline",()=>{try{if(cloud)cloud.paintDot();}catch(e){}});
 
