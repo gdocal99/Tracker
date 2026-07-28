@@ -18,7 +18,7 @@ button{cursor:pointer;font-family:inherit;transition:transform .09s ease}
 .hist-cell.crown-cell{animation:crownPulse 2.4s ease-in-out infinite}
 input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:10px;padding:9px 10px;font-size:14px;outline:none;width:100%}
 textarea{resize:none}
-input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0}
+input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0;touch-action:pan-y}
 .section-label{font-size:11px;letter-spacing:1.5px;color:#6B6B75;text-transform:uppercase;margin:20px 0 9px 2px}
 .row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid transparent;margin-top:7px;width:100%;text-align:left}
 .row-label{font-size:14.5px;color:#A1A1AA;transition:color .15s}
@@ -3065,9 +3065,16 @@ render();
 // поэтому не полагается на «а вдруг браузер успеет». Контейнер #app переживает ре-рендеры (у него
 // меняется только innerHTML), поэтому слушатель ставится один раз и работает всегда.
 // textarea сюда не входят — у них своё, более лёгкое сохранение (taInput на каждый keystroke).
+// ВАЖНО: живое сохранение срабатывает ТОЛЬКО для полей РУЧНОГО ВВОДА, в которых пользователь
+// СЕЙЧАС реально печатает (поле в фокусе). Ползунки (range), чекбоксы, радио и любые «случайные»
+// события сюда НЕ попадают — иначе можно записать то, чего человек не вводил (напр. задетый
+// пальцем ползунок). Ползунки и селекты сохраняются своими собственными обработчиками.
+const LIVE_TYPES=new Set(["text","number","tel","search","time","date","datetime-local","month","week"]);
 let _liveT=null,_liveEl=null;
 function liveCommit(el){
   if(!el)return;
+  // Ещё раз убеждаемся, что поле ВСЁ ЕЩЁ в фокусе (пользователь в нём), прежде чем сохранять.
+  try{if(document.activeElement!==el)return;}catch(e){}
   try{_noRender=true;el.dispatchEvent(new Event("change",{bubbles:true}));}
   catch(e){logError("live-commit",e);}
   finally{_noRender=false;}
@@ -3075,10 +3082,10 @@ function liveCommit(el){
 try{
   const _app=document.getElementById("app");
   if(_app)_app.addEventListener("input",e=>{
-    const el=e.target;if(!el||!el.tagName)return;
-    // textarea — своё сохранение (taInput); select фиксируется сразу по change (blur не нужен).
-    // Живём только по <input>: именно им нужен «немедленный» сейв вместо ожидания blur.
-    if(el.tagName!=="INPUT")return;
+    const el=e.target;if(!el||el.tagName!=="INPUT")return;
+    const ty=(el.type||"text").toLowerCase();
+    if(!LIVE_TYPES.has(ty))return;                 // не range/checkbox/radio/etc.
+    try{if(document.activeElement!==el)return;}catch(_){} // только активно редактируемое поле
     _liveEl=el;clearTimeout(_liveT);
     _liveT=setTimeout(()=>{const t=_liveEl;_liveEl=null;if(t)liveCommit(t);},250);
   },true);
