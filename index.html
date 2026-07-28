@@ -3019,11 +3019,13 @@ setInterval(()=>{if(document.visibilityState==="visible")checkForUpdate();},15*6
 window.addEventListener("error",ev=>{try{logError("js",(ev&&ev.message)||"?",(ev&&ev.filename?"":"")+"стр."+((ev&&ev.lineno)||"?"));}catch(e){}});
 window.addEventListener("unhandledrejection",ev=>{try{logError("promise",String((ev&&ev.reason)||"?"));}catch(e){}});
 const _origRender=render;
-let _crashed=false,_pendingRender=false;
+let _crashed=false,_pendingRender=false,_noRender=false;
 function _typing(){try{const a=document.activeElement;return !!a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT");}catch(e){return false;}}
 document.addEventListener("focusout",()=>{setTimeout(()=>{if(_pendingRender&&!_typing()){_pendingRender=false;render();}},60);},true);
 render=function(force){
   if(_crashed)return;
+  // Живое сохранение (liveCommit) намеренно НЕ перерисовывает экран, чтобы не сбить курсор/набор.
+  if(_noRender){_pendingRender=true;return;}
   if(!force&&_typing()){_pendingRender=true;return;}
   _pendingRender=false;
   try{_origRender();}
@@ -3050,6 +3052,38 @@ render=function(force){
 
 applyCustomItems();
 render();
+
+// ============================================================================
+// ЖИВОЕ СОХРАНЕНИЕ ЛЮБОГО ПОЛЯ ПО МЕРЕ НАБОРА (главная защита от потери данных).
+// ----------------------------------------------------------------------------
+// Раньше числовые/временные поля и селекты (замеры, вода, доход, сон, приёмы пищи, смены…)
+// сохранялись ТОЛЬКО по onchange, а он срабатывает при потере фокуса (blur). На телефоне человек
+// набирает и сворачивает приложение, не снимая фокус — blur не происходит, значение теряется.
+// Теперь на контейнере #app висит ОДИН делегированный слушатель ввода: любое поле, как только в
+// нём что-то меняется, тихо сохраняется на диск (через свой же onchange), но БЕЗ перерисовки
+// экрана — курсор и набор текста не сбиваются. Это не зависит ни от blur, ни от событий фона,
+// поэтому не полагается на «а вдруг браузер успеет». Контейнер #app переживает ре-рендеры (у него
+// меняется только innerHTML), поэтому слушатель ставится один раз и работает всегда.
+// textarea сюда не входят — у них своё, более лёгкое сохранение (taInput на каждый keystroke).
+let _liveT=null,_liveEl=null;
+function liveCommit(el){
+  if(!el)return;
+  try{_noRender=true;el.dispatchEvent(new Event("change",{bubbles:true}));}
+  catch(e){logError("live-commit",e);}
+  finally{_noRender=false;}
+}
+try{
+  const _app=document.getElementById("app");
+  if(_app)_app.addEventListener("input",e=>{
+    const el=e.target;if(!el||!el.tagName)return;
+    // textarea — своё сохранение (taInput); select фиксируется сразу по change (blur не нужен).
+    // Живём только по <input>: именно им нужен «немедленный» сейв вместо ожидания blur.
+    if(el.tagName!=="INPUT")return;
+    _liveEl=el;clearTimeout(_liveT);
+    _liveT=setTimeout(()=>{const t=_liveEl;_liveEl=null;if(t)liveCommit(t);},250);
+  },true);
+}catch(e){logError("live-listen",e);}
+
 // Тихо поднимаем облако после первой отрисовки — оно не должно задерживать показ экрана.
 try{cloud.boot();}catch(e){logError("cloud-boot",e);}
 // Раз в минуту тихо перерисовываем сегодняшний день — чтобы ритуалы сами появились/исчезли
