@@ -728,6 +728,8 @@ function fmtTs(ms){const d=new Date(Number(ms)||0);if(!ms||isNaN(d.getTime()))re
 function tsKey(ms){const d=new Date(Number(ms)||0);if(!ms||isNaN(d.getTime()))return "";const p=n=>String(n).padStart(2,"0");return d.getFullYear()+"-"+p(d.getMonth()+1)+"-"+p(d.getDate());}
 // Короткая дата «ДД.ММ.ГГГГ» без времени — для бейджа даты в хронологии.
 function fmtDate(ms){const d=new Date(Number(ms)||0);if(!ms||isNaN(d.getTime()))return "";const p=n=>String(n).padStart(2,"0");return p(d.getDate())+"."+p(d.getMonth()+1)+"."+d.getFullYear();}
+// Сколько КАЛЕНДАРНЫХ дней между двумя днями-ключами (ГГГГ-ММ-ДД). Плюс = b позже a.
+function daysBetween(a,b){if(!a||!b)return 0;const [y1,m1,d1]=a.split("-").map(Number),[y2,m2,d2]=b.split("-").map(Number);return Math.round((Date.UTC(y2,m2-1,d2)-Date.UTC(y1,m1-1,d1))/86400000);}
 function totalSpent(days){let s=0;for(const k in days){for(const x of (days[k].spends||[]))s+=Number(x.n)||0;}return s;}
 function calcBalance(days){
   const keys=Object.keys(days).sort();let total=0,run=0;for(const k of keys){total+=dayMoney(days[k],k);if(dayComplete(days[k])){run++;if(run%7===0)total+=5;}else run=0;}return Math.max(0,r2(total-totalSpent(days)));}
@@ -853,7 +855,7 @@ function buildExport(days){
         else verdict="отмечалось кусками";
         s+="  Как вёлся день: "+ts.length+" отметок, "+ts[0]+"–"+ts[ts.length-1]+" ("+verdict+")\n";
       }
-      s+="  Хронология:\n";for(const x of d.log){const rk=x.ts?tsKey(x.ts):"";const late=(rk&&rk!==k)?" [вписано "+fmtTs(x.ts)+"]":"";s+="    "+(x.t||"")+"  "+String(x.e||"").replace(/</g,"&lt;")+late+"\n";}
+      s+="  Хронология:\n";for(const x of d.log){const rk=x.ts?tsKey(x.ts):"";let late="";if(rk&&rk!==k){const dd=daysBetween(k,rk);late=" [вписано "+fmtTs(x.ts)+(dd>0?", +"+dd+" дн позже":dd<0?", "+dd+" дн":"")+"]";}s+="    "+(x.t||"")+"  "+String(x.e||"").replace(/</g,"&lt;")+late+"\n";}
     }
     return s.replace(/\n$/,"");
   });
@@ -1848,7 +1850,11 @@ function logHTML(day){const L=day.log||[];const rows=L.length?L.map(x=>{
     // запись (sel) — значит отметку поставили задним числом: показываем полную дату, чтобы через
     // полгода было ясно «галочка стоит на этом дне, но нажата такого-то числа».
     const rk=x.ts?tsKey(x.ts):"";const late=rk&&rk!==sel;
-    const badge=late?`<span class="log-date" style="color:#FBBF24;font-size:11px;font-weight:600;margin-right:6px">📅 ${fmtDate(x.ts)}</span>`:"";
+    // Отметка сделана НЕ в тот день, к которому относится → показываем реальную дату+день недели и
+    // на сколько дней позже (или раньше) она поставлена. Так сразу видно, насколько поздно отмечено.
+    let badge="";
+    if(late){const dd=daysBetween(sel,rk);const gap=dd>0?` · +${dd} дн позже`:dd<0?` · ${dd} дн`:"";
+      badge=`<span class="log-date" style="color:#FBBF24;font-size:11px;font-weight:600;margin-right:6px">📅 ${dayLabel(rk).txt} (${dayLabel(rk).dow})${gap}</span>`;}
     const ttl=x.ts?` title="${fmtTs(x.ts)}"`:"";
     return `<div class="log-row"${ttl}><span class="log-t">${String(x.t||"").replace(/</g,"&lt;")}</span>${badge}<span class="log-e">${String(x.e||"").replace(/</g,"&lt;")}</span></div>`;
   }).join(""):`<div class="muted-note" style="padding:8px 0">Пусто. Отметишь что-нибудь — появится время.</div>`;return `<div class="log-card"><button class="log-head" onclick="logOpen=!logOpen;render()"><span>🕓 Хронология дня</span><span style="color:#6B6B75;font-weight:600">${L.length} · ${logOpen?"▾":"▸"}</span></button>${logOpen?`<div class="log-list">${rows}</div>`:""}</div>`;}
