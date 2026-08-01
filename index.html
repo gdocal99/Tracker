@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.87.0";
+const VERSION="0.88.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -607,7 +607,9 @@ const APP_TZ="Europe/Kiev";
 let _tzFmt=null;
 function _tzFormatter(){
   if(_tzFmt!==null)return _tzFmt;
-  try{_tzFmt=new Intl.DateTimeFormat("en-GB",{timeZone:APP_TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false});}
+  // hourCycle:"h23" ОБЯЗАТЕЛЕН: без него некоторые браузеры в полночь отдают час "24" вместо "00"
+  // (и иногда с датой предыдущего дня) — из-за этого «сегодня» уезжало в «завтра». h23 = строго 0–23.
+  try{_tzFmt=new Intl.DateTimeFormat("en-GB",{timeZone:APP_TZ,year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hour12:false,hourCycle:"h23"});}
   catch(e){_tzFmt=false;}
   return _tzFmt;
 }
@@ -1110,15 +1112,20 @@ function tapLock(){const t=todayKey();if(sel>=t)return;lockTaps++;vib(6);if(lock
 function relock(){unlockedDay="";lockTaps=0;vib(8);render();}
 function lockHTML(){
   const t=todayKey();
-  if(sel>t)return `<div class="banner banner-warn" style="border-color:#4A2020"><b>${dayLabel(sel).txt} ещё не наступило.</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Записывать в будущее нельзя — ничего не сохранится.</div></div>`;
+  if(sel>t)return `<div class="banner banner-warn" style="border-color:#4A2020"><b>${dayLabel(sel).txt} ещё не наступило.</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Это будущий день. Всё, что отметишь, автоматически запишется в <b>сегодня</b> — ничего не потеряется.</div></div>`;
   if(sel===t)return "";
   if(unlockedDay===sel)return `<div class="banner" style="background:rgba(203,164,92,.1);border-color:#4A3821;color:#FBBF24"><b>⚠ ТЫ ПРАВИШЬ ПРОШЛОЕ: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Не сегодня. Всё, что отметишь, ляжет на этот день.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="relock()">🔒 Закрыть обратно</button></div></div>`;
   return `<div class="banner" style="background:#101017;border-color:#1B1B26"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#A1A1AA">Чтобы не записать сегодняшнее во вчерашнее. Хочешь дописать — нажми замок <b>3 раза</b>.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">🔒 Открыть ${lockTaps?"· "+lockTaps+"/3":""}</button></div></div>`;
 }
 function setDay(patch){
+  // САМОЛЕЧЕНИЕ ОТ ПОТЕРИ ДАННЫХ: если выбранный день вдруг оказался «в будущем» (сбой часов на
+  // устройстве, задетая будущая клетка календаря, полуночная граница) — НЕ отказываем и НЕ теряем
+  // введённое, а тихо переносим правку на СЕГОДНЯ и сохраняем. Лучше записать в сегодня, чем
+  // выбросить полчаса работы. (Прошлые «закрытые» дни ведём как раньше — через замок.)
+  const _t=todayKey();
+  if(sel>_t){sel=_t;try{toast("Записал в сегодня ("+dayLabel(_t).txt+")");}catch(e){}}
   if(!dayEditable(sel)){
-    if(sel>todayKey())toast("Завтра ещё не наступило");
-    else toast("День закрыт — нажми замок 3 раза");
+    toast("День закрыт — нажми замок 3 раза");
     vib(8);render();return;
   }
   const ts=Date.now();patch.lastUpdated=ts;
@@ -2514,6 +2521,9 @@ function setField(f,v){if(["energy","drift","focus","spirit","control"].includes
 let _taSaveT=null;
 function taInput(f,v){
   try{
+    // То же самолечение, что и в setDay: набранный текст никогда не должен пропасть из-за того,
+    // что день определился как «будущий». Переносим на сегодня и сохраняем.
+    const _t=todayKey();if(sel>_t)sel=_t;
     if(!dayEditable(sel))return;
     const before=getDay();
     if(String(before[f]??"")===String(v??""))return;
