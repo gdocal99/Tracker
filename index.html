@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.86.0";
+const VERSION="0.87.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2153,7 +2153,7 @@ function render(){
   appEl.innerHTML=`
     ${gearHTML()}
     ${dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow)}
-    ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${importErrHTML()}${lockHTML()}${topBanner}
+    ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
     ${pendingImportHTML()}
     <div class="grid">
       <div class="col-main">
@@ -2387,6 +2387,25 @@ function constructorHTML(){
 function backupStale(){if(cloud&&cloud.isSignedIn()&&cloud.state()==="synced")return false;return !meta.lastBackup||(Date.now()-meta.lastBackup)/86400000>=5;}
 function gearHTML(){const bad=hasProblem()||backupStale();return `<span id="cloud-dot" class="cloud-dot" onclick="openSettings()"></span><button class="gear${bad?" gear-bad":""}" onclick="openSettings()">⚙${bad?'<span class="gear-dot"></span>':""}</button>`;}
 function openSettings(){settingsOpen=true;render();}
+function openCloudSettings(){settingsOpen=true;settingsTab=1;render();setTimeout(()=>{try{const a=document.getElementById("app");if(a)a.scrollTop=0;}catch(e){}},0);}
+// КРУПНОЕ, НЕПРОПУСКАЕМОЕ предупреждение: если в приложении уже есть данные, но пользователь НЕ
+// вошёл в аккаунт — записи живут только в браузере этого устройства и в облако не уходят. Телефон
+// (особенно iPhone/Safari) со временем сам вычищает локальные данные сайта → всё пропадает без
+// следа. Маленький серый кружок это не доносил. Баннер висит, пока не войдёшь, и сам исчезает
+// после входа. Это прямая защита от «заполнял пару дней, не заметил серый значок, всё потерял».
+function cloudGuardHTML(){
+  try{
+    if(!cloud||typeof cloud.isSignedIn!=="function")return "";
+    if(cloud.isSignedIn())return "";               // вошёл → бэкап в облаке есть, тревоги нет
+    let has=false;for(const k in days){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&!dayIsEmpty(days[k])){has=true;break;}}
+    if(!has)return "";                              // терять нечего — не пугаем
+    return `<div class="banner banner-warn" style="border-color:#F87171;background:rgba(224,121,91,.14)">
+      <b style="color:#F87171;font-size:14.5px">☁️⚠️ Данные только на этом устройстве</b>
+      <div style="font-size:12.5px;margin-top:6px;color:#F5F5F7;line-height:1.55">Ты <b>не вошёл в аккаунт</b> — записи сохраняются только в браузере этого устройства и <b>в облако не уходят</b>. Телефон может очистить их сам, и тогда всё пропадёт. Войди один раз — данные будут в облаке и появятся на всех устройствах.</div>
+      <div class="backup-row" style="margin-top:10px"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8;font-weight:700;width:100%" onclick="openCloudSettings()">☁️ Войти, чтобы не потерять данные</button></div>
+    </div>`;
+  }catch(e){return "";}
+}
 function alarmHTML(){
   let out="";
   if(!saveState.ok)out+=`<div class="banner banner-warn" style="border-color:#F87171;background:rgba(224,121,91,.12)"><b style="color:#F87171">⛔ ДАННЫЕ НЕ СОХРАНЯЮТСЯ!</b><div style="font-size:12.5px;margin-top:5px;color:#F5F5F7">${saveState.err}</div><div style="font-size:12px;margin-top:5px;color:#D4D4D8">${saveState.quota?"Хранилище браузера заполнено.":"Немедленно сделай копию."}</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="copyBackup()">📋 СПАСТИ ДАННЫЕ В БУФЕР</button></div></div>`;
@@ -3091,6 +3110,16 @@ render=function(force){
 
 applyCustomItems();
 render();
+
+// Просим браузер НЕ вычищать локальные данные сайта (главная причина «телефон сам всё стёр»).
+// navigator.storage.persist() переводит хранилище в «persistent» режим — тогда данные не удаляются
+// автоматически при нехватке места/по давности. Поддерживается не везде и не всегда гарантируется,
+// поэтому это лишь дополнительный слой; настоящий бэкап — вход в облако. Тихо, без побочных эффектов.
+try{
+  if(navigator.storage&&navigator.storage.persist){
+    navigator.storage.persisted().then(p=>{if(!p)return navigator.storage.persist();}).catch(()=>{});
+  }
+}catch(e){}
 
 // ============================================================================
 // ЖИВОЕ СОХРАНЕНИЕ ЛЮБОГО ПОЛЯ ПО МЕРЕ НАБОРА (главная защита от потери данных).
