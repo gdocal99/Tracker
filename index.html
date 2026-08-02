@@ -467,7 +467,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.88.0";
+const VERSION="0.89.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -967,6 +967,22 @@ function restoreSnapshot(k){
     save();vib(15);toast("Восстановлено из снимка");render();
   }catch(e){logError("restore",e);toast("Снимок повреждён");render();}
 }
+// Замеры (вес/пульс/давление/…) НЕ суммируются, в отличие от воды: на один тип+время должна быть
+// ОДНА запись. Из-за слияния устройств без стабильного id каждое промежуточное значение (пока
+// набирал «6», «65», «5») превращалось в отдельную строку — так и рождались десятки дублей
+// «вес 5кг / вес —». Здесь схлопываем: выбрасываем пустые значения и оставляем по одной (последней
+// непустой) записи на пару тип+время. Порядок сохраняем по первому появлению.
+function dedupeMeasLog(L){
+  if(!Array.isArray(L)||L.length<2)return Array.isArray(L)?L.filter(x=>x&&x.v!==""&&x.v!=null):[];
+  const idx=new Map(),out=[];
+  for(const x of L){
+    if(!x||typeof x!=="object"||x.v===""||x.v==null)continue;
+    const k=(x.type||"")+"|"+(x.t||"");
+    if(idx.has(k))out[idx.get(k)]=x;      // тот же тип+время → обновляем на последнее значение
+    else{idx.set(k,out.length);out.push(x);}
+  }
+  return out;
+}
 function repairDay(v){
   const b=blankDay();const out={...b};
   for(const f in b){
@@ -977,6 +993,7 @@ function repairDay(v){
     else out[f]=val;
   }
   for(const f in v)if(!(f in b))out[f]=v[f];
+  if(Array.isArray(out.measLog))out.measLog=dedupeMeasLog(out.measLog); // чистим дубли замеров
   return out;
 }
 function validateDays(raw){
@@ -2695,7 +2712,7 @@ function mergeDayDeep(local,imp){
       out.sups=res;
     }
     else if(g==="meas"){
-      out.measLog=mergeArr(L.measLog,I.measLog,wI);
+      out.measLog=dedupeMeasLog(mergeArr(L.measLog,I.measLog,wI)); // без дублей на тип+время
       const sc=measScalars(out.measLog);
       for(const f of MERGE_GROUPS.meas){if(f==="measLog")continue;const scv=sc?sc[f]:"";out[f]=(scv!==""&&scv!=null)?scv:((S[f]!==""&&S[f]!=null)?S[f]:O[f]);}
     }
@@ -3143,11 +3160,14 @@ try{
 // поэтому не полагается на «а вдруг браузер успеет». Контейнер #app переживает ре-рендеры (у него
 // меняется только innerHTML), поэтому слушатель ставится один раз и работает всегда.
 // textarea сюда не входят — у них своё, более лёгкое сохранение (taInput на каждый keystroke).
-// ВАЖНО: живое сохранение срабатывает ТОЛЬКО для полей РУЧНОГО ВВОДА, в которых пользователь
-// СЕЙЧАС реально печатает (поле в фокусе). Ползунки (range), чекбоксы, радио и любые «случайные»
-// события сюда НЕ попадают — иначе можно записать то, чего человек не вводил (напр. задетый
-// пальцем ползунок). Ползунки и селекты сохраняются своими собственными обработчиками.
-const LIVE_TYPES=new Set(["text","number","tel","search","time","date","datetime-local","month","week"]);
+//
+// ОТКЛЮЧЕНО (LIVE_TYPES пуст). Оказалось, что «живое сохранение» на числовых/текстовых полях
+// приносило больше вреда, чем пользы: на некоторых мобильных браузерах оно задваивало ввод
+// («65» → «6565») и плодило десятки промежуточных строк замеров при синхронизации. Обычные поля
+// и так надёжно сохраняются: по blur (onchange) и при уходе в фон (commitFocused). Живое
+// посимвольное сохранение осталось только у больших текстов (жалобы/выводы) — через taInput,
+// где оно реально нужно и где этих проблем нет.
+const LIVE_TYPES=new Set();
 let _liveT=null,_liveEl=null;
 function liveCommit(el){
   if(!el)return;
