@@ -470,7 +470,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.90.0";
+const VERSION="0.91.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1128,14 +1128,16 @@ function startWriting(f){
 }
 function pushLog(e){if(!dayEditable(sel))return;const d=getDay();days[sel]={...d,log:[...(d.log||[]),{t:nowHM(),ts:Date.now(),e}]};save();}
 function dayEditable(k){const t=todayKey();if(k>t)return false;if(k===t)return true;return unlockedDay===k;}
-function tapLock(){const t=todayKey();if(sel>=t)return;lockTaps++;vib(6);if(lockTaps>=3){unlockedDay=sel;lockTaps=0;vibNice();toast("Прошлый день открыт для правки");}render();}
+// Один тап + подтверждение (раньше требовалось клацать 3 раза). Спрашиваем прямо тут, какой день
+// правим, — и открываем.
+function tapLock(){const t=todayKey();if(sel>=t)return;const lbl=dayLabel(sel);if(confirm("Править прошлый день — "+lbl.txt+" ("+lbl.dow+")?\n\nВсё, что отметишь, ляжет на этот день, а не на сегодня.")){unlockedDay=sel;lockTaps=0;vibNice();toast("Открыт для правки: "+lbl.txt);}render();}
 function relock(){unlockedDay="";lockTaps=0;vib(8);render();}
 function lockHTML(){
   const t=todayKey();
   if(sel>t)return `<div class="banner banner-warn" style="border-color:#4A2020"><b>${dayLabel(sel).txt} ещё не наступило.</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Это будущий день. Всё, что отметишь, автоматически запишется в <b>сегодня</b> — ничего не потеряется.</div></div>`;
   if(sel===t)return "";
   if(unlockedDay===sel)return `<div class="banner" style="background:rgba(203,164,92,.1);border-color:#4A3821;color:#FBBF24"><b>⚠ ТЫ ПРАВИШЬ ПРОШЛОЕ: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Не сегодня. Всё, что отметишь, ляжет на этот день.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="relock()">🔒 Закрыть обратно</button></div></div>`;
-  return `<div class="banner" style="background:#101017;border-color:#1B1B26"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#A1A1AA">Чтобы не записать сегодняшнее во вчерашнее. Хочешь дописать — нажми замок <b>3 раза</b>.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">🔒 Открыть ${lockTaps?"· "+lockTaps+"/3":""}</button></div></div>`;
+  return `<div class="banner" style="background:#101017;border-color:#1B1B26"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#A1A1AA">Чтобы случайно не записать сегодняшнее во вчерашнее. Можно просто начать отмечать — спросит подтверждение. Или открой заранее кнопкой ниже.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">✏️ Править этот день</button></div></div>`;
 }
 function setDay(patch){
   // САМОЛЕЧЕНИЕ ОТ ПОТЕРИ ДАННЫХ: если выбранный день вдруг оказался «в будущем» (сбой часов на
@@ -1145,8 +1147,11 @@ function setDay(patch){
   const _t=todayKey();
   if(sel>_t){sel=_t;try{toast("Записал в сегодня ("+dayLabel(_t).txt+")");}catch(e){}}
   if(!dayEditable(sel)){
-    toast("День закрыт — нажми замок 3 раза");
-    vib(8);render();return;
+    // Прошлый закрытый день. Больше НЕ надо идти наверх и клацать 3 раза: спрашиваем прямо здесь,
+    // и если пользователь подтвердил — открываем день и тут же применяем эту самую правку.
+    const lbl=dayLabel(sel);
+    if(!confirm("Правишь прошлый день — "+lbl.txt+" ("+lbl.dow+")?\n\nВсё, что отметишь, ляжет на этот день, а не на сегодня.")){vib(8);render();return;}
+    unlockedDay=sel;vibNice();toast("Открыт для правки: "+lbl.txt);
   }
   const ts=Date.now();patch.lastUpdated=ts;
   const before=getDay();const after={...before,...patch};
@@ -1346,7 +1351,13 @@ function recoHTML(day){
   return `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:12px;background:#101017;border:1px solid #1B1B26">
     <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:${tc}">Автооценка: ${q.label}</div><div style="font-size:11px;color:#6B6B75;margin-top:2px">${q.reason}</div></div>${right}</div>`;
 }
-function markHTML(day){const opts=[["crown","👑 Идеальный","#A5B4FC"],["fail","🔴 Провал","#F87171"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом — в анализе считать неточными, времена не фиксируются">≈ Неточно</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div>${recoHTML(day)}<div class="mark-row" style="margin-top:8px">${b}${badBtn}${clr}</div>`;}
+function markHTML(day){
+  // Самооценку дня (идеальный/провал) для СЕГОДНЯ показываем только после 20:00 — раньше рано
+  // судить, день ещё идёт и всё может измениться. Прошлые дни — всегда открыты (они уже закончились).
+  if(sel===todayKey()&&tzParts(Date.now()).h<20){
+    return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="muted-note" style="padding:9px 2px;color:#6B6B75;font-size:12.5px;line-height:1.55">Появится после <b>20:00</b> — день ещё идёт, рано ставить оценку. Вечером сам увидишь, каким он вышел.</div>`;
+  }
+  const opts=[["crown","👑 Идеальный","#A5B4FC"],["fail","🔴 Провал","#F87171"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом — в анализе считать неточными, времена не фиксируются">≈ Неточно</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div>${recoHTML(day)}<div class="mark-row" style="margin-top:8px">${b}${badBtn}${clr}</div>`;}
 function lifeHTML(){
   const target=40;
   const ageYears=(Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000);
@@ -1997,7 +2008,9 @@ function itemsBlock(items,day,wd,opts){
 function hasVisible(items,day,wd){return items.some(it=>(it.type!=="fact"&&isDue(it,wd))||(it.type==="fact")||(it.sched&&!isDue(it,wd)&&day.items?.[it.id]));}
 // Тайм-гейт ритуалов: ТОЛЬКО для сегодняшнего дня. Утро видно 06:00–13:00, вечер 19:00–23:00,
 // вне окна блок сегодня прячется до завтра. Прошлые/будущие дни — всегда открыты (дозаполнить вчера).
-const RITUAL_WINDOWS={morning:[6,13],evening:[19,23]};
+// Утренние действия доступны до 16:00, после 16:00 показываются вечерние (по просьбе пользователя).
+// Для прошлых дней (не сегодня) показываются ОБА блока — их дозаполняют задним числом.
+const RITUAL_WINDOWS={morning:[0,16],evening:[16,24]};
 function ritualVisible(part){
   if(sel!==todayKey())return true;
   const _np=tzParts(Date.now()),h=_np.h+_np.mi/60,w=RITUAL_WINDOWS[part];
