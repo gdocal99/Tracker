@@ -470,7 +470,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.91.0";
+const VERSION="0.92.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2847,15 +2847,49 @@ cloud=(function(){
   }
   // Локальная запись без цикла обратной отправки (используем при приёме удалённых изменений).
   function writeLocal(){try{const r=safeWrite(KEY,days);if(r.ok)lastWritten=JSON.stringify(days);}catch(e){}}
-  // Настройки: whole-object LWW по metaUpdated (меняются редко — построчное слияние не нужно).
+  // Настройки сливаем ПО-ПОЛЬНО и БЕЗ ПОТЕРЬ (как импорт), а НЕ заменяем целиком.
+  // Раньше был whole-object LWW: устройство со свежей меткой затирало настройки другого — так
+  // пропадали долгосрочные цели (meta.customTasks term:long) и блокировки (meta.blockers), даже когда
+  // синхронизация была «зелёной». Теперь массивы объединяются по id: все элементы обеих сторон
+  // сохраняются; при конфликте одного id берём более свежую сторону. Плюс, если после слияния мы
+  // оказались «богаче» облака, отправляем объединённые настройки обратно — чтобы они жили в облаке и
+  // не терялись при чистке локального хранилища.
   function applyCloudMeta(rm){
     if(!rm||typeof rm!=="object")return false;
     const rt=Number(rm.metaUpdated)||0,lt=Number(meta.metaUpdated)||0;
-    if(rt<=lt)return false;
-    for(const f of ["customTasks","customItems","userSups","supPeriods","blockers","blockerLog","checkinDay","checkinEve","lifeTarget"]){
-      if(rm[f]!==undefined)meta[f]=rm[f];
+    let changed=false,localRicher=false;
+    const mergeById=(field,key)=>{
+      const R=Array.isArray(rm[field])?rm[field]:null;
+      const L=Array.isArray(meta[field])?meta[field]:[];
+      if(R===null){if(L.length)localRicher=true;return;} // облако вообще не прислало это поле — не трогаем локальное
+      const Rids=new Set(R.map(x=>x&&x[key]));
+      const map=new Map();
+      for(const x of L){if(x&&x[key]!=null){map.set(x[key],x);if(!Rids.has(x[key]))localRicher=true;}}
+      for(const x of R){if(!x||x[key]==null)continue;const id=x[key];if(!map.has(id)||rt>lt)map.set(id,x);}
+      const merged=[...map.values()];
+      if(JSON.stringify(merged)!==JSON.stringify(L)){meta[field]=merged;changed=true;}
+    };
+    mergeById("customTasks","id");
+    mergeById("customItems","id");
+    mergeById("userSups","id");
+    mergeById("blockers","id");
+    if(Array.isArray(rm.blockerLog)){
+      const seen=new Set((meta.blockerLog||[]).map(x=>x&&(x.t+"|"+x.name)));
+      const add=rm.blockerLog.filter(x=>x&&!seen.has(x.t+"|"+x.name));
+      if(add.length){meta.blockerLog=[...(meta.blockerLog||[]),...add];changed=true;}
     }
-    meta.metaUpdated=rt;saveMeta({noStamp:true});applyCustomItems();return true;
+    if(rm.supPeriods&&typeof rm.supPeriods==="object"){
+      const merged=(rt>lt)?{...(meta.supPeriods||{}),...rm.supPeriods}:{...rm.supPeriods,...(meta.supPeriods||{})};
+      if(JSON.stringify(merged)!==JSON.stringify(meta.supPeriods||{})){meta.supPeriods=merged;changed=true;}
+    }
+    if(rt>lt){for(const f of ["checkinDay","checkinEve","lifeTarget"]){if(rm[f]!==undefined&&rm[f]!==meta[f]){meta[f]=rm[f];changed=true;}}}
+    let nt=Math.max(rt,lt);
+    if(localRicher){nt=Math.max(nt,Date.now());changed=true;}
+    if(nt!==(Number(meta.metaUpdated)||0)){meta.metaUpdated=nt;}
+    if(changed){saveMeta({noStamp:true});applyCustomItems();}
+    // Объединённые (более полные) настройки вернуть в облако, чтобы не пропали при вайпе локалки.
+    if(localRicher){try{S.metaDirty=true;if(S.ready&&S.user){clearTimeout(S.metaT);S.metaT=setTimeout(()=>pushMetaNow().catch(()=>{}),2500);}}catch(e){}}
+    return changed;
   }
 
   async function ensureInit(){
