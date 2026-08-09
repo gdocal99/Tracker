@@ -9,14 +9,49 @@
 <title>BLOCK 3 — Трекер</title>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+/* ── Токены. Значения 1:1 совпадают с теми, что были захардкожены по файлу, поэтому появление
+   этого блока само по себе ничего не меняет. Дальше на них переводятся только те правила,
+   которые и так правятся — сплошная замена по файлу запрещена (риск незаметных регрессий). */
+:root{
+  --bg:#060609; --surface-1:#101017; --surface-2:#16161C; --line:#1B1B26; --line-2:#3A3A45;
+  --text:#F5F5F7; --text-2:#A1A1AA; --text-3:#8B8B95; --text-4:#6B6B75;
+  --accent:#818CF8; --accent-soft:rgba(129,140,248,.14); --accent-line:#6366F1;
+  --ok:#4ADE80; --warn:#FBBF24; --next:#FB923C; --bad:#F87171; --water:#38BDF8;
+  --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
+  --r-1:10px; --r-2:12px; --r-3:14px; --r-4:20px;
+  --tap:44px; --tap-lg:52px;
+  --ic-sm:16px; --ic-md:20px; --ic-lg:26px;
+  /* Ширина: лестница вместо жёстких 440/1080px. На ноутбуке приложение занимает экран, а не
+     висит узкой полосой посередине. --cats-cols читается из JS (catsCols) — один источник правды. */
+  --shell-max:480px; --pad-x:16px; --pad-y:18px; --pad-b:104px; --rail:0px; --cats-cols:1; --gap:14px;
+}
+@media (min-width:700px){ :root{--shell-max:660px;--pad-x:24px} }
+@media (min-width:1000px){:root{--shell-max:1180px;--pad-x:28px;--rail:320px;--cats-cols:2;--pad-b:40px} }
+@media (min-width:1440px){:root{--shell-max:1560px;--pad-x:32px;--rail:330px;--cats-cols:3} }
+@media (min-width:1800px){:root{--shell-max:1760px;--pad-x:40px;--rail:340px} }
 body{background:#060609;color:#F5F5F7;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
-#app{max-width:440px;margin:0 auto;padding:18px 16px 70px}
+/* position:relative обязателен: .gear и .cloud-dot заданы absolute, и без позиционированного
+   предка они цеплялись к углу СТРАНИЦЫ — на широком экране шестерёнка улетала от контента. */
+#app{position:relative;width:100%;max-width:var(--shell-max);margin:0 auto;padding:var(--pad-y) var(--pad-x) var(--pad-b)}
+/* Ручной переключатель вида перебивает лестницу. */
+#app.force-mobile{--shell-max:480px;--rail:0px;--cats-cols:1;--pad-b:104px}
+#app.force-desktop{--rail:330px;--cats-cols:3}
+/* Каркас: слева липкая панель управления, справа блоки. На телефоне — обычный поток. */
+.shell{display:block}
+@media (min-width:1000px){
+  #app:not(.force-mobile) .shell{display:grid;grid-template-columns:var(--rail) minmax(0,1fr);gap:var(--sp-5);align-items:start}
+  #app:not(.force-mobile) .rail{position:sticky;top:16px;max-height:calc(100vh - 32px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin}
+  #app:not(.force-mobile) .rail .dash{margin:0}
+}
+.cats-grid{display:grid;grid-template-columns:repeat(var(--cats-cols),minmax(0,1fr));gap:var(--gap);align-items:start}
+.cats-col{min-width:0}
+.cats-col .cat-block{margin:0 0 var(--gap)}
 button{cursor:pointer;font-family:inherit;transition:transform .09s ease}
 .row:active,.prayer-btn:active,.cat-header:active,.mark-btn:active,.wbtn:active,.task-check:active,.q-btn:active,.state-btn:active,.backup-btn:active,.export-btn:active,.nav-btn:active,.task-add:active,.vt-btn:active,.task-del:active{transform:scale(.96)}
 .prayer-btn.on{box-shadow:0 0 10px rgba(129,140,248,.22)}
 @keyframes crownPulse{0%,100%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}50%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.42),0 0 9px rgba(165,180,252,.6)}}
 .hist-cell.crown-cell{animation:crownPulse 2.4s ease-in-out infinite}
-input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:10px;padding:9px 10px;font-size:14px;outline:none;width:100%}
+input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:10px;padding:12px;font-size:14px;outline:none;width:100%;min-height:var(--tap)}
 textarea{resize:none}
 input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0;touch-action:pan-y}
 .section-label{font-size:11px;letter-spacing:1.5px;color:#6B6B75;text-transform:uppercase;margin:20px 0 9px 2px}
@@ -26,12 +61,12 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid #3A3A45;background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
 .check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
-.prayer-btn{position:relative;overflow:hidden;flex:1;padding:11px 2px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
+.prayer-btn{position:relative;overflow:hidden;flex:1;padding:15px 2px;min-height:var(--tap-lg);border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#818CF8;background:rgba(129,140,248,.14);color:#818CF8}
 .prayers-row{display:flex;gap:6px;margin-top:7px}
-.step-btn{width:34px;height:34px;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#F5F5F7;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.step-btn{width:var(--tap);height:var(--tap);border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#F5F5F7;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .water-count{font-size:15px;font-weight:700;min-width:118px;text-align:center}
-.wbtn{flex:1;padding:9px 0;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:13px;font-weight:600}
+.wbtn{flex:1;padding:14px 0;min-height:48px;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:14px;font-weight:600}
 .tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
 .tag-fact{background:#1B1B26;color:#A8A29E}
 .tag-sched{background:rgba(203,164,92,.14);color:#FBBF24}
@@ -53,7 +88,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 /* flex-wrap: на узком телефоне строка замера/лога переносится (значение остаётся видимым сверху,
    время и «удалить» уходят на вторую строку), а не сплющивает поле ввода до невидимой полоски. */
 .mrow{display:flex;flex-wrap:wrap;align-items:center;gap:6px;padding:5px 0;border-top:1px solid #1B1B26}
-.msel{flex:0 0 92px;background:#16161C;border:1px solid #1B1B26;border-radius:9px;color:#F5F5F7;font-size:12.5px;padding:8px 6px}
+.msel{flex:0 0 92px;background:#16161C;border:1px solid #1B1B26;border-radius:9px;color:#F5F5F7;font-size:12.5px;padding:8px 6px;min-height:var(--tap)}
 /* Поле значения НИКОГДА не сжимается ниже читаемой ширины — иначе на телефоне не видно, что вводишь. */
 .mval{flex:1 1 88px;min-width:88px}
 .munit{flex:0 0 auto;font-size:11px;color:#6B6B75;min-width:32px}
@@ -62,7 +97,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .mlog-row{display:flex;align-items:center;gap:7px;padding:4px 0;font-size:12.5px}
 .mlog-v{flex:1;color:#D4D4D8}
 .mlog-v b{color:#F5F5F7}
-.mlog-x{flex:0 0 30px;border-radius:8px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:12px;padding:5px 0}
+.mlog-x{flex:0 0 40px;min-height:36px;border-radius:8px;border:1px solid #1B1B26;background:#16161C;color:#8B8B95;font-size:14px;padding:5px 0}
 .hud{border-bottom:1px solid #1B1B26;padding:3px 2px;margin:0 0 6px}
 .hud-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
 .hud-day{font-size:13.5px;font-weight:700;color:#F5F5F7}
@@ -104,7 +139,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .toggle-thumb{position:absolute;top:3px;left:3px;width:21px;height:21px;border-radius:11px;background:#6B6B75;transition:.15s}
 .toggle-track.on .toggle-thumb{left:22px;background:#818CF8}
 .toggle-track.danger.on .toggle-thumb{left:22px;background:#F87171}
-.state-btn{padding:7px 12px;border-radius:10px;font-size:13px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA}
+.state-btn{padding:11px 14px;min-height:40px;border-radius:10px;font-size:13px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA}
 .state-btn.on{border-color:#818CF8;background:rgba(129,140,248,.12);color:#818CF8}
 .expand-btn{width:100%;margin-top:14px;padding:13px 15px;border-radius:13px;background:#16161C;border:1px solid #1B1B26;color:#A1A1AA;font-size:14px;font-weight:600;display:flex;justify-content:space-between;align-items:center}
 .details-inner{background:#16161C;border:1px solid #1B1B26;border-radius:15px;padding:15px;margin-top:8px;display:flex;flex-direction:column;gap:14px}
@@ -138,7 +173,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .datebar-txt{font-size:18px;font-weight:700;color:#F5F5F7}
 .q-btn.active{border-color:#4ADE80;color:#4ADE80;background:rgba(121,169,141,.14)}
 .nav-row{display:flex;align-items:center;justify-content:space-between}
-.nav-btn{width:38px;height:38px;border-radius:11px;border:none;background:transparent;color:#A1A1AA;font-size:22px;display:flex;align-items:center;justify-content:center}
+.nav-btn{width:var(--tap);height:var(--tap);border-radius:11px;border:none;background:transparent;color:#A1A1AA;font-size:22px;display:flex;align-items:center;justify-content:center}
 .nav-btn:disabled{opacity:.25}
 .date-center{text-align:center}
 .date-dow{font-size:12px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
@@ -157,19 +192,22 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .earn-val{font-size:19px;font-weight:700;color:#FBBF24}
 .bal-txt{font-size:12px;color:#A1A1AA;margin-top:4px}
 .bal-num{color:#F5F5F7;font-weight:600}
-.hist-row{display:flex;gap:3px;flex-wrap:wrap}
-.hist-cell{width:calc(12.5% - 3px);height:22px;border-radius:5px;border:1px solid #1B1B26;background:#16161C;cursor:pointer}
+/* Календарь — сетка по дням недели. Ширину ограничиваем, иначе на мониторе клетки
+   растягиваются в простыни и месяц перестаёт читаться как месяц. */
+.hist-row{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;max-width:420px}
+.hist-cell{width:auto;height:30px;border-radius:5px;border:1px solid #1B1B26;background:#16161C;cursor:pointer}
 .hist-cell.sel{border:1.5px solid #FBBF24}
 .hist-cell.skip-cell{border:1px dashed rgba(224,121,91,.5);opacity:.9}
 .hist-month{font-size:12px;color:#A1A1AA;font-weight:600;margin:13px 0 6px 2px}
-.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:50}
-.modal-box{background:#16161C;width:100%;max-width:440px;border-radius:20px 20px 0 0;border:1px solid #1B1B26;padding:18px;max-height:80vh;display:flex;flex-direction:column}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-end;justify-content:center;z-index:90}
+@media (min-width:1000px){.modal-overlay{align-items:center}}
+.modal-box{background:#16161C;width:100%;max-width:min(720px,92vw);border-radius:20px 20px 0 0;border:1px solid #1B1B26;padding:18px;max-height:80vh;display:flex;flex-direction:column}
 .modal-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
 .modal-title{font-size:16px;font-weight:700}
 .modal-hint{font-size:12.5px;color:#A1A1AA;margin-bottom:10px}
 .copy-btn{margin-top:12px;padding:13px;border-radius:13px;border:none;background:#818CF8;color:#16161C;font-size:15px;font-weight:700;width:100%}
 .mark-row{display:flex;gap:6px;margin-top:4px}
-.mark-btn{flex:1;padding:10px 4px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:13px;font-weight:600}
+.mark-btn{flex:1;padding:14px 4px;min-height:48px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:13px;font-weight:600}
 .banner{border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.5;margin-bottom:6px}
 .banner-empty{background:rgba(203,164,92,.10);border:1px solid #4A3821;color:#FBBF24}
 .banner-warn{background:rgba(224,121,91,.12);border:1px solid #4A2020;color:#FDBA74}
@@ -180,16 +218,11 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .vt-btn.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .side-title{display:none}
 #app.mode-mobile .grid{display:block}
-#app.mode-desktop{max-width:1080px}
 #app.mode-desktop .grid{display:block;margin-top:16px}
-/* Жёсткая сетка: два фиксированных столбца, каждый блок всегда на своём месте (предсказуемо
-   для СДВГ — не надо искать, где что). Никакого masonry-перетекания. */
-#app.mode-desktop .cats-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;align-items:start}
-#app.mode-desktop .cats-col{min-width:0}
+/* Блоки стоят на фиксированных местах и НЕ перетекают между колонками при раскрытии
+   (предсказуемо для СДВГ — не надо каждый раз искать, где что). Никакого masonry. */
 #app.mode-desktop .cat-header{margin-top:0}
-#app.mode-desktop .cat-block{min-width:0;margin:0 0 14px}
-#app.mode-desktop .col-side{position:sticky;top:16px;display:flex;flex-direction:column}
-#app.mode-desktop .col-side .side-title{display:block;font-size:13px;font-weight:700;color:#F5F5F7;margin:0 0 10px 2px;letter-spacing:.3px}
+#app.mode-desktop .cat-block{min-width:0}
 #app.mode-desktop .details-inner{margin-top:0}
 #app.mode-desktop .export-btn,#app.mode-desktop .backup-row{margin-top:12px}
 #app.mode-desktop .header-card{padding:20px 22px}
@@ -199,7 +232,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
    экрана. Конструктор привычек — во всю ширину (он самый большой), остальные карточки —
    в 2 колонки. Экран настроек — отдельная ветка рендера без mode-desktop/mobile на #app,
    поэтому переключаем по ширине окна напрямую, а не по классу режима. */
-#app.mode-settings{max-width:880px}
+#app.mode-settings{max-width:min(1080px,var(--shell-max))}
 @media (min-width:760px){
   .settings-grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;align-items:start}
   .settings-grid2 .meas-card{margin-top:0}
@@ -207,9 +240,9 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .pt-time{font-size:10px;font-weight:700;opacity:.9}
 .pt-cfg{background:#101017;border:1px solid #1B1B26;border-radius:12px;padding:10px;margin-bottom:8px;display:flex;flex-direction:column;gap:8px}
 .pt-cfg u{cursor:pointer}
-.pt-sel{width:100%;background:#101017;color:#F5F5F7;border:1px solid #1B1B26;border-radius:10px;padding:9px 10px;font-size:14px;height:38px}
+.pt-sel{width:100%;background:#101017;color:#F5F5F7;border:1px solid #1B1B26;border-radius:10px;padding:9px 10px;font-size:14px;height:var(--tap)}
 .q-row{display:flex;gap:6px;margin:2px 0 4px 10px}
-.q-btn{padding:6px 11px;border-radius:9px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:12px;font-weight:600}
+.q-btn{padding:11px 14px;min-height:40px;border-radius:9px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:12px;font-weight:600}
 .q-btn.good.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .q-btn.meh.on{border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.12)}
 .tasks-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:12px;margin-bottom:14px}
@@ -221,7 +254,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .tk-badge.ok{color:#818CF8}
 .tk-badge.no{color:#F87171}
 .tk-badge.muted{color:#6B6B75;font-weight:600}
-.task-add{width:30px;height:30px;border-radius:9px;border:1px solid rgba(129,140,248,.5);background:rgba(129,140,248,.15);color:#A5B4FC;font-size:20px;font-weight:700;line-height:1;padding:0}
+.task-add{width:var(--tap);height:var(--tap);border-radius:11px;border:1px solid rgba(129,140,248,.5);background:rgba(129,140,248,.15);color:#A5B4FC;font-size:24px;font-weight:700;line-height:1;padding:0}
 .tasks-list{display:flex;flex-direction:column;gap:6px}
 .task-row{display:flex;gap:6px}
 .task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
@@ -303,7 +336,28 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .toast{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.92);background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#818CF8;padding:14px 24px;border-radius:16px;font-size:15px;font-weight:700;z-index:70;pointer-events:none;animation:toastPop 1.8s ease forwards;white-space:nowrap}
 @keyframes toastPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
 /* Тихая плашка «доступно обновление» — снизу по центру, не перекрывает контент, легко нажать. */
-.upd-bar{position:fixed;left:50%;bottom:16px;transform:translateX(-50%);z-index:75;background:rgba(18,24,19,.98);border:1px solid #6366F1;color:#A5B4FC;padding:9px 10px 9px 16px;border-radius:14px;font-size:13.5px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;animation:updIn .4s ease;max-width:calc(100% - 24px)}
+/* ── Полоса быстрых действий: главное лекарство от «заполнять тяжело».
+   Живёт внизу, в зоне большого пальца (раньше все кнопки были вверху экрана — на телефоне
+   до них надо было перехватывать руку). Одно касание = одна отметка, без раскрытия блоков. */
+.qbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
+  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
+  background:linear-gradient(180deg,rgba(6,6,9,0),#060609 26%);backdrop-filter:blur(6px)}
+.qb{min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border-radius:var(--r-3);border:1px solid var(--line);background:var(--surface-2);color:var(--text-2);padding:0 2px}
+.qb-ic{font-size:var(--ic-lg);line-height:1}
+.qb-l{font-size:10.5px;font-weight:700;line-height:1}
+.qb-v{font-size:10px;font-weight:700;color:var(--text-4);min-height:12px;line-height:1}
+.qb.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.qb.on .qb-v{color:var(--accent)}
+.qb-next{border-color:var(--next);box-shadow:0 0 0 1.5px rgba(251,146,60,.32)}
+.qbar-past{grid-template-columns:1fr}
+.qbar-past .qb{min-height:52px;flex-direction:row;gap:8px;border-color:var(--warn);color:var(--warn)}
+@media (min-width:1000px){
+  .upd-bar{bottom:16px}
+  #app:not(.force-mobile) .qbar{position:static;grid-template-columns:repeat(3,1fr);background:none;padding:0;margin:12px 0 0;backdrop-filter:none}
+  #app:not(.force-mobile) .qb{min-height:66px}
+}
+.upd-bar{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:75;background:rgba(18,24,19,.98);border:1px solid #6366F1;color:#A5B4FC;padding:9px 10px 9px 16px;border-radius:14px;font-size:13.5px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;animation:updIn .4s ease;max-width:calc(100% - 24px)}
 .upd-go{padding:9px 16px;border-radius:10px;border:none;background:#818CF8;color:#0B0B12;font-size:13.5px;font-weight:800}
 .upd-x{width:34px;height:34px;border-radius:10px;border:1px solid #1B1B26;background:#16161C;color:#8B8B95;font-size:13px;font-weight:700;flex:0 0 auto}
 @keyframes updIn{from{opacity:0;transform:translate(-50%,10px)}to{opacity:1;transform:translate(-50%,0)}}
@@ -348,7 +402,18 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .dash-namaz-status{width:100%;margin-top:16px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
 .np-top{display:flex;align-items:center;gap:9px;width:100%}
 .np-ic{font-size:17px;flex:0 0 auto;line-height:1}
-.np-dots{display:flex;gap:7px}
+.np-dots{display:flex;gap:6px;width:100%}
+/* Намаз отмечается прямо отсюда: были пять точек по 9px «для красоты», стало пять кнопок по 52px.
+   Раньше тап по этому блоку лишь прокручивал к свёрнутому блоку «Дин» — отметить было нельзя. */
+.np-hit{flex:1;min-height:var(--tap-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface-1);color:var(--text-2);padding:0 2px}
+.np-hit .np-dot{width:12px;height:12px}
+.np-nm{font-size:10px;font-weight:700;line-height:1}
+.np-tm{font-size:9px;color:var(--text-4);font-family:ui-monospace,Menlo,monospace;line-height:1}
+.np-hit.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.np-hit.next{border-color:var(--next);box-shadow:0 0 0 1.5px rgba(251,146,60,.3)}
+.np-jump{margin-left:6px;flex:0 0 auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
+  background:var(--surface-1);color:var(--text-4);font-size:15px}
 .np-dot{width:9px;height:9px;border-radius:50%;background:#1B1B26;flex:0 0 auto;transition:all .2s}
 .np-dot.on{background:#818CF8;box-shadow:0 0 6px rgba(129,140,248,.7)}
 .np-dot.next{background:#FB923C;box-shadow:0 0 5px rgba(251,146,60,.55)}
@@ -358,7 +423,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 /* Чекины прямо в шапке (дашборде): две быстрые кнопки с временем. Отмечают тот же пункт,
    что и в блоке — источник данных один, просто доступ ещё и из шапки. */
 .dash-checkins{display:flex;gap:8px;margin-top:10px}
-.ci-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:10px 8px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:background .2s,border-color .2s}
+.ci-chip{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;padding:14px 8px;min-height:48px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:background .2s,border-color .2s}
 .ci-chip.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14);color:#F5F5F7}
 .ci-box{width:18px;height:18px;border-radius:6px;border:1.5px solid #3A3A45;display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:12px;font-weight:700;flex:0 0 auto}
 .ci-chip.on .ci-box{border-color:#818CF8}
@@ -470,7 +535,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.93.0";
+const VERSION="0.97.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -634,7 +699,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],del:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipCount:0,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",mainTime:"",block:"",blockTime:"",seq:"",seqTime:"",extract:"",extractTime:"",analysis:"",analysisTime:"",complaints:"",complaintsTime:"",healthComplaints:"",healthComplaintsTime:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],del:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipCount:0,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",mainTime:"",block:"",blockTime:"",seq:"",seqTime:"",extract:"",extractTime:"",analysis:"",analysisTime:"",complaints:"",complaintsTime:"",story:"",storyTime:"",healthComplaints:"",healthComplaintsTime:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 // ВСЁ ВРЕМЯ В ПРИЛОЖЕНИИ — ПО КИЕВУ, а не по часам устройства.
 // Причина: на ноутбуке иногда сбивается часовой пояс/время. Пользователь живёт в одном поясе
 // (Киев, Europe/Kiev, зимой +2 / летом +3) и никуда не переезжает. Поэтому «сегодня», час и
@@ -655,8 +720,12 @@ function _tzFormatter(){
 }
 // Разбор epoch-метки в киевские части {y,mo,d,h,mi}. При недоступности Intl/пояса — падаем на
 // локальное время устройства (как было раньше), чтобы приложение никогда не падало.
+// Точное «сейчас». Киевское время уже не зависит от часового ПОЯСА устройства, но оставался
+// случай, когда врут САМИ часы. Поэтому при запуске сверяемся со временем сервера и запоминаем
+// поправку — дальше она применяется даже офлайн. Без сети работаем по часам устройства, как раньше.
+function nowMs(){const o=Number(meta.clockOffset)||0;return Date.now()+o;}
 function tzParts(ms){
-  const t=(typeof ms==="number"&&isFinite(ms))?ms:Date.now();
+  const t=(typeof ms==="number"&&isFinite(ms))?ms:nowMs();
   const dt=new Date(t);
   const f=_tzFormatter();
   if(f){
@@ -669,8 +738,8 @@ function tzParts(ms){
   return {y:dt.getFullYear(),mo:dt.getMonth()+1,d:dt.getDate(),h:dt.getHours(),mi:dt.getMinutes()};
 }
 const _z2=n=>String(n).padStart(2,"0");
-function todayKey(){const p=tzParts(Date.now());return p.y+"-"+_z2(p.mo)+"-"+_z2(p.d);}
-function nowHM(){const p=tzParts(Date.now());return _z2(p.h)+":"+_z2(p.mi);}
+function todayKey(){const p=tzParts(nowMs());return p.y+"-"+_z2(p.mo)+"-"+_z2(p.d);}
+function nowHM(){const p=tzParts(nowMs());return _z2(p.h)+":"+_z2(p.mi);}
 function addDays(k,n){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);dt.setDate(dt.getDate()+n);return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,"0")}-${String(dt.getDate()).padStart(2,"0")}`;}
 function dayLabel(k){const[y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d);return{dow:DOW[dt.getDay()],txt:`${d} ${MON[m-1]}`};}
 function weekdayOf(k){const[y,m,d]=k.split("-").map(Number);return new Date(y,m-1,d).getDay();}
@@ -704,7 +773,7 @@ function computeRing(day,k){
   return {obDone,obTotal,desDone,desTotal,obPct:obTotal?Math.round(obDone/obTotal*100):0,desPct:desTotal?Math.round(desDone/desTotal*100):0};
 }
 function dayComplete(day){if(!day)return false;for(const p of PRAYERS){if(!day.prayers?.[p[0]])return false;}return true;}
-function dayTouched(d){if(!d)return false;if(d.items&&Object.values(d.items).some(Boolean))return true;if(d.prayers&&Object.values(d.prayers).some(Boolean))return true;if(d.water>0)return true;if(d.slip||d.onTime||d.bounced||d.urge)return true;if(d.energy!==""&&d.energy!=null)return true;if(d.drift!==""&&d.drift!=null)return true;if(d.main||d.block||d.seq||d.extract||d.analysis||d.mark||d.poop||d.income||d.weight||d.pulse||d.bpSys||d.sleepDown||d.sleepUp)return true;if(d.sups&&Object.values(d.sups).some(v=>v>0))return true;if((d.workLog&&d.workLog.length)||(d.meals&&d.meals.length))return true;return false;}
+function dayTouched(d){if(!d)return false;if(d.items&&Object.values(d.items).some(Boolean))return true;if(d.prayers&&Object.values(d.prayers).some(Boolean))return true;if(d.water>0)return true;if(d.slip||d.onTime||d.bounced||d.urge)return true;if(d.energy!==""&&d.energy!=null)return true;if(d.drift!==""&&d.drift!=null)return true;if(d.story||d.main||d.block||d.seq||d.extract||d.analysis||d.mark||d.poop||d.income||d.weight||d.pulse||d.bpSys||d.sleepDown||d.sleepUp)return true;if(d.sups&&Object.values(d.sups).some(v=>v>0))return true;if((d.workLog&&d.workLog.length)||(d.meals&&d.meals.length))return true;return false;}
 const PENALTY_FROM="2026-07-09";
 const HIST_FLOOR="2026-06-01";
 const TRACK_START="2026-07-26";
@@ -740,6 +809,7 @@ function answersCount(d){
 // loggedSections оставлен для денежной логики (dayMoney: closed-порог), чтобы НЕ сдвигать
 // исторический баланс. Крестик/пропуск теперь считает answersCount, а не эту функцию.
 function loggedSections(d){
+  if(String(d&&d.story||"").trim())return 10; // день рассказан целиком — считаем полностью заполненным
   if(!d)return 0;
   let n=0;
   if(d.items&&Object.values(d.items).some(Boolean))n++;
@@ -907,6 +977,7 @@ function buildExport(days){
     if(d.seq)s+="  События (пр/обр)"+tt("seq")+": "+String(d.seq).replace(/</g,"&lt;")+"\n";
     if(d.extract)s+="  Извлёк"+tt("extract")+": "+String(d.extract).replace(/</g,"&lt;")+"\n";
     if(d.analysis)s+="  Анализ"+tt("analysis")+": "+String(d.analysis).replace(/</g,"&lt;")+"\n";
+    if(d.story)s+="  🎙 РАССКАЗ О ДНЕ"+tt("story")+" (день заполнен рассказом, а не галочками):\n    "+String(d.story).replace(/</g,"&lt;")+"\n";
     if(d.complaints)s+="  🐞 ЖАЛОБА НА ПРИЛОЖЕНИЕ"+tt("complaints")+": "+String(d.complaints).replace(/</g,"&lt;")+"\n";
     if(d.main)s+="  Главное"+tt("main")+": "+String(d.main).replace(/</g,"&lt;")+"\n";
     if(d.block)s+="  Помеха"+tt("block")+": "+String(d.block).replace(/</g,"&lt;")+"\n";
@@ -1082,10 +1153,25 @@ let days=loadDays();
 if(loadState.ok&&!loadState.corrupt&&Object.keys(days).length)makeSnapshot();
 let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",newTaskText="",supFormOpen=false,supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""},pasteOpen=false,pasteText="",offSchedOpen=false;
 // По умолчанию ВСЕ блоки свёрнуты — чище, меньше визуального шума, пользователь открывает нужное сам.
-let catOpen={din:0,regime:0,health:0,delo:0,home:0,state:0,guard:0,reflect:0};
+// Состояние интерфейса (какие блоки раскрыты) живёт в ОТДЕЛЬНОМ ключе, а НЕ в meta.
+// Почему: saveMeta() штампует metaUpdated и отправляет настройки в облако — то есть запись в
+// Firestore на каждое раскрытие блока, прямо в то слияние настроек, которое чинили от пропажи
+// целей. Здесь чисто локальная память экрана: в данные, экспорт и синхронизацию не попадает.
+const UI_KEY="journal_block3_ui";
+let catOpen={now:1,din:1,regime:1,health:0,delo:0,home:0,state:0,reflect:0};
 let taOpen={};
+try{
+  const u=localStorage.getItem(UI_KEY);
+  if(u){const p=JSON.parse(u);
+    if(p&&typeof p==="object"){
+      if(p.catOpen&&typeof p.catOpen==="object")catOpen={...catOpen,...p.catOpen};
+      if(p.taOpen&&typeof p.taOpen==="object")taOpen={...p.taOpen};
+    }}
+}catch(e){/* битое значение не должно ронять приложение — просто остаёмся на умолчаниях */}
+function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({catOpen,taOpen}));}catch(e){}}
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
+let qSheetOpen=""; // "" | "more" | "stool" — лист быстрых отметок
 // Состояние конструктора привычек (Таб «Кастом»)
 let ncCat="regime:morning",ncLabel="",ncType="ob",ncPts="1",ncPen=false,ncSched=[];
 const LIFE_BIRTH=new Date(2006,4,6);
@@ -1145,9 +1231,9 @@ function optLabelOf(itemId,gk,v){
 function labelOf(id){for(const c of CATEGORIES)for(const it of c.items)if(it.id===id)return it.label.replace(/\s*\(\+\d+\)\s*$/,"");const t=(meta.customTasks||[]).find(x=>x.id===id);return t?t.label:id;}
 function supLabel(id){const s=allSups().find(x=>x[0]===id);return s?s[1]:id;}
 const OPT_RU={own:"своё место",all:"весь стол",self:"сам",asked:"попросили",good:"качественно",meh:"так себе",little:"мало",mid:"средне",much:"много",reward:"в награду",slipc:"срыв",shower:"душ",bath:"ванна",short:"менее часа",long:"час и больше",athome:"дома",atwork:"на работе"};
-const LOG_FIELDS={income:"доход ₴",weight:"вес",height:"рост",pulse:"пульс",bpSys:"давление верх",bpDia:"давление низ",temp:"температура",sleepDown:"лёг спать",sleepUp:"проснулся",onTime:"встал вовремя",slip:"срыв",slipTrigger:"триггер срыва",bounced:"отбился после срыва",drift:"рассеянность",energy:"энергия",focus:"фокус",spirit:"иман",control:"самоконтроль",urge:"тяга перед сном",main:"главное за день",block:"помеха дня",seq:"события дня",extract:"что извлёк",analysis:"мысли и анализ",complaints:"🐞 жалоба на приложение",poop:"стул",phoneOut:"телефон убрал (вечер)",phoneBack:"телефон забрал (утро)"};
+const LOG_FIELDS={income:"доход ₴",weight:"вес",height:"рост",pulse:"пульс",bpSys:"давление верх",bpDia:"давление низ",temp:"температура",sleepDown:"лёг спать",sleepUp:"проснулся",onTime:"встал вовремя",slip:"срыв",slipTrigger:"триггер срыва",bounced:"отбился после срыва",drift:"рассеянность",energy:"энергия",focus:"фокус",spirit:"иман",control:"самоконтроль",urge:"тяга перед сном",main:"главное за день",block:"помеха дня",seq:"события дня",extract:"что извлёк",analysis:"мысли и анализ",story:"🎙 рассказ о дне",complaints:"🐞 жалоба на приложение",poop:"стул",phoneOut:"телефон убрал (вечер)",phoneBack:"телефон забрал (утро)"};
 function logDiff(b,a){
-  const t=nowHM(),ts=Date.now(),out=[],push=e=>out.push({t,ts,e}),ks=o=>Object.keys(o||{});
+  const t=nowHM(),ts=nowMs(),out=[],push=e=>out.push({t,ts,e}),ks=o=>Object.keys(o||{});
   for(const id of new Set([...ks(b.items),...ks(a.items)])){const w=!!(b.items||{})[id],n=!!(a.items||{})[id];if(w!==n)push((n?"✓ ":"↩ снял: ")+labelOf(id));}
   for(const id of new Set([...ks(b.prayers),...ks(a.prayers)])){const w=!!(b.prayers||{})[id],n=!!(a.prayers||{})[id];if(w!==n){const p=PRAYERS.find(x=>x[0]===id);push((n?"🕌 намаз: ":"↩ снял намаз: ")+(p?p[1]:id));}}
   for(const id of new Set([...ks(b.sups),...ks(a.sups)])){const w=(b.sups||{})[id]||0,n=(a.sups||{})[id]||0;if(w!==n)push("💊 "+supLabel(id)+": "+n+" доз");}
@@ -1172,7 +1258,7 @@ function startWriting(f){
   writeStarted[key]=true;
   pushLog("✍ начал писать: "+(LOG_FIELDS[f]||f));
 }
-function pushLog(e){if(!dayEditable(sel))return;const d=getDay();days[sel]={...d,log:[...(d.log||[]),{t:nowHM(),ts:Date.now(),e}]};save();}
+function pushLog(e){if(!dayEditable(sel))return;const d=getDay();days[sel]={...d,log:[...(d.log||[]),{t:nowHM(),ts:nowMs(),e}]};save();}
 function dayEditable(k){const t=todayKey();if(k>t)return false;if(k===t)return true;return unlockedDay===k;}
 // Один тап + подтверждение (раньше требовалось клацать 3 раза). Спрашиваем прямо тут, какой день
 // правим, — и открываем.
@@ -1400,7 +1486,7 @@ function recoHTML(day){
 function markHTML(day){
   // Самооценку дня (идеальный/провал) для СЕГОДНЯ показываем только после 20:00 — раньше рано
   // судить, день ещё идёт и всё может измениться. Прошлые дни — всегда открыты (они уже закончились).
-  if(sel===todayKey()&&tzParts(Date.now()).h<20){
+  if(sel===todayKey()&&tzParts(nowMs()).h<20){
     return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="muted-note" style="padding:9px 2px;color:#6B6B75;font-size:12.5px;line-height:1.55">Появится после <b>20:00</b> — день ещё идёт, рано ставить оценку. Вечером сам увидишь, каким он вышел.</div>`;
   }
   const opts=[["crown","👑 Идеальный","#A5B4FC"],["fail","🔴 Провал","#F87171"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом — в анализе считать неточными, времена не фиксируются">≈ Неточно</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div>${recoHTML(day)}<div class="mark-row" style="margin-top:8px">${b}${badBtn}${clr}</div>`;}
@@ -1431,27 +1517,114 @@ function weekBarsHTML(r){
 }
 // Единый дашборд: крупное кольцо в центре, баланс и серии по бокам — как «часы» с ключевыми
 // метриками (нет пустоты), плюс компактный статус намаза (точки, без дублей кнопок из блока «Дин»)
-// и понятный недельный прогресс. Тап по статусу намаза переносит к блоку «Дин» и раскрывает его.
+// и понятный недельный прогресс. Намаз отмечается прямо из шапки — тапом по нужной кнопке.
 function namazStatusHTML(day){
   const pt=ptFor(sel),nx=nextPrayerId(pt);
   const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
-  const dots=PRAYERS.map(([id])=>{
-    const on=!!day.prayers?.[id];
-    return `<span class="np-dot${on?" on":""}${(!on&&id===nx)?" next":""}"></span>`;
-  }).join("");
   let sub;
   if(pn===5)sub="Все 5 совершены ✓ ماشاء الله";
   else if(nx){const nm=(PRAYERS.find(([id])=>id===nx)||[])[1];const tm=pt[PT_MAP[nx]]||"";sub=`Следующий: ${nm}${tm?" "+tm:""}`;}
   else sub=`Отметь совершённые намазы`;
   const cnt=pn===5?"#4ADE80":pn>0?"#818CF8":"#6B6B75";
-  return `<button class="dash-namaz-status" onclick="jumpToDin()">
-    <div class="np-top"><span class="np-ic">🕌</span><span class="np-dots">${dots}</span><span class="np-count" style="color:${cnt}">${pn}<span class="np-count-u">/5</span></span></div>
-    <span class="np-sub">${sub}</span>
-  </button>`;
+  // ВАЖНО: внешний элемент — div, а не button. Кнопка внутри кнопки невалидна, браузер её
+  // «распутывает» и вёрстка ломается. jumpToDin переехал на отдельную стрелку «→».
+  const hits=PRAYERS.map(([id,nm])=>{
+    const on=!!day.prayers?.[id];const tm=pt[PT_MAP[id]]||"";
+    return `<button class="np-hit${on?" on":""}${(!on&&id===nx)?" next":""}" onclick="event.stopPropagation();togglePrayer('${id}')" title="${nm}${tm?" · "+tm:""}">
+      <span class="np-dot${on?" on":""}"></span><span class="np-nm">${nm}</span><span class="np-tm">${tm}</span></button>`;
+  }).join("");
+  return `<div class="dash-namaz-status">
+    <div class="np-top"><span class="np-ic">🕌</span><span class="np-sub" style="flex:1">${sub}</span><span class="np-count" style="color:${cnt}">${pn}<span class="np-count-u">/5</span></span><button class="np-jump" onclick="jumpToDin()" title="Открыть блок Дин">→</button></div>
+    <div class="np-dots">${hits}</div>
+  </div>`;
 }
-function jumpToDin(){catOpen.din=true;animBlock="din";render();setTimeout(()=>{const el=document.getElementById("blk-din");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
+function jumpToDin(){catOpen.din=true;animBlock="din";saveUI();render();setTimeout(()=>{const el=document.getElementById("blk-din");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
 // Чекины в шапке: две быстрые кнопки (дневной/вечерний) с временем. Отмечают тот же пункт
 // items[checkin_*] — данные не дублируются, просто отметить можно сразу из дашборда.
+/* ═══ ПОЛОСА БЫСТРЫХ ДЕЙСТВИЙ ═══
+   Зачем: отметить воду/намаз/истинджу/стул стоило 3–8 касаний (открыть блок → прокрутить →
+   найти → нажать), а стул вообще требовал сначала вписать число в поле внутри «Замеров»,
+   и только потом становилась доступна истинджа. При СДВГ намерение «надо отметить» живёт
+   несколько секунд — каждое лишнее касание убивает его. Здесь всё это — одно касание.
+   Все обработчики зовут СУЩЕСТВУЮЩИЕ мутаторы, новых путей записи в данные нет. */
+function qGuard(){
+  // Никогда не пишем в прошлый день из нижней полосы: там ждать диалог подтверждения — плохо.
+  if(sel!==todayKey()){goToday();toast("Вернул в сегодня");return false;}
+  try{commitFocused();}catch(e){}   // досохраняем поле в фокусе перед перерисовкой
+  return true;
+}
+function qWater(){if(!qGuard())return;changeWater(250);}
+function qPrayer(){
+  if(!qGuard())return;
+  const d=getDay();
+  const id=nextPrayerId(ptFor(sel))||(PRAYERS.find(([p])=>!d.prayers?.[p])||[])[0];
+  if(id)togglePrayer(id);else toast("Все 5 отмечены ✓");
+}
+function qToilet(){if(!qGuard())return;toggleItem("istinja_s");}
+function qStool(){
+  if(!qGuard())return;
+  const d=getDay();
+  // Флаг листа ставим ДО setDay: setDay сам перерисовывает экран, и лист должен попасть в этот
+  // же рендер, иначе он просто не откроется.
+  qSheetOpen="stool";
+  setDay({poop:String((Number(d.poop)||0)+1)});
+  vib(8);
+  toast("Стул +1 · отметь истинджу");
+}
+function qCheckin(){
+  if(!qGuard())return;
+  const h=tzParts(nowMs()).h;
+  toggleItem(h>=17?"checkin_eve":"checkin_day");
+}
+function qSheet(){if(sel!==todayKey()){goToday();return;}qSheetOpen=qSheetOpen?"":"more";render();}
+function closeQSheet(){qSheetOpen="";render();}
+function qbarHTML(day){
+  if(sel!==todayKey()){
+    return `<div class="qbar qbar-past"><button class="qb" onclick="goToday()"><span class="qb-ic">↩</span><span class="qb-l">Вернуться в сегодня</span></button></div>`;
+  }
+  const pt=ptFor(sel),nx=nextPrayerId(pt);
+  const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
+  const nxName=nx?((PRAYERS.find(([id])=>id===nx)||[])[1]||"Намаз"):"Намаз";
+  const wl=day.water||0,tgt=waterTarget(day,sel);
+  const isS=!!day.items?.istinja_s;
+  const h=tzParts(nowMs()).h;
+  const ciId=h>=17?"checkin_eve":"checkin_day";
+  const ciOn=!!day.items?.[ciId];
+  const ciTm=h>=17?(meta.checkinEve||"22:30"):(meta.checkinDay||"12:00");
+  return `<div class="qbar">
+    <button class="qb${wl>0?" on":""}" onclick="qWater()"><span class="qb-ic">💧</span><span class="qb-l">+250</span><span class="qb-v">${(wl/1000).toFixed(1)}/${(tgt/1000).toFixed(1)}</span></button>
+    <button class="qb${pn===5?" on":""}${pn<5?" qb-next":""}" onclick="qPrayer()"><span class="qb-ic">🕌</span><span class="qb-l">${pn===5?"Все ✓":nxName}</span><span class="qb-v">${pn}/5</span></button>
+    <button class="qb${isS?" on":""}" onclick="qToilet()"><span class="qb-ic">🚻</span><span class="qb-l">Истинджа</span><span class="qb-v">${isS?"✓":""}</span></button>
+    <button class="qb${Number(day.poop)>0?" on":""}" onclick="qStool()"><span class="qb-ic">💩</span><span class="qb-l">Стул</span><span class="qb-v">${Number(day.poop)||0}</span></button>
+    <button class="qb${ciOn?" on":""}" onclick="qCheckin()"><span class="qb-ic">⏰</span><span class="qb-l">Чекин</span><span class="qb-v">${ciTm}</span></button>
+    <button class="qb" onclick="qSheet()"><span class="qb-ic">➕</span><span class="qb-l">Ещё</span><span class="qb-v"></span></button>
+  </div>`;
+}
+// Лист «Ещё» — второй ярус частых действий, тоже по одному касанию.
+function qSheetHTML(day){
+  if(!qSheetOpen)return "";
+  const stool=qSheetOpen==="stool";
+  const isB=!!day.items?.istinja_b;
+  const AS=(typeof activeSups==="function")?activeSups():[];
+  const supBtns=AS.slice(0,4).map(([id,l,st,u])=>`<button class="wbtn" onclick="changeSup('${id}',${st})">${l} +${st}${u}</button>`).join("");
+  return `<div class="modal-overlay" onclick="closeQSheet()"><div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">${stool?"Стул отмечен":"Быстрые отметки"}</span><button class="nav-btn" onclick="closeQSheet()">✕</button></div>
+    ${stool?`<button class="wbtn" style="min-height:56px;border-color:${isB?"#818CF8":"#4A3821"};color:${isB?"#818CF8":"#FBBF24"};font-size:15px" onclick="toggleItem('istinja_b');closeQSheet()">${isB?"✓ Истинджа большая отмечена":"✓ Отметить истинджу большую"}</button>`:""}
+    <div class="section-label" style="margin-top:14px">Вода</div>
+    <div style="display:flex;gap:8px"><button class="wbtn" onclick="changeWater(-250)">−250</button><button class="wbtn" onclick="changeWater(500)">+500</button><button class="wbtn" onclick="changeWater(1000)">+1л</button></div>
+    <div class="section-label" style="margin-top:14px">Отметить</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="wbtn" onclick="setSlipCount((getDay().slipCount||0)+1)">🔴 Срыв +1</button>
+      <button class="wbtn" onclick="addProc()">🌀 Прокрастинация</button>
+      <button class="wbtn" onclick="addMeal()">🍽 Приём пищи</button>
+    </div>
+    ${supBtns?`<div class="section-label" style="margin-top:14px">БАДы</div><div style="display:flex;gap:8px;flex-wrap:wrap">${supBtns}</div>`:""}
+    <div class="section-label" style="margin-top:14px">Состояние</div>
+    ${sliderHTML("Энергия","energy",day.energy)}
+    ${sliderHTML("Фокус / собранность","focus",day.focus)}
+    ${sliderHTML("Самоконтроль","control",day.control)}
+  </div></div>`;
+}
 function checkinStatusHTML(day){
   const list=[["checkin_day","☀️ День",meta.checkinDay||"12:00"],["checkin_eve","🌙 Вечер",meta.checkinEve||"22:30"]];
   const chips=list.map(([id,lbl,tm])=>{
@@ -1603,7 +1776,7 @@ const PT_LAT=48.585,PT_LNG=22.283;
 function uaTZ(y,m,d){const last=(yy,mm)=>{const dt=new Date(yy,mm+1,0);return new Date(yy,mm,dt.getDate()-dt.getDay()).getTime();};const t=new Date(y,m-1,d).getTime();return (t>=last(y,2)&&t<last(y,9))?3:2;}
 function computeTimes(y,m,d,lat,lng,tz){const D2R=Math.PI/180,R2D=180/Math.PI;const sin=x=>Math.sin(x*D2R),cos=x=>Math.cos(x*D2R),tan=x=>Math.tan(x*D2R);const asin=x=>R2D*Math.asin(x),acos=x=>R2D*Math.acos(x),atan2=(a,b)=>R2D*Math.atan2(a,b),acot=x=>R2D*Math.atan(1/x);const fixA=a=>{a=a%360;return a<0?a+360:a;},fixH=a=>{a=a%24;return a<0?a+24:a;};let Y=y,M=m;if(M<=2){Y-=1;M+=12;}const A=Math.floor(Y/100),B=2-A+Math.floor(A/4);const jd=Math.floor(365.25*(Y+4716))+Math.floor(30.6001*(M+1))+d+B-1524.5-lng/(15*24);const sp=t=>{const T=jd+t/24-2451545.0;const g=fixA(357.529+0.98560028*T);const q=fixA(280.459+0.98564736*T);const L=fixA(q+1.915*sin(g)+0.020*sin(2*g));const e=23.439-0.00000036*T;return[asin(sin(e)*sin(L)),q/15-fixH(atan2(cos(e)*sin(L),cos(L))/15)];};const midDay=t=>fixH(12-sp(t)[1]);const angT=(ang,t,dir)=>{const dc=sp(t)[0],noon=midDay(t);const v=(-sin(ang)-sin(dc)*sin(lat))/(cos(dc)*cos(lat));if(v>1||v<-1)return NaN;const T=acos(v)/15;return noon+(dir==='ccw'?-T:T);};const asrT=t=>{const dc=sp(t)[0];return angT(-acot(1+tan(Math.abs(lat-dc))),t,'cw');};let dhuhr=midDay(12),sunrise=angT(0.833,6,'ccw'),maghrib=angT(0.833,18,'cw'),fajr=angT(18.5,5,'ccw'),asr=asrT(13);const night=fixH((sunrise+24)-maghrib),floor=sunrise-0.5*night;if(isNaN(fajr)||fajr<floor)fajr=floor;const adj=v=>v+tz-lng/15;const fmt=v=>{v=fixH(adj(v)+0.5/60);const h=Math.floor(v),mm=Math.floor((v-h)*60);return String(h).padStart(2,'0')+":"+String(mm).padStart(2,'0');};const ish=fixH(adj(maghrib)+90/60),fmI=v=>{v=fixH(v+0.5/60);const h=Math.floor(v),mm=Math.floor((v-h)*60);return String(h).padStart(2,'0')+":"+String(mm).padStart(2,'0');};return{Fajr:fmt(fajr),Dhuhr:fmt(dhuhr),Asr:fmt(asr),Maghrib:fmt(maghrib),Isha:fmI(ish)};}
 function ptFor(dk){const[y,m,d]=dk.split("-").map(Number);return computeTimes(y,m,d,PT_LAT,PT_LNG,uaTZ(y,m,d));}
-function nextPrayerId(pt){if(sel!==todayKey())return null;const np=tzParts(Date.now()),cur=np.h*60+np.mi;for(const p of PRAYERS){const tm=pt[PT_MAP[p[0]]];if(!tm)continue;const parts=tm.split(":");if(+parts[0]*60+ +parts[1]>cur)return p[0];}return null;}
+function nextPrayerId(pt){if(sel!==todayKey())return null;const np=tzParts(nowMs()),cur=np.h*60+np.mi;for(const p of PRAYERS){const tm=pt[PT_MAP[p[0]]];if(!tm)continue;const parts=tm.split(":");if(+parts[0]*60+ +parts[1]>cur)return p[0];}return null;}
 function prayerTimesHTML(day){
   const marked=PRAYERS.filter(([id])=>day.prayers?.[id]);
   if(!marked.length)return "";
@@ -1705,7 +1878,7 @@ function blockerFmtShort(ms){
 // addDays работает только с датами без времени — для datetime-local нужен вариант,
 // сохраняющий час/минуту при продлении.
 function addDaysDT(dtStr,n){const d=new Date(dtStr);d.setDate(d.getDate()+n);const p=x=>String(x).padStart(2,"0");return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;}
-function nowDT(){const q=tzParts(Date.now());return `${q.y}-${_z2(q.mo)}-${_z2(q.d)}T${_z2(q.h)}:${_z2(q.mi)}`;}
+function nowDT(){const q=tzParts(nowMs());return `${q.y}-${_z2(q.mo)}-${_z2(q.d)}T${_z2(q.h)}:${_z2(q.mi)}`;}
 let blDraft={app:"appblock",customName:"",until:""};
 function saveBlocker(){
   const app=BLOCKER_APPS.find(([id])=>id===(blDraft.app||"appblock"))||BLOCKER_APPS[0];
@@ -1874,7 +2047,7 @@ const FX_COLORS=["#10B981","#0EA5E9","#C084FC","#F59E0B","#2DD4BF","#A1A1AA","#F
 function _softColor(){return FX_COLORS[(Math.random()*FX_COLORS.length)|0];}
 // Запоминаем точку касания И прямоугольник задетого пункта — чтобы волна шла из ЦЕНТРА пункта.
 let _lastTap=null;
-try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn,.toggle-track,.wbtn,.step-btn,.q-btn");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
+try{document.addEventListener("pointerdown",e=>{let r=null;try{const el=e.target.closest&&e.target.closest(".task-check,.prayer-btn,.row,.check-box,.cat-header,.mark-btn,.toggle-track,.wbtn,.step-btn,.q-btn,.qb,.np-hit,.ci-chip");if(el){const b=el.getBoundingClientRect();r={left:b.left,top:b.top,width:b.width,height:b.height};}}catch(_){}_lastTap={x:e.clientX,y:e.clientY,rect:r,t:Date.now()};},true);}catch(e){}
 // Ядро отклика: одна-три медленные волны + мягкое свечение из точки касания. Всё полупрозрачно
 // и гаснет за ~1с, поэтому НИКОГДА не перекрывает название/время. Клипуется границами пункта.
 function fxWave(rect,tapX,tapY,opts){
@@ -2034,6 +2207,43 @@ function offSchedHTML(day,wd){
 // Пункты по-прежнему живут в CATEGORIES по своим id — здесь мы только группируем их
 // в меньшее число крупных блоков с подблоками, чтобы было компактно и понятно, что где.
 function catItems(id){return (CATEGORIES.find(c=>c.id===id)||{items:[]}).items;}
+/* ═══ КАРТОЧКА «СЕЙЧАС» ═══
+   Зачем: восемь свёрнутых блоков — это восемь решений «куда лезть», а при СДВГ каждое решение
+   стоит дорого. Здесь показано только то, что горит В ЭТОТ ЧАС: утренние ритуалы до 16:00,
+   вечерние после, просроченный чекин, запланированные на сегодня обязательные дела.
+   Это чистое представление поверх тех же day.items — новых полей нет, баллы и отчёт не меняются,
+   задвоить отметку невозможно (тот же id). Выполненное ИСЧЕЗАЕТ из карточки: видимое сокращение
+   списка вознаграждает сильнее абстрактного процента. */
+function hOfTime(s){const p=String(s||"").split(":");const h=Number(p[0]),m=Number(p[1]);return (isFinite(h)?h:0)+(isFinite(m)?m:0)/60;}
+function nowItems(day,wd){
+  const out=[],seen=new Set();
+  const np=tzParts(nowMs()),h=np.h+np.mi/60;
+  const add=it=>{
+    if(!it||seen.has(it.id))return;
+    if(day.items?.[it.id])return;                       // уже сделано — не показываем
+    if(it.id==="istinja_b"&&!(Number(day.poop)>0))return;
+    seen.add(it.id);out.push(it);
+  };
+  const reg=catItems("regime");
+  const part=h<16?["bed","warmwater","lymph","charge"]:["phone","groin","teeth","facemassage","expander"];
+  part.forEach(id=>add(reg.find(i=>i.id===id)));
+  // Чекин показываем, только когда его время уже наступило.
+  for(const c of CATEGORIES)for(const it of c.items){
+    if(it.id==="checkin_day"&&h>=hOfTime(meta.checkinDay||"12:00"))add(it);
+    if(it.id==="checkin_eve"&&h>=hOfTime(meta.checkinEve||"22:30"))add(it);
+  }
+  // Обязательные дела, запланированные именно на сегодня.
+  for(const c of CATEGORIES)for(const it of c.items)
+    if(it.type==="ob"&&it.sched&&isDue(it,wd))add(it);
+  return out.slice(0,6);
+}
+function nowCardHTML(day,wd){
+  const list=nowItems(day,wd);
+  const inner=list.length
+    ? list.map(it=>catRowHTML(it,day,wd)).join("")
+    : `<div class="muted-note" style="padding:10px 2px;color:#8B8B95;font-size:13px">Сейчас ничего не горит — можно выдохнуть.</div>`;
+  return blockShell("now","⚡ Сейчас",list.length?cntChip(0,list.length):"",()=>inner);
+}
 function countItems(items,day,wd){let done=0,total=0;for(const it of items){if(it.type==="fact")continue;if(it.id==="istinja_b"&&!(Number(day.poop)>0))continue;if(!isDue(it,wd))continue;total++;if(day.items?.[it.id])done++;}return{done,total};}
 // Рендер списка пунктов (по графику на сегодня + выполненные вне графика + «по факту»).
 function itemsBlock(items,day,wd,opts){
@@ -2060,7 +2270,7 @@ function hasVisible(items,day,wd){return items.some(it=>(it.type!=="fact"&&isDue
 const RITUAL_WINDOWS={morning:[0,16],evening:[16,24]};
 function ritualVisible(part){
   if(sel!==todayKey())return true;
-  const _np=tzParts(Date.now()),h=_np.h+_np.mi/60,w=RITUAL_WINDOWS[part];
+  const _np=tzParts(nowMs()),h=_np.h+_np.mi/60,w=RITUAL_WINDOWS[part];
   return h>=w[0]&&h<w[1];
 }
 // Ритуалы: утро/вечер карточками. Группа рисуется только если её окно активно (для сегодня).
@@ -2077,7 +2287,7 @@ function regimeInner(day,wd){
 }
 function subHTML(icon,title,inner){if(!inner)return "";return `<div class="subblock"><div class="sb-head">${icon?icon+" ":""}${title}</div>${inner}</div>`;}
 // Свёртываемое поле дневника: закрыто → кнопка; открыто → textarea, растущая по мере ввода.
-function toggleTa(f){taOpen[f]=!taOpen[f];render();}
+function toggleTa(f){taOpen[f]=!taOpen[f];saveUI();render();}
 function sizeTa(el){try{el.style.height="auto";const lh=parseFloat(getComputedStyle(el).lineHeight)||21;el.style.height=(el.scrollHeight+lh*5)+"px";}catch(e){}}
 function growTa(el){sizeTa(el);}
 function collapTa(f,label,ph,day){
@@ -2087,7 +2297,7 @@ function collapTa(f,label,ph,day){
   return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this);taInput('${f}',this.value)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
-const BLOCK_ACCENT={din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
+const BLOCK_ACCENT={now:"#FB923C",din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
   const ac=BLOCK_ACCENT[id]||"#1B1B26";
@@ -2182,16 +2392,53 @@ function blocksHTML(day,wd){
   push("offsched",offSchedHTML(day,wd));
   return B;
 }
-// Раскладка блоков: мобайл — один поток в порядке; десктоп — два фиксированных столбца,
-// каждый блок всегда на своём месте (левый: вера/здоровье/быт; правый: ритуалы/дело/состояние/дневник).
-const COL_LEFT=["din","health","home","offsched"],COL_RIGHT=["regime","delo","state","reflect"];
-function layoutBlocks(blocks,mode){
-  if(mode!=="desktop")return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
-  const pick=ids=>ids.map(id=>{const b=blocks.find(x=>x[0]===id);return b?b[1]:"";}).join("");
-  // блоки, не попавшие ни в один столбец (на всякий случай) — в левый.
-  const known=new Set([...COL_LEFT,...COL_RIGHT]);
-  const extra=blocks.filter(([id])=>!known.has(id)).map(([,h])=>h).join("");
-  return `<div class="cats-grid"><div class="cats-col">${pick(COL_LEFT)}${extra}</div><div class="cats-col">${pick(COL_RIGHT)}</div></div>`;
+// Сколько колонок блоков сейчас. Число объявлено в CSS (--cats-cols), JS его только читает —
+// один источник правды, поэтому вёрстка и раскладка не могут разъехаться.
+function catsCols(){
+  if(meta.view==="mobile")return 1;
+  if(meta.view==="desktop")return 3;
+  try{
+    const el=document.getElementById("app");
+    const v=parseInt(getComputedStyle(el).getPropertyValue("--cats-cols"),10);
+    if(v>=1&&v<=3)return v;
+  }catch(e){}
+  const w=window.innerWidth||0;
+  return w>=1440?3:w>=1000?2:1;
+}
+/* ═══ «ПЛЮСИК»: рассказ о дне вместо галочек ═══
+   Для дней, когда сил заполнять поля нет: наговариваешь ИИ, что было, вставляешь готовый отчёт
+   сюда — и день считается заполненным (в отчёт идёт целиком, в счёт «разделов» засчитывается,
+   штраф за незаполненный день не начисляется). Кнопка нарочно неприметная — это запасной путь,
+   а не основной. */
+function storyHTML(day){
+  const v=String(day.story||"");const filled=v.trim().length>0;
+  const open=!!taOpen.story;
+  if(!open){
+    return `<button class="ta-toggle${filled?" filled":""}" style="margin-top:10px;${filled?"":"color:#6B6B75;border-style:dashed"}" onclick="toggleTa('story')">
+      <span>➕ ${filled?`Рассказ о дне <span style="color:#818CF8;font-weight:600">· записан</span>${day.storyTime?` <span style="color:#6B6B75;font-weight:500">· в ${day.storyTime}</span>`:""}`:"Нет сил заполнять — рассказать о дне"}</span><span style="color:#6B6B75">＋</span></button>`;
+  }
+  return `<div style="margin-top:10px">
+    <button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('story')"><span>➕ Рассказ о дне</span><span style="color:#6B6B75">▾</span></button>
+    <div class="muted-note" style="padding:8px 2px;color:#8B8B95;font-size:12px;line-height:1.55">Наговори ИИ, как прошёл день, и вставь сюда готовый отчёт. Этот день будет считаться заполненным — галочки ставить не нужно.</div>
+    <textarea class="field-ta ta-grow" placeholder="вставь сюда отчёт о дне" onfocus="startWriting('story')" oninput="growTa(this);taInput('story',this.value)" onchange="setField('story',this.value)">${v.replace(/</g,"&lt;")}</textarea>
+  </div>`;
+}
+// Раскладка блоков. Позиции ФИКСИРОВАННЫЕ: блок никогда не переезжает в другую колонку из-за
+// того, что сосед раскрылся (прыгающие блоки — худшее, что можно сделать при СДВГ).
+// Группировка смысловая: обязательное каждый день → тело и быт → ситуативное и итоги.
+const BLOCK_COLS={
+  2:[["din","regime","health"],["home","delo","state","reflect","offsched"]],
+  3:[["din","regime"],["health","home"],["delo","state","reflect","offsched"]]
+};
+function layoutBlocks(blocks,cols){
+  if(!(cols>=2))return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
+  const map=new Map(blocks);
+  const plan=BLOCK_COLS[cols]||BLOCK_COLS[2];
+  const used=new Set(plan.reduce((a,b)=>a.concat(b),[]));
+  const extra=blocks.filter(([id])=>!used.has(id)).map(([,h])=>h).join("");
+  return `<div class="cats-grid">`+plan.map((ids,i)=>
+    `<div class="cats-col">${ids.map(id=>map.get(id)||"").join("")}${i===plan.length-1?extra:""}</div>`
+  ).join("")+`</div>`;
 }
 function render(){
   const day=getDay(),wd=weekdayOf(sel);
@@ -2218,7 +2465,15 @@ function render(){
   let histHTML="",curMonth=-1,kk=periodStart;
   while(kk<=periodEnd){
     const mo=Number(kk.split("-")[1]);
-    if(mo!==curMonth){if(curMonth!==-1)histHTML+="</div>";histHTML+=`<div class="hist-month">${MON[mo-1]}</div><div class="hist-row">`;curMonth=mo;}
+    if(mo!==curMonth){
+      if(curMonth!==-1)histHTML+="</div>";
+      histHTML+=`<div class="hist-month">${MON[mo-1]}</div><div class="hist-row">`;
+      curMonth=mo;
+      // Календарь теперь сетка 7×N, поэтому первый день месяца сдвигаем на его день недели
+      // (Пн первым столбцом) — иначе числа не совпадают с реальными днями недели.
+      const off=(weekdayOf(kk)+6)%7;
+      for(let i=0;i<off;i++)histHTML+=`<span class="hist-cell" style="background:transparent;border-color:transparent"></span>`;
+    }
     const d=days[kk];const hbg=dayColor(kk);
     const mkRing=(d&&d.mark)?"box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28);":"";
     const crownCls=(d&&d.mark==="crown")?" crown-cell":"";
@@ -2230,39 +2485,48 @@ function render(){
   }
   if(curMonth!==-1)histHTML+="</div>";
 
-  const cats=layoutBlocks(blocksHTML(day,wd),mode);
+  const cols=catsCols();
+  const cats=layoutBlocks(blocksHTML(day,wd),cols);
 
   let modal="";
   if(modalOpen)modal=`<div class="modal-overlay" onclick="closeModal()"><div class="modal-box" onclick="event.stopPropagation()"><div class="modal-header"><span class="modal-title">Отчёт для Claude</span><button class="nav-btn" onclick="closeModal()">✕</button></div><div class="modal-hint">Долгий тап на текст → выделить всё.</div><textarea id="exp-ta" style="flex:1;min-height:160px;font-size:12px;font-family:monospace" readonly onclick="this.select()">${exportText}</textarea><button class="copy-btn" id="copy-btn" onclick="doCopy()">Копировать</button></div></div>`;
 
   const appEl=document.getElementById("app");
-  appEl.className="mode-"+mode;
+  // force-* включается только при РУЧНОМ выборе вида; в «авто» ширину решает CSS-лестница.
+  appEl.className="mode-"+mode+(meta.view==="mobile"?" force-mobile":meta.view==="desktop"?" force-desktop":"");
+  // Каркас: на широком экране слева липкая панель управления (дашборд), справа блоки —
+  // так пустые поля по бокам превращаются в рабочее место. На телефоне это обычный поток.
   appEl.innerHTML=`
     ${gearHTML()}
-    ${dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow)}
-    ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
-    ${pendingImportHTML()}
-    <div class="grid">
-      <div class="col-main">
+    <div class="shell">
+      <aside class="rail">
+        ${dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow)}
+        ${qbarHTML(day)}
+      </aside>
+      <main class="main">
+        ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${archiveBannerHTML()}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
+        ${pendingImportHTML()}
+        ${nowCardHTML(day,wd)}
         ${tasksHTML(day)}
         ${cats}
         ${markHTML(day)}
+        ${storyHTML(day)}
         <div style="margin-top:16px;opacity:.85">${collapTa("complaints","🐞 Жалобы на приложение / баги","что бесит, что сломалось, что добавить — по этому дню. Я это увижу в отчёте и выкачу обновление.",day)}</div>
         <div style="font-size:11px;color:#6B6B75;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
-      </div>
+        <div class="col-full">
+          <div class="section-label">${MON[Number(periodStart.split("-")[1])-1]} — ${MON[Number(periodEnd.split("-")[1])-1]}</div>
+          ${histHTML}
+          <div class="auto-save">v${VERSION} · ${BUILD} · Данные живут в этом браузере.</div>
+        </div>
+      </main>
     </div>
-    <div class="col-full">
-      <div class="section-label">${MON[Number(periodStart.split("-")[1])-1]} — ${MON[Number(periodEnd.split("-")[1])-1]}</div>
-      ${histHTML}
-      <div class="auto-save">v${VERSION} · ${BUILD} · Данные живут в этом браузере.</div>
-    </div>
-    ${modal}`;
+    ${modal}${qSheetHTML(day)}`;
   try{document.querySelectorAll(".ta-grow").forEach(sizeTa);}catch(e){}
   try{if(cloud)cloud.paintDot();}catch(e){}
 }
 
 function navDay(n){sel=addDays(sel,n);if(sel>todayKey())sel=todayKey();render();}
-function selDay(k){if(k!==unlockedDay){unlockedDay="";lockTaps=0;}sel=k;render();}
+function selDay(k){if(k!==unlockedDay){unlockedDay="";lockTaps=0;}sel=k;taOpen={};saveUI();render();}
 function goToday(){unlockedDay="";lockTaps=0;sel=todayKey();vib(6);render();}
 function fmtBytes(n){return n>1048576?(n/1048576).toFixed(2)+" МБ":(n/1024).toFixed(0)+" КБ";}
 function selfTest(){
@@ -2343,6 +2607,7 @@ function settingsTab1HTML(day){
     <div class="side-title" style="display:block;margin:16px 0 8px">Отчёт и резервная копия</div>
     <button class="export-btn" onclick="copyReport()">📋 Копировать отчёт для Claude</button>
     <button class="export-btn" style="margin-top:8px;background:#16161C;border-color:#1B1B26;color:#A1A1AA" onclick="saveBackup()">💾 Скачать резервную копию (JSON)</button>
+    ${archiveOpen?archiveHTML():`<button class="backup-btn" style="width:100%;margin-top:8px" onclick="openArchive()">🗄 Полугодовой архив (выгрузить и начать заново)</button>`}
     <button class="sup-arch-head" style="margin-top:10px" onclick="restoreOpen=!restoreOpen;render()">
       <span>↩︎ Восстановить из копии</span><span>${restoreOpen?"▲":"▼"}</span></button>
     ${restoreOpen?`<div class="backup-row"><button class="backup-btn" onclick="togglePaste()">📥 Вставить копию</button><label class="backup-btn" style="text-align:center;cursor:pointer">📂 Из файла<input type="file" accept=".json,application/json" style="display:none" onchange="onFile(event)"></label></div>
@@ -2522,7 +2787,7 @@ function diagHTML(){
     <div style="margin-top:8px;padding-top:8px;border-top:1px solid #1B1B26;color:#FBBF24;line-height:1.5">${verdict}</div>
   </div>`;
 }
-function toggleCat(id){catOpen[id]=!catOpen[id];if(catOpen[id])animBlock=id;render();}
+function toggleCat(id){catOpen[id]=!catOpen[id];if(catOpen[id])animBlock=id;saveUI();render();}
 function togglePrayer(id){const d=getDay();const on=!d.prayers?.[id];const np={...d.prayers,[id]:on};const nt={...(d.prayerTimes||{})};const nr={...(d.prayerRecTimes||{})};if(on){nr[id]=(d.badLogging||sel!==todayKey())?"":nowHM();justChecked="prayer_"+id;}else{delete nt[id];delete nr[id];}setDay({prayers:np,prayerTimes:nt,prayerRecTimes:nr});if(on&&PRAYERS.every(([p])=>np[p])){milestoneFx();const st=calcStreak(days,sel);toast(st>1?("Все 5 намазов · серия "+st+" дн ✓"):"Все 5 намазов ✓ ماشاء الله");}else if(on)itemFx("din");else vib(4);}
 function toggleItem(id){
   const longTask=(meta.customTasks||[]).find(t=>t.id===id&&t.term==="long");
@@ -2588,7 +2853,7 @@ function setWaterTime(i,v){const d=getDay();const L=[...(d.waterLog||[])];if(!L[
 function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];const row=L[i];L.splice(i,1);setDay({waterLog:L,water:L.reduce((a,x)=>a+(Number(x.ml)||0),0),...tomb(d,row)});}
 function setWaterTotal(v){const ml=clampNum(Math.round(num(v,0)*1000),0,30000);const d=getDay();const L=d.waterLog||[];if(L.length){setDay({water:Math.max(ml,waterSum(d))});}else{setDay({water:ml});}}
 function toggleField(f){const d=getDay();const nv=!d[f];setDay({[f]:nv});if((f==="slip"||f==="urge")&&nv)negFx();else vib(4);}
-const TEXT_TIME_FIELDS=new Set(["main","seq","analysis","extract","block","complaints","healthComplaints"]);
+const TEXT_TIME_FIELDS=new Set(["main","seq","analysis","extract","block","complaints","healthComplaints","story"]);
 function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}const patch={[f]:v};if(TEXT_TIME_FIELDS.has(f)&&String(v||"").trim())patch[f+"Time"]=nowHM();setDay(patch);}
 // ЖИВОЕ СОХРАНЕНИЕ ТЕКСТА (защита от потери данных на телефоне).
 // Проблема была: textarea сохранялся только по onchange, а он срабатывает при потере фокуса
@@ -2689,6 +2954,66 @@ function saveBackup(auto){
   }
 }
 
+/* ═══ ПОЛУГОДОВОЙ АРХИВ (1 марта и 1 сентября) ═══
+   Зачем: память браузера ~5 МБ, и за год активного ведения в неё можно упереться — тогда записи
+   начнут молча теряться. Раз в полгода выгружаем всё в файл и начинаем с чистого листа.
+   Операция НЕОБРАТИМА, поэтому защита многоступенчатая:
+     1) сначала обязательно скачать архив (кнопка стирания до этого заблокирована),
+     2) затем вручную ввести слово СТЕРЕТЬ (не тап — чтобы исключить случайное нажатие),
+     3) и только потом чистится локальная база и облако.
+   НАСТРОЙКИ (цели, блокировки, кастомные пункты, БАДы) НЕ стираются — это не история. */
+let archiveOpen=false,archiveSaved=false,archiveWord="";
+function archiveDue(){
+  const p=tzParts(nowMs());
+  const season=p.mo>=9||p.mo<3?p.y+"-09":p.y+"-03";      // текущее «полугодие»
+  if(!((p.mo===9&&p.d>=1)||(p.mo===3&&p.d>=1)||p.mo>9||p.mo<3))return false;
+  if(meta.lastArchive===season)return false;              // за это полугодие уже архивировали
+  return Object.keys(days).length>0;
+}
+function archiveSeason(){const p=tzParts(nowMs());return p.mo>=9||p.mo<3?p.y+"-09":p.y+"-03";}
+function openArchive(){archiveOpen=true;archiveSaved=false;archiveWord="";settingsOpen=true;settingsTab=1;render();}
+function archiveDownload(){saveBackup();archiveSaved=true;render();}
+function archiveWordInput(v){archiveWord=String(v||"").trim().toUpperCase();render();}
+async function archiveWipe(){
+  if(!archiveSaved){toast("Сначала скачай архив");return;}
+  if(archiveWord!=="СТЕРЕТЬ"){toast("Введи слово СТЕРЕТЬ");return;}
+  const n=Object.keys(days).length;
+  if(!confirm("Стереть все "+n+" дней из приложения и облака?\n\nНастройки (цели, блокировки, БАДы) останутся.\nАрхив уже скачан — без него историю не вернуть."))return;
+  // 1) облако
+  try{if(cloud&&cloud.wipeDays)await cloud.wipeDays();}catch(e){logError("archive-cloud",e);}
+  // 2) локально
+  try{
+    days={};
+    safeWrite(KEY,days);
+    for(const k of snapKeys()){try{localStorage.removeItem(k);}catch(e){}}
+  }catch(e){logError("archive-local",e);}
+  meta.lastArchive=archiveSeason();saveMeta();
+  archiveOpen=false;archiveSaved=false;archiveWord="";
+  vibNice();toast("Архив сохранён · начинаем с чистого листа");
+  render();
+}
+function archiveHTML(){
+  if(!archiveOpen)return "";
+  const n=Object.keys(days).length;
+  const canWipe=archiveSaved&&archiveWord==="СТЕРЕТЬ";
+  return `<div class="meas-card" style="margin-top:2px;border-color:#4A3821;background:#101017">
+    <div class="side-title" style="display:block;margin:0 0 6px;color:#FBBF24;font-size:13px;font-weight:700">🗄 Полугодовой архив</div>
+    <div style="font-size:12px;color:#A1A1AA;line-height:1.55;margin-bottom:10px">В приложении <b>${n}</b> дн. Сначала скачай архив, проверь файл, и только потом стирай. Настройки (цели, блокировки, БАДы) <b>останутся</b>.</div>
+    <button class="export-btn" onclick="archiveDownload()">${archiveSaved?"✓ Архив скачан — скачать ещё раз":"1. 💾 Скачать полный архив"}</button>
+    <div style="margin-top:12px;opacity:${archiveSaved?1:.45};pointer-events:${archiveSaved?"auto":"none"}">
+      <div style="font-size:12px;color:#A1A1AA;line-height:1.5;margin-bottom:6px">2. Проверь, что файл открылся и данные на месте. Затем впиши слово <b style="color:#F87171">СТЕРЕТЬ</b>:</div>
+      <input value="${escA(archiveWord)}" placeholder="СТЕРЕТЬ" oninput="archiveWordInput(this.value)" style="text-align:center;letter-spacing:2px;font-weight:700">
+      <button class="export-btn" style="margin-top:8px;background:${canWipe?"rgba(224,121,91,.14)":"#16161C"};border-color:${canWipe?"#F87171":"#1B1B26"};color:${canWipe?"#F87171":"#6B6B75"}" onclick="archiveWipe()">3. Стереть историю и начать с чистого листа</button>
+    </div>
+    <button class="backup-btn" style="width:100%;margin-top:10px" onclick="archiveOpen=false;render()">Отмена</button>
+  </div>`;
+}
+function archiveBannerHTML(){
+  if(!archiveDue()||archiveOpen)return "";
+  return `<div class="banner banner-warn"><b>🗄 Пора сделать полугодовой архив</b>
+    <div style="font-size:12px;margin-top:4px;color:#D4D4D8;line-height:1.5">Выгрузи историю в файл и начни с чистого листа — чтобы память браузера не переполнилась и записи не начали теряться.</div>
+    <div class="backup-row" style="margin-top:8px"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="openArchive()">🗄 Сделать архив</button></div></div>`;
+}
 function togglePaste(){pasteOpen=!pasteOpen;pasteText="";render();}
 function importPaste(){let obj;try{obj=JSON.parse(pasteText);}catch(e){importErr="Это не JSON. Скопируй копию целиком.";render();return;}if(!obj||obj._app!=="block3"||!obj.days){importErr="Формат не совпал.";render();return;}const s=sanitizeImportDays(obj.days);if(Object.keys(s.out).length===0){importErr="В копии нет дней с датами.";render();return;}pendingImport={days:s.out,meta:obj.meta&&typeof obj.meta==="object"?obj.meta:null,dropped:s.dropped,from:s.from,to:s.to,source:"paste"};render();}
 function loadBackup(){document.getElementById("file-input").click();}
@@ -3129,6 +3454,19 @@ cloud=(function(){
     queueDay(k){if(S.applying)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(k))return;S.dirtyDays.add(k);if(!S.ready||!S.user)return;clearTimeout(S.pushT);S.pushT=setTimeout(()=>flushDays().catch(()=>{}),2500);},
     queueMeta(){if(S.applying)return;S.metaDirty=true;if(!S.ready||!S.user)return;clearTimeout(S.metaT);S.metaT=setTimeout(()=>pushMetaNow().catch(()=>{}),2500);},
     flushNow(){try{flushDays().catch(()=>{});if(S.metaDirty)pushMetaNow().catch(()=>{});}catch(e){}},
+    // Полугодовой архив: удаляем дни из облака (настройки остаются). Вызывается только после
+    // того, как пользователь скачал архив и вручную подтвердил словом.
+    async wipeDays(){
+      if(!S.ready||!S.user)return;
+      const {getDocs,writeBatch}=S.api;
+      try{
+        const snap=await getDocs(daysCol());
+        let batch=writeBatch(S.db),n=0;
+        for(const d of snap.docs){batch.delete(d.ref);n++;if(n>=400){await batch.commit();batch=writeBatch(S.db);n=0;}}
+        if(n>0)await batch.commit();
+        S.dirtyDays.clear();
+      }catch(e){logError("cloud-wipe",e);throw e;}
+    },
     isConfigured(){return !!effectiveFirebaseConfig();},
     usingDefault(){return !meta.firebaseConfig;},
     isSignedIn(){return !!S.user;},
@@ -3187,7 +3525,23 @@ function parseFirebaseConfig(text){
   return JSON.parse(body);
 }
 
-let _rz;window.addEventListener("resize",()=>{if(meta.view!=="auto")return;clearTimeout(_rz);_rz=setTimeout(render,150);});
+// Перерисовываем при изменении размера окна ТОЛЬКО когда реально сменилось число колонок.
+// Раньше render() дёргался на каждый тик перетаскивания окна — это сбрасывало открытые списки
+// и позицию прокрутки. И никогда не трогаем экран, пока идёт набор текста.
+let _rz,_lastCols=null;
+window.addEventListener("resize",()=>{
+  if(meta.view!=="auto")return;
+  clearTimeout(_rz);
+  _rz=setTimeout(()=>{
+    try{
+      const c=catsCols();
+      if(c===_lastCols)return;
+      _lastCols=c;
+      if(_typing())return;
+      render();
+    }catch(e){}
+  },180);
+});
 // Досинхронизация при сворачивании/закрытии вкладки — чтобы облако получило свежие правки.
 document.addEventListener("visibilitychange",()=>{try{if(document.visibilityState==="hidden"){commitFocused();if(cloud)cloud.flushNow();}else{checkForUpdate();}}catch(e){}});
 // Телефон замораживает/выгружает вкладку без надёжного blur — досбрасываем на диск ЗАРАНЕЕ.
@@ -3292,6 +3646,36 @@ try{
     navigator.storage.persisted().then(p=>{if(!p)return navigator.storage.persist();}).catch(()=>{});
   }
 }catch(e){}
+
+// ── Сверка часов с сервером ─────────────────────────────────────────────────
+// Киевское время уже не зависит от часового ПОЯСА устройства, но если врут САМИ часы (села
+// батарейка, сбилось время) — пересчитывать не от чего. Спрашиваем время у своего же сервера
+// (заголовок Date), запоминаем поправку и применяем её дальше даже офлайн. Внешние сервисы
+// не используются. Если расхождение большое — честно предупреждаем, а не молчим.
+let clockWarned=false;
+async function syncClock(){
+  try{
+    if(location.protocol==="file:")return;
+    const t0=Date.now();
+    const res=await fetch(location.href.split("#")[0].split("?")[0]+"?ct="+t0,{method:"HEAD",cache:"no-store"});
+    if(!res||!res.ok)return;
+    const hdr=res.headers.get("date");if(!hdr)return;
+    const srv=Date.parse(hdr);if(!isFinite(srv))return;
+    // Учитываем задержку сети: сервер отдал время где-то в середине запроса.
+    const rtt=Date.now()-t0;
+    const off=Math.round(srv+rtt/2-Date.now());
+    const prev=Number(meta.clockOffset)||0;
+    if(Math.abs(off-prev)>2000){meta.clockOffset=off;saveMeta({noStamp:true});}
+    if(Math.abs(off)>10*60000&&!clockWarned){
+      clockWarned=true;
+      const mins=Math.round(Math.abs(off)/60000);
+      try{toast("⏰ Часы устройства врут на ~"+mins+" мин — время исправлено");}catch(e){}
+      try{if(!_typing())render();}catch(e){}
+    }
+  }catch(e){/* нет сети — работаем по последней сохранённой поправке */}
+}
+setTimeout(()=>{syncClock();},1500);
+setInterval(()=>{if(document.visibilityState==="visible")syncClock();},60*60*1000);
 
 // ============================================================================
 // ЖИВОЕ СОХРАНЕНИЕ ЛЮБОГО ПОЛЯ ПО МЕРЕ НАБОРА (главная защита от потери данных).
