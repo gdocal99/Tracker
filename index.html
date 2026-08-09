@@ -27,7 +27,7 @@
   --ic-sm:16px; --ic-md:20px; --ic-lg:26px;
   /* Ширина: лестница вместо жёстких 440/1080px. На ноутбуке приложение занимает экран, а не
      висит узкой полосой посередине. --cats-cols читается из JS (catsCols) — один источник правды. */
-  --shell-max:480px; --pad-x:16px; --pad-y:18px; --pad-b:104px; --rail:0px; --cats-cols:1; --gap:14px;
+  --shell-max:480px; --pad-x:16px; --pad-y:18px; --pad-b:104px; --rail:0px; --cats-cols:1; --gap:16px;
 }
 @media (min-width:700px){ :root{--shell-max:660px;--pad-x:24px} }
 @media (min-width:1000px){:root{--shell-max:1180px;--pad-x:28px;--rail:320px;--cats-cols:2;--pad-b:40px} }
@@ -79,7 +79,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .row-label.on{color:var(--text-3)}
 /* Рамка пустого чекбокса была #3A3A45 на фоне #16161C — контраст 1.63:1 при норме 3:1 для
    органов управления: кружок буквально сливался с карточкой. #6B6B75 даёт 3.48:1. */
-.check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.check-box{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
 /* Галочка остаётся яркой — сатисфакция от выполнения никуда не девается. */
 .check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
@@ -93,9 +93,9 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .tag-fact{background:#1B1B26;color:#A8A29E}
 .tag-sched{background:rgba(203,164,92,.14);color:#FBBF24}
 /* Каждая категория — чётко очерченный блок (карта: ясно, что к чему относится). */
-.cat-block{border:1px solid #1B1B26;border-radius:14px;background:#101017;overflow:hidden;margin-top:12px}
+.cat-block{border:1px solid #1B1B26;border-radius:18px;background:#101017;overflow:hidden;margin-top:12px}
 .cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border:none;border-radius:0;background:#101017;margin-top:0}
-.cat-body{padding:2px 11px 12px}
+.cat-body{padding:4px 13px 14px}
 .cat-name{font-size:15px;font-weight:700;color:#F5F5F7;letter-spacing:.2px}
 .blk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;flex:0 0 auto;box-shadow:0 0 6px -1px currentColor}
 /* Плавное «выезжание» тела блока при раскрытии (аккордеон) — глаз успевает проследить. */
@@ -267,7 +267,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .q-btn{padding:11px 14px;min-height:40px;border-radius:9px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:12px;font-weight:600}
 .q-btn.good.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .q-btn.meh.on{border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.12)}
-.tasks-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:12px;margin-bottom:14px}
+.tasks-card{background:#101017;border:1px solid #1B1B26;border-radius:18px;padding:14px;margin-bottom:14px}
 .tasks-card.locked{border-color:#4A2020}
 .tasks-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .tk-title{font-size:14px;font-weight:700;color:#F5F5F7}
@@ -281,12 +281,13 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .task-row{display:flex;gap:6px}
 .task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
 .task-check.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14)}
-.task-box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--text-4);display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
+.task-box{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-4);display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
 .task-check.on .task-box{border-color:#818CF8}
 .task-lbl{font-size:14px;color:#F5F5F7}
 .task-lbl.done{color:#6B6B75;text-decoration:line-through}
-.task-del{flex:0 0 40px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:13px}
-.task-del.armed{background:#F87171;border-color:#F87171;color:#fff;font-size:11px;flex:0 0 60px}
+.task-del{flex:0 0 40px;min-height:36px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--text-4);font-size:15px;opacity:.6;transition:opacity .15s,color .15s}
+/* Взведённое состояние («точно?») — единственный момент, когда удаление вправе кричать. */
+.task-del.armed{background:#F87171;border-color:#F87171;color:#fff;font-size:11px;flex:0 0 60px;opacity:1}
 .pt-cap{font-size:11px;color:#6B6B75;padding:8px 2px 2px;line-height:1.4}
 .prayer-btn.next{border-color:#FB923C;box-shadow:0 0 0 1.5px rgba(224,149,91,.5)}
 .prayer-btn.next .pt-time{color:#FB923C}
@@ -300,7 +301,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .subblock:first-child{margin-top:2px}
 .sb-head{font-size:12px;font-weight:700;letter-spacing:.4px;color:#86EFAC;padding:6px 2px 3px;border-top:1px solid #1B1B26;margin-top:6px;display:flex;align-items:center;gap:6px}
 .subblock:first-child .sb-head{border-top:none;margin-top:0}
-.meas-card{background:#101017;border:1px solid transparent;border-radius:14px;padding:12px;margin-top:14px}
+.meas-card{background:#101017;border:1px solid transparent;border-radius:18px;padding:14px;margin-top:14px}
 .cf{position:fixed;top:-14px;width:8px;height:13px;border-radius:2px;z-index:99;pointer-events:none;animation:cfFall linear forwards}
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,.5)}70%{box-shadow:0 0 0 16px rgba(129,140,248,0)}100%{box-shadow:0 0 0 0 rgba(129,140,248,0)}}
@@ -395,7 +396,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#6B6B75;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:#101017;border:1px solid #1B1B26;border-radius:22px;padding:18px 18px 15px;margin:2px 0 14px}
+.dash{background:#101017;border:1px solid #1B1B26;border-radius:24px;padding:18px 18px 15px;margin:2px 0 14px}
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
 .dash-dow{font-size:13px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
 .dash-date-txt{font-size:20px;font-weight:800;color:#F5F5F7;line-height:1.1}
@@ -424,16 +425,16 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .dash-namaz-status{width:100%;margin-top:16px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
 .np-top{display:flex;align-items:center;gap:9px;width:100%}
 .np-ic{font-size:17px;flex:0 0 auto;line-height:1}
-.np-dots{display:flex;gap:6px;width:100%}
+.np-dots{display:flex;gap:7px;width:100%}
 /* Намаз отмечается прямо отсюда: были пять точек по 9px «для красоты», стало пять кнопок по 52px.
    Раньше тап по этому блоку лишь прокручивал к свёрнутому блоку «Дин» — отметить было нельзя. */
 .np-hit{flex:1;min-height:var(--tap-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface-1);color:var(--text-2);padding:0 2px}
 .np-hit .np-dot{width:12px;height:12px}
-.np-nm{font-size:10px;font-weight:700;line-height:1}
-.np-tm{font-size:9px;color:var(--text-4);font-family:ui-monospace,Menlo,monospace;line-height:1}
+.np-nm{font-size:11.5px;font-weight:700;line-height:1}
+.np-tm{font-size:10px;color:var(--text-4);font-family:ui-monospace,Menlo,monospace;line-height:1}
 .np-hit.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
-.np-hit.next{border-color:var(--next);box-shadow:0 0 0 1.5px rgba(251,146,60,.3)}
+.np-hit.next{border-color:var(--next);background:rgba(251,146,60,.07)}
 .np-jump{margin-left:6px;flex:0 0 auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
   background:var(--surface-1);color:var(--text-4);font-size:15px}
 .np-dot{width:9px;height:9px;border-radius:50%;background:#1B1B26;flex:0 0 auto;transition:all .2s}
@@ -557,7 +558,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.98.0";
+const VERSION="0.99.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2356,8 +2357,11 @@ const BLOCK_ACCENT={now:"#FB923C",din:"#FBBF24",regime:"#FB923C",health:"#F472B6
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
   const ac=BLOCK_ACCENT[id]||"#1B1B26";
-  // Полупрозрачная заливка заголовка цветом блока — различается боковым зрением.
-  const hBg=`background:linear-gradient(100deg, ${ac}26, ${ac}0A 55%, transparent)`;
+  // Цветная заливка заголовка — ТОЛЬКО у раскрытого блока. Раньше градиент рисовался у всех
+  // восьми одновременно, и они конкурировали за внимание, превращаясь в фоновый шум.
+  // Раскрытый блок — текущий контекст, его подсветить полезно; свёрнутые остаются спокойными.
+  // Цвет категории при этом никуда не делся: его несут левая полоса 3px и точка.
+  const hBg=open?`background:linear-gradient(100deg, ${ac}26, ${ac}0A 55%, transparent)`:"background:#101017";
   const hStyle=`border-left:3px solid ${ac};${hBg}`+(warn?";border-left-color:#FBBF24":"");
   const dot=`<span class="blk-dot" style="background:${ac};color:${ac}"></span>`;
   const anim=(animBlock===id&&open)?" cat-body-anim":"";if(animBlock===id)animBlock="";
