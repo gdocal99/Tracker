@@ -13,6 +13,10 @@
    этого блока само по себе ничего не меняет. Дальше на них переводятся только те правила,
    которые и так правятся — сплошная замена по файлу запрещена (риск незаметных регрессий). */
 :root{
+  /* Сообщает браузеру, что тема тёмная. Одной строкой чинит ВСЕ нативные элементы разом:
+     полосы прокрутки (на Windows они были ярко-белыми на почти чёрном фоне), выпадающие
+     календарь и часы у input[type=time]/date, автозаполнение. */
+  color-scheme:dark;
   --bg:#060609; --surface-1:#101017; --surface-2:#16161C; --line:#1B1B26; --line-2:#3A3A45;
   --text:#F5F5F7; --text-2:#A1A1AA; --text-3:#8B8B95; --text-4:#6B6B75;
   --accent:#818CF8; --accent-soft:rgba(129,140,248,.14); --accent-line:#6366F1;
@@ -30,6 +34,13 @@
 @media (min-width:1440px){:root{--shell-max:1560px;--pad-x:32px;--rail:330px;--cats-cols:3} }
 @media (min-width:1800px){:root{--shell-max:1760px;--pad-x:40px;--rail:340px} }
 body{background:#060609;color:#F5F5F7;font-family:system-ui,-apple-system,sans-serif;min-height:100vh}
+/* Явные тёмные полосы прокрутки — для браузеров, которые не подхватывают color-scheme. */
+*{scrollbar-width:thin;scrollbar-color:var(--line-2) transparent}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--line-2);border-radius:8px;border:2px solid transparent;background-clip:content-box}
+::-webkit-scrollbar-thumb:hover{background:#5A5A68;background-clip:content-box}
+::-webkit-scrollbar-corner{background:transparent}
 /* position:relative обязателен: .gear и .cloud-dot заданы absolute, и без позиционированного
    предка они цеплялись к углу СТРАНИЦЫ — на широком экране шестерёнка улетала от контента. */
 #app{position:relative;width:100%;max-width:var(--shell-max);margin:0 auto;padding:var(--pad-y) var(--pad-x) var(--pad-b)}
@@ -56,10 +67,21 @@ textarea{resize:none}
 input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0;touch-action:pan-y}
 .section-label{font-size:11px;letter-spacing:1.5px;color:#6B6B75;text-transform:uppercase;margin:20px 0 9px 2px}
 .row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid transparent;margin-top:7px;width:100%;text-align:left}
-.row-label{font-size:14.5px;color:#A1A1AA;transition:color .15s}
-.row-label.on{color:#F5F5F7}
-.check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid #3A3A45;background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+/* Невыполненное — яркое, выполненное — приглушённое. Раньше было наоборот: сделанный пункт
+   становился #F5F5F7, а несделанный оставался #A1A1AA, то есть глаз тянуло к тому, о чём уже
+   можно забыть. При СДВГ это прямой вред. Тот же приём уже применён в задачах (.task-lbl.done).
+   Зачёркивание сознательно НЕ добавляем: привычек в списке десятки, и перечёркнутые строки
+   сами превращаются в шум (в задачах их 2–5, там уместно). */
+.row-label{font-size:14.5px;color:#F5F5F7;transition:color .15s}
+/* --text-3, а не --text-4: приглушает втрое (16.6:1 → 5.3:1), но остаётся выше порога
+   читаемости 4.5:1. С --text-4 было бы 3.4:1 — выполненное стало бы трудночитаемым,
+   а его всё-таки нужно уметь перечитать. */
+.row-label.on{color:var(--text-3)}
+/* Рамка пустого чекбокса была #3A3A45 на фоне #16161C — контраст 1.63:1 при норме 3:1 для
+   органов управления: кружок буквально сливался с карточкой. #6B6B75 даёт 3.48:1. */
+.check-box{width:25px;height:25px;border-radius:8px;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
+/* Галочка остаётся яркой — сатисфакция от выполнения никуда не девается. */
 .check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
 .prayer-btn{position:relative;overflow:hidden;flex:1;padding:15px 2px;min-height:var(--tap-lg);border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#818CF8;background:rgba(129,140,248,.14);color:#818CF8}
@@ -259,7 +281,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .task-row{display:flex;gap:6px}
 .task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
 .task-check.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14)}
-.task-box{width:20px;height:20px;border-radius:6px;border:1.5px solid #3A3A45;display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
+.task-box{width:20px;height:20px;border-radius:6px;border:1.5px solid var(--text-4);display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
 .task-check.on .task-box{border-color:#818CF8}
 .task-lbl{font-size:14px;color:#F5F5F7}
 .task-lbl.done{color:#6B6B75;text-decoration:line-through}
@@ -535,7 +557,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.97.0";
+const VERSION="0.98.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2237,11 +2259,44 @@ function nowItems(day,wd){
     if(it.type==="ob"&&it.sched&&isDue(it,wd))add(it);
   return out.slice(0,6);
 }
+// Сколько дел этого часа уже закрыто — нужно, чтобы отличить «ты всё сделал» от
+// «на этот час ничего и не было запланировано». Это разные вещи, и выдавать вторую за первую
+// нечестно: похвала за несделанное обесценивает похвалу за сделанное.
+function nowDoneCount(day,wd){
+  const np=tzParts(nowMs()),h=np.h+np.mi/60;
+  const ids=new Set();
+  const reg=catItems("regime");
+  (h<16?["bed","warmwater","lymph","charge"]:["phone","groin","teeth","facemassage","expander"])
+    .forEach(id=>{if(reg.find(i=>i.id===id))ids.add(id);});
+  for(const c of CATEGORIES)for(const it of c.items){
+    if(it.id==="checkin_day"&&h>=hOfTime(meta.checkinDay||"12:00"))ids.add(it.id);
+    if(it.id==="checkin_eve"&&h>=hOfTime(meta.checkinEve||"22:30"))ids.add(it.id);
+    if(it.type==="ob"&&it.sched&&isDue(it,wd))ids.add(it.id);
+  }
+  let n=0;for(const id of ids)if(day.items?.[id])n++;
+  return n;
+}
 function nowCardHTML(day,wd){
   const list=nowItems(day,wd);
-  const inner=list.length
-    ? list.map(it=>catRowHTML(it,day,wd)).join("")
-    : `<div class="muted-note" style="padding:10px 2px;color:#8B8B95;font-size:13px">Сейчас ничего не горит — можно выдохнуть.</div>`;
+  let inner;
+  if(list.length){
+    inner=list.map(it=>catRowHTML(it,day,wd)).join("");
+  }else{
+    // Пусто — это микро-победа, а не пустота. Спокойно, без анимации и восклицаний:
+    // цель — награда, а не ещё один источник возбуждения.
+    const done=nowDoneCount(day,wd);
+    inner=done>0
+      ? `<div style="display:flex;align-items:center;gap:11px;padding:14px 12px;border-radius:var(--r-2);background:rgba(74,222,128,.08);border:1px solid rgba(74,222,128,.28)">
+           <span style="font-size:26px;line-height:1">✅</span>
+           <span style="min-width:0"><span style="display:block;font-size:14px;font-weight:700;color:var(--ok)">Всё на этот час закрыто</span>
+           <span style="display:block;font-size:12px;color:var(--text-3);margin-top:2px">${done} ${done===1?"дело":done<5?"дела":"дел"} — можно выдохнуть</span></span>
+         </div>`
+      : `<div style="display:flex;align-items:center;gap:11px;padding:14px 12px;border-radius:var(--r-2);background:var(--surface-2);border:1px solid var(--line)">
+           <span style="font-size:22px;line-height:1;opacity:.75">🌙</span>
+           <span style="min-width:0"><span style="display:block;font-size:13.5px;font-weight:600;color:var(--text-2)">На этот час ничего не запланировано</span>
+           <span style="display:block;font-size:12px;color:var(--text-3);margin-top:2px">Отметить сделанное можно в блоках ниже</span></span>
+         </div>`;
+  }
   return blockShell("now","⚡ Сейчас",list.length?cntChip(0,list.length):"",()=>inner);
 }
 function countItems(items,day,wd){let done=0,total=0;for(const it of items){if(it.type==="fact")continue;if(it.id==="istinja_b"&&!(Number(day.poop)>0))continue;if(!isDue(it,wd))continue;total++;if(day.items?.[it.id])done++;}return{done,total};}
