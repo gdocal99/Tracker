@@ -457,7 +457,7 @@ const KEY="journal_block3";
 const ERR_KEY="journal_block3_errors";
 const SNAP_PREFIX="journal_block3_snap_";
 const SCHEMA=2;
-const BUILD="28 июля 2026";
+const BUILD="9 августа 2026";
 let errLog=[];
 try{const e=localStorage.getItem(ERR_KEY);if(e){const p=JSON.parse(e);if(Array.isArray(p))errLog=p.slice(0,40);}}catch(e){}
 // Чистим ранее накопленные «merge-tabs» — это не ошибки, а обычные слияния между вкладками.
@@ -470,15 +470,52 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.92.0";
+const VERSION="0.93.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
 if(!meta.supPeriods||typeof meta.supPeriods!=="object")meta.supPeriods={};
 // saveMeta: локальная запись + отметка времени (для облачного LWW настроек) + тихий фон-пуш в облако.
 let cloud=null; // облачный модуль (Firebase); присваивается ниже, поэтому все обращения защищены проверкой.
-function saveMeta(opts){const r=safeWriteMeta();if(!r)logError("saveMeta","не удалось сохранить настройки");if(!(opts&&opts.noStamp)){meta.metaUpdated=Date.now();safeWriteMeta();try{if(cloud&&cloud.queueMeta)cloud.queueMeta();}catch(e){}}return r;}
-function safeWriteMeta(){try{localStorage.setItem(META_KEY,JSON.stringify(meta));return true;}catch(e){return false;}}
+// Состояние записи на диск. Объявлено ЗДЕСЬ (а не ниже, рядом с save()), потому что saveMeta()
+// вызывается уже на этапе загрузки настроек — при объявлении ниже ошибка записи роняла бы
+// приложение в белый экран (обращение к переменной до инициализации).
+let saveState={ok:true,err:"",quota:false};
+// Тумбстоун настроек: помним id удалённой цели/блокировки/БАДа, чтобы она не «воскресла» с другого
+// устройства при синхронизации (настройки сливаются объединением — без этого удаление не расходится).
+function metaTomb(id){
+  if(!id)return;
+  const cur=Array.isArray(meta.delIds)?meta.delIds:[];
+  if(cur.includes(id))return;
+  meta.delIds=[...cur,id].slice(-300);
+}
+function saveMeta(opts){
+  let r=safeWriteMeta();
+  if(!(opts&&opts.noStamp)){meta.metaUpdated=Date.now();r=safeWriteMeta();try{if(cloud&&cloud.queueMeta)cloud.queueMeta();}catch(e){}}
+  return r;
+}
+// Настройки (цели, блокировки, кастомные пункты, БАДы) раньше писались «вслепую»: без перечитывания
+// и без обработки переполнения — при забитом хранилище правка тихо не сохранялась, и человек об
+// этом не узнавал. Теперь как у дневных данных: проверяем запись чтением, ловим переполнение и
+// поднимаем ту же красную тревогу (alarmHTML), а не молчим.
+function safeWriteMeta(){
+  let json;
+  try{json=JSON.stringify(meta);}catch(e){logError("saveMeta","настройки не сериализуются: "+e.message);return false;}
+  try{
+    localStorage.setItem(META_KEY,json);
+    if(localStorage.getItem(META_KEY)!==json){
+      saveState={ok:false,err:"настройки не подтвердились при перечитывании",quota:false};
+      logError("saveMeta","запись настроек не подтвердилась");return false;
+    }
+    return true;
+  }catch(e){
+    const nm=String((e&&e.name)||"")+" "+String((e&&e.message)||"");
+    const quota=/quota|exceed|full|storage/i.test(nm);
+    saveState={ok:false,err:quota?"ХРАНИЛИЩЕ ПЕРЕПОЛНЕНО — настройки не сохранились":String((e&&e.message)||e),quota};
+    logError("saveMeta",saveState.err);
+    return false;
+  }
+}
 
 // Google Drive убран полностью — синхронизация через Firebase (Offline-First, Cloud-Synced).
 // Встроенный конфиг проекта (публичный — это норма для web-SDK). Приложение работает «из коробки»:
@@ -597,7 +634,7 @@ const CATEGORIES=[
  ]},
 ];
 
-function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipCount:0,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",mainTime:"",block:"",blockTime:"",seq:"",seqTime:"",extract:"",extractTime:"",analysis:"",analysisTime:"",complaints:"",complaintsTime:"",healthComplaints:"",healthComplaintsTime:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
+function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],del:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipCount:0,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",mainTime:"",block:"",blockTime:"",seq:"",seqTime:"",extract:"",extractTime:"",analysis:"",analysisTime:"",complaints:"",complaintsTime:"",healthComplaints:"",healthComplaintsTime:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 // ВСЁ ВРЕМЯ В ПРИЛОЖЕНИИ — ПО КИЕВУ, а не по часам устройства.
 // Причина: на ноутбуке иногда сбивается часовой пояс/время. Пользователь живёт в одном поясе
 // (Киев, Europe/Kiev, зимой +2 / летом +3) и никуда не переезжает. Поэтому «сегодня», час и
@@ -743,7 +780,9 @@ function dayMoney(day,k){
   const WORK=["crypto","bizacc","accounting","drive","repair"];
   if(closed&&!WORK.some(id=>day.items?.[id]))m-=3;
   m+=Number(day.bonus)||0; // бонусные баллы (напр. за продление блокировки)
-  return r2(m);
+  // Дневной счёт НЕ уходит в минус: минимум 0. Минус демотивирует и выглядит как наказание за
+  // незаполненный день; штрафы по-прежнему съедают заработанное за день, но не создают долг.
+  return r2(Math.max(0,m));
 }
 // Начисление бонусных баллов за хорошее действие ВНЕ дневной сетки (продление защиты и т.п.).
 // Пишем в СЕГОДНЯШНИЙ день (поле bonus), метим время для LWW, добавляем в хронологию.
@@ -771,9 +810,9 @@ function daysBetween(a,b){if(!a||!b)return 0;const [y1,m1,d1]=a.split("-").map(N
 function totalSpent(days){let s=0;for(const k in days){for(const x of (days[k].spends||[]))s+=Number(x.n)||0;}return s;}
 function calcBalance(days){
   const keys=Object.keys(days).sort();let total=0,run=0;for(const k of keys){total+=dayMoney(days[k],k);if(dayComplete(days[k])){run++;if(run%7===0)total+=5;}else run=0;}return Math.max(0,r2(total-totalSpent(days)));}
-function addSpend(){const d=getDay();const now=nowHM();const L=[...(d.spends||[]),{t:now,rt:now,n:0,what:""}];setDay({spends:L});}
+function addSpend(){const d=getDay();const now=nowHM();const L=[...(d.spends||[]),{rid:newRid(),t:now,rt:now,n:0,what:""}];setDay({spends:L});}
 function setSpend(i,f,v){const d=getDay();const L=[...(d.spends||[])];if(!L[i])return;L[i]={...L[i],[f]:f==="n"?clampNum(Math.round(num(v,0)),0,100000):v};setDay({spends:L});}
-function delSpend(i){const d=getDay();const L=[...(d.spends||[])];L.splice(i,1);setDay({spends:L});}
+function delSpend(i){const d=getDay();const L=[...(d.spends||[])];const row=L[i];L.splice(i,1);setDay({spends:L,...tomb(d,row)});}
 function spendHTML(day){const L=day.spends||[];const spentToday=L.reduce((s,x)=>s+(Number(x.n)||0),0);return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px"><span class="side-title" style="display:block;margin:0">Потратить баллы</span>${spentToday?`<span style="font-size:12px;color:#F87171;font-weight:700">−${spentToday} сегодня</span>`:""}</div>${L.length?L.map((x,i)=>`<div class="mlog-row"><input type="time" value="${x.t||""}" style="flex:0 0 88px" onchange="setSpend(${i},'t',this.value)"><input type="number" inputmode="numeric" value="${x.n||""}" placeholder="баллов" style="flex:0 0 84px" onchange="setSpend(${i},'n',this.value)"><input type="text" value="${String(x.what||"").replace(/"/g,"&quot;")}" placeholder="на что потратил" onchange="setSpend(${i},'what',this.value)"><button class="mlog-x" onclick="delSpend(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Пока ничего не тратил</div>`}<button class="task-add" style="margin-top:8px;width:100%" onclick="addSpend()">− Потратить баллы</button></div>`;}
 function cleanStreak(days,upto){
   let k=upto,n=0,guard=0;
@@ -911,7 +950,6 @@ function buildExport(days){
   return _fbLine+_cLine+"═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(Date.now())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
 }
 
-let saveState={ok:true,err:"",quota:false};
 let lastWritten="";
 let loadState={ok:true,corrupt:false,raw:"",restoredFrom:"",repaired:0,issues:[]};
 function storageBytes(){let n=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);n+=(k||"").length+((localStorage.getItem(k)||"").length);}}catch(e){}return n*2;}
@@ -937,11 +975,19 @@ function pruneOldLogs(){
   let freed=0;
   for(const k in days){
     if(k>=floor)continue;
-    const d=days[k];
-    if(d&&Array.isArray(d.log)&&d.log.length>4){
+    const d=days[k];if(!d)continue;
+    let nd=d,touched=false;
+    if(Array.isArray(d.log)&&d.log.length>4){
       freed+=d.log.length-4;
-      days[k]={...d,log:[{t:d.log[0].t,e:"(хронология свёрнута: было "+d.log.length+" отметок, "+d.log[0].t+"–"+d.log[d.log.length-1].t+")"}]};
+      nd={...nd,log:[{t:d.log[0].t,e:"(хронология свёрнута: было "+d.log.length+" отметок, "+d.log[0].t+"–"+d.log[d.log.length-1].t+")"}]};
+      touched=true;
     }
+    // Погода старого дня — самая объёмная часть записи (8 массивов по 6 точек), а в отчётах она уже
+    // отражена. Для дней старше 90 дней выбрасываем её целиком: это основной источник роста хранилища.
+    if(nd.weather){nd={...nd,weather:null};freed++;touched=true;}
+    // Тумбстоуны удалённых строк старше 90 дней больше не нужны — все устройства давно синхронизированы.
+    if(Array.isArray(nd.del)&&nd.del.length){nd={...nd,del:[]};touched=true;}
+    if(touched)days[k]=nd;
   }
   return freed;
 }
@@ -1169,7 +1215,7 @@ const MERGE_GROUPS={
 };
 // Служебные поля, которые НЕ являются самостоятельными единицами слияния (переезжают со своими
 // «хозяевами»: itemTimes — вместе с items, и т.д.).
-const MERGE_SKIP=new Set(["t","lastUpdated","items","prayers","quality","opts","itemTimes","itemRecTimes","prayerTimes","prayerRecTimes","log"]);
+const MERGE_SKIP=new Set(["t","lastUpdated","items","prayers","quality","opts","itemTimes","itemRecTimes","prayerTimes","prayerRecTimes","log","del"]);
 // Проставляем метку времени ts каждой изменившейся единице (пункт, намаз, поле, группа).
 function stampDayTimes(before,after,ts){
   const t={...(after.t||{})};const K=o=>Object.keys(o||{});
@@ -1435,6 +1481,7 @@ function confirmRemoveAll(){
     meta.blockerLog=[rec,...(meta.blockerLog||[])].slice(0,80);
     const ids=new Set(blockersToRemove);
     meta.blockers=(meta.blockers||[]).filter(x=>!ids.has(x.id));
+    ids.forEach(id=>metaTomb(id));
     saveMeta();
   }
   blockersToRemove=[];removeReason="";vib(12);toast("Записано");render();
@@ -1584,18 +1631,18 @@ function measScalars(L){
   }
   return o;
 }
-function addMeas(){const d=getDay();const now=nowHM();setDay({measLog:[...(d.measLog||[]),{t:now,rt:now,type:"weight",v:""}]});}
+function addMeas(){const d=getDay();const now=nowHM();setDay({measLog:[...(d.measLog||[]),{rid:newRid(),t:now,rt:now,type:"weight",v:""}]});}
 function setMeas(i,f,v){const d=getDay();const L=[...(d.measLog||[])];if(!L[i])return;L[i]={...L[i],[f]:v};setDay({measLog:L,...measScalars(L)});}
-function delMeas(i){const d=getDay();const L=[...(d.measLog||[])];L.splice(i,1);setDay({measLog:L,...measScalars(L)});}
-function addMeal(){const d=getDay();const now=nowHM();setDay({meals:[...(d.meals||[]),{t:now,rt:now,what:""}]});}
+function delMeas(i){const d=getDay();const L=[...(d.measLog||[])];const row=L[i];L.splice(i,1);setDay({measLog:L,...measScalars(L),...tomb(d,row)});}
+function addMeal(){const d=getDay();const now=nowHM();setDay({meals:[...(d.meals||[]),{rid:newRid(),t:now,rt:now,what:""}]});}
 function setMeal(i,what){const d=getDay();const L=[...(d.meals||[])];if(!L[i])return;L[i]={...L[i],what};setDay({meals:L});}
 function setMealTime(i,t){const d=getDay();const L=[...(d.meals||[])];if(!L[i])return;L[i]={...L[i],t};setDay({meals:L});}
-function delMeal(i){const d=getDay();const L=[...(d.meals||[])];L.splice(i,1);setDay({meals:L});}
+function delMeal(i){const d=getDay();const L=[...(d.meals||[])];const row=L[i];L.splice(i,1);setDay({meals:L,...tomb(d,row)});}
 function mealsHTML(day){const L=day.meals||[];return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Приёмы пищи</div><button class="task-add" onclick="addMeal()">+</button></div>${L.length?L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.t||""}" onchange="setMealTime(${i},this.value)"><input class="mval" type="text" value="${String(x.what||"").replace(/"/g,"&quot;")}" placeholder="что ел" onchange="setMeal(${i},this.value)"><button class="mlog-x" onclick="delMeal(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Не отмечено приёмов пищи. Нажми «+», когда поел.</div>`}</div>`;}
 // Рабочие смены: несколько периодов за день (from→to). Только запись, на баллы не влияет.
-function addWorkPeriod(){const d=getDay();setDay({workLog:[...(d.workLog||[]),{from:"",to:""}]});}
+function addWorkPeriod(){const d=getDay();setDay({workLog:[...(d.workLog||[]),{rid:newRid(),from:"",to:""}]});}
 function setWork(i,f,v){const d=getDay();const L=[...(d.workLog||[])];if(!L[i])return;L[i]={...L[i],[f]:v};setDay({workLog:L});}
-function delWork(i){const d=getDay();const L=[...(d.workLog||[])];L.splice(i,1);setDay({workLog:L});}
+function delWork(i){const d=getDay();const L=[...(d.workLog||[])];const row=L[i];L.splice(i,1);setDay({workLog:L,...tomb(d,row)});}
 function workMinutes(x){if(!x||!x.from||!x.to)return 0;const p=t=>Number(t.slice(0,2))*60+Number(t.slice(3,5));let m=p(x.to)-p(x.from);if(m<0)m+=1440;return m;}
 function workTotalH(L){const mm=(L||[]).reduce((a,x)=>a+workMinutes(x),0);return mm/60;}
 function workHTML(day){const L=day.workLog||[];const th=workTotalH(L);const rows=L.length?L.map((x,i)=>`<div class="mrow"><input class="mtime" type="time" value="${x.from||""}" onchange="setWork(${i},'from',this.value)"><span style="color:#6B6B75;flex:0 0 auto">→</span><input class="mtime" type="time" value="${x.to||""}" onchange="setWork(${i},'to',this.value)"><span class="mlog-v" style="flex:1;text-align:right;color:#A1A1AA;font-size:12px">${workMinutes(x)?(workMinutes(x)/60).toFixed(1)+" ч":""}</span><button class="mlog-x" onclick="delWork(${i})">✕</button></div>`).join(""):`<div class="muted-note" style="padding:4px 0">Смен нет. Нажми «+», когда был на работе.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🏢 Рабочие смены${th?` · ${th.toFixed(1)} ч`:""}</div><button class="task-add" onclick="addWorkPeriod()">+</button></div>${rows}</div>`;}
@@ -1709,11 +1756,11 @@ function supsConfigHTML(){
 function toggleSupForm(){supFormOpen=!supFormOpen;render();setTimeout(()=>{const i=document.getElementById("sup-name");if(i)i.focus();},60);}
 function saveSup(){const n=(supDraft.name||"").trim();const st=Number(supDraft.step);if(!n||!(st>0)){toast("Нужно название и шаг дозы (число > 0)");return;}meta.userSups=[...(meta.userSups||[]),{id:"s_"+Date.now().toString(36),name:n,brand:(supDraft.brand||"").trim(),step:st,unit:(supDraft.unit||"мг").trim()||"мг",time:supDraft.time||"",comp:(supDraft.comp||"").trim()}];supFormOpen=false;supDraft={name:"",brand:"",step:"",unit:"мг",time:"",comp:""};saveMeta();vib(12);render();}
 function askDel(id){if(confirmDelId===id){confirmDelId="";return true;}confirmDelId=id;vib(8);render();setTimeout(()=>{if(confirmDelId===id){confirmDelId="";render();}},3500);return false;}
-function delSup(id){if(!askDel("sup_"+id))return;meta.userSups=(meta.userSups||[]).filter(u=>u.id!==id);saveMeta();render();}
+function delSup(id){if(!askDel("sup_"+id))return;meta.userSups=(meta.userSups||[]).filter(u=>u.id!==id);metaTomb(id);saveMeta();render();}
 function supSums(L){const o={};for(const x of (L||[])){o[x.id]=(o[x.id]||0)+(Number(x.n)||0);}for(const k in o){if(o[k]<=0)delete o[k];}return o;}
 function changeSup(id,n){
   const d=getDay();const L=[...(d.supsLog||[])];
-  if(n>0){const now=nowHM();L.push({t:now,rt:now,id,n});}
+  if(n>0){const now=nowHM();L.push({rid:newRid(),t:now,rt:now,id,n});}
   else{
     let rem=-n;
     for(let i=L.length-1;i>=0&&rem>0;i--){
@@ -1725,7 +1772,7 @@ function changeSup(id,n){
   setDay({supsLog:L,sups:supSums(L)});
 }
 function setSupTime(id,i,v){const d=getDay();const L=[...(d.supsLog||[])];const idx=L.map((x,j)=>[x,j]).filter(([x])=>x.id===id)[i];if(!idx)return;L[idx[1]]={...L[idx[1]],t:v};setDay({supsLog:L});}
-function delSupDose(id,i){const d=getDay();const L=[...(d.supsLog||[])];const idx=L.map((x,j)=>[x,j]).filter(([x])=>x.id===id)[i];if(!idx)return;L.splice(idx[1],1);setDay({supsLog:L,sups:supSums(L)});}
+function delSupDose(id,i){const d=getDay();const L=[...(d.supsLog||[])];const idx=L.map((x,j)=>[x,j]).filter(([x])=>x.id===id)[i];if(!idx)return;const row=L[idx[1]];L.splice(idx[1],1);setDay({supsLog:L,sups:supSums(L),...tomb(d,row)});}
 function setSupTotal(id,v,step){
   // «Итог за день» = ВСЕГО за день. Отметки по времени НЕ удаляем — они остаются, а «итогом без
   // времени» пишем только остаток (итог − сумма по времени). Так точечные приёмы не затираются.
@@ -1736,7 +1783,7 @@ function setSupTotal(id,v,step){
   const sumTimed=timed.reduce((a,x)=>a+(Number(x.n)||0),0);
   const rem=Math.max(0,total-sumTimed);               // остаток без времени
   const L=[...others,...timed];
-  if(rem>0)L.push({t:"",id,n:rem});
+  if(rem>0)L.push({rid:newRid(),t:"",id,n:rem});
   setDay({supsLog:L,sups:supSums(L)});
 }
 function supTimesHTML(day,id,unit){
@@ -1773,9 +1820,9 @@ function setCharge(ex,v){const d=getDay();const c={...(d.charge||{})};c[ex]=clam
 function chargeHTML(day){const c=day.charge||{};const done=chargeDone(day);const rows=CHARGE_EX.map(([k,l])=>{const v=Number(c[k])||0;const ok=v>=20;return `<div class="mrow"><span class="mlog-v" style="flex:1;color:${ok?"#818CF8":"#A1A1AA"}">${l}</span><input class="mval" style="flex:0 0 96px;text-align:center" type="number" inputmode="numeric" value="${v||""}" placeholder="повт." onchange="setCharge('${k}',this.value)"><span class="munit" style="min-width:18px;text-align:center">${ok?"✓":""}</span></div>`;}).join("");return `<div class="meas-card" style="margin-top:7px;border-color:${done?"#6366F1":"#1B1B26"}"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px"><span class="row-label${done?" on":""}" style="font-size:14px">🤸 Зарядка</span><span style="font-size:11px;color:${done?"#818CF8":"#6B6B75"}">${done?"засчитано ✓":"хотя бы одно × 20"}</span></div>${rows}</div>`;}
 // Прокрастинация: несколько записей за день (сила / время / комментарий) — механика как у замеров.
 const PROC_LEVELS=[["little","немного"],["mid","средне"],["much","сильно"]];
-function addProc(){const d=getDay();setDay({procLog:[...(d.procLog||[]),{level:"mid",t:nowHM(),note:""}]});}
+function addProc(){const d=getDay();setDay({procLog:[...(d.procLog||[]),{rid:newRid(),level:"mid",t:nowHM(),note:""}]});}
 function setProc(i,f,v){const d=getDay();const L=[...(d.procLog||[])];if(!L[i])return;L[i]={...L[i],[f]:v};setDay({procLog:L});}
-function delProc(i){const d=getDay();const L=[...(d.procLog||[])];L.splice(i,1);setDay({procLog:L});}
+function delProc(i){const d=getDay();const L=[...(d.procLog||[])];const row=L[i];L.splice(i,1);setDay({procLog:L,...tomb(d,row)});}
 function procHTML(day){const L=day.procLog||[];const rows=L.length?L.map((x,i)=>{const opts=PROC_LEVELS.map(([v,l])=>`<option value="${v}"${x.level===v?" selected":""}>${l}</option>`).join("");return `<div class="mrow"><select class="msel" style="flex:0 0 90px" onchange="setProc(${i},'level',this.value)">${opts}</select><input class="mtime" type="time" value="${x.t||""}" onchange="setProc(${i},'t',this.value)"><input class="mval" type="text" value="${String(x.note||"").replace(/"/g,"&quot;")}" placeholder="на что / комментарий" onchange="setProc(${i},'note',this.value)"><button class="mlog-x" onclick="delProc(${i})">✕</button></div>`;}).join(""):`<div class="muted-note" style="padding:4px 0">Прокрастинации не было — или добавь запись, если залипал.</div>`;return `<div class="meas-card" style="margin-top:10px"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">🌀 Прокрастинация</div><button class="task-add" onclick="addProc()">+</button></div>${rows}</div>`;}
 // СДВГ-опросник срыва: только кнопки, без текстовых полей.
 const SLIP_TYPES=[["fantasy","Фантазии"],["porn","Порно"],["both","Порно + Фантазии"],["planned","Плановый"]];
@@ -2519,7 +2566,7 @@ function timeEditHTML(id,day){if(editTimeId!==id)return"";const act=day.itemTime
 function addTask(term){addingTask=addingTask===term?"":term;newTaskText="";render();setTimeout(()=>{const i=document.getElementById("task-inp");if(i)i.focus();},60);}
 function confirmTask(){const t=newTaskText.trim();if(!t){addingTask="";render();return;}const id="c_"+Date.now().toString(36);meta.customTasks=[...(meta.customTasks||[]),{id,label:t,term:addingTask==="long"?"long":"short"}];addingTask="";newTaskText="";saveMeta();vib(5);render();}
 function cancelTask(){addingTask="";newTaskText="";render();}
-function delTask(id){if(!askDel("task_"+id))return;meta.customTasks=(meta.customTasks||[]).filter(t=>t.id!==id);saveMeta();render();}
+function delTask(id){if(!askDel("task_"+id))return;meta.customTasks=(meta.customTasks||[]).filter(t=>t.id!==id);metaTomb(id);saveMeta();render();}
 function taskRowHTML(t,day){const on=t.term==="long"?!!t.done:!!day.items?.[t.id];const justOn=justChecked===t.id;if(justOn)justChecked="";return `<div class="task-row"><button class="task-check${on?" on":""}" onclick="toggleItem('${t.id}')"><span class="task-box${justOn?" just":""}">${on?"✓":""}</span><span class="task-lbl${on?" done":""}">${t.label.replace(/</g,"&lt;")}</span></button><button class="task-del${confirmDelId===("task_"+t.id)?" armed":""}" onclick="delTask('${t.id}')">${confirmDelId===("task_"+t.id)?"точно?":"✕"}</button></div>`;}
 function taskFormHTML(t){if(addingTask!==t)return "";return `<div style="display:flex;gap:6px;margin-top:6px"><input id="task-inp" value="${newTaskText.replace(/"/g,"&quot;")}" placeholder="${t==="long"?"Цель на недели/месяцы":"Задача на сегодня"}" oninput="newTaskText=this.value" onkeydown="if(event.key==='Enter')confirmTask()"><button class="task-add" style="width:44px;height:auto;flex:0 0 44px" onclick="confirmTask()">✓</button><button class="task-del" style="flex:0 0 40px" onclick="cancelTask()">✕</button></div>`;}
 function tasksHTML(day){const all=meta.customTasks||[];const short=all.filter(t=>t.term!=="long"),long=all.filter(t=>t.term==="long");const sDone=short.filter(t=>day.items?.[t.id]).length,sAll=short.length;const lDone=long.filter(t=>t.done).length,lAll=long.length;const sBadge=sAll===0?`<span class="tk-badge muted">нет</span>`:(sDone===sAll?`<span class="tk-badge ok">выполнено ✓</span>`:`<span class="tk-badge no">осталось ${sAll-sDone}</span>`);const lBadge=lAll===0?`<span class="tk-badge muted">нет</span>`:`<span class="tk-badge ${lDone===lAll?"ok":"muted"}">${lDone}/${lAll}</span>`;return `<div class="tasks-card${sAll>0&&sDone<sAll?" locked":""}"><div class="tasks-head"><span class="tk-title">Краткосрочные</span><div class="tk-right">${sBadge}<button class="task-add" onclick="addTask('short')">+</button></div></div><div class="tasks-list">${short.map(t=>taskRowHTML(t,day)).join("")||`<div class="muted-note" style="margin:2px 0 6px">Задачи на сегодня</div>`}${taskFormHTML("short")}</div><div class="tasks-head" style="margin-top:14px"><span class="tk-title">Долгосрочные</span><div class="tk-right">${lBadge}<button class="task-add" onclick="addTask('long')">+</button></div></div><div class="tasks-list">${long.map(t=>taskRowHTML(t,day)).join("")||`<div class="muted-note" style="margin:2px 0 0">Цели на недели/месяцы</div>`}${taskFormHTML("long")}</div></div>`;}
@@ -2527,7 +2574,7 @@ function waterSum(day){const L=day.waterLog||[];return L.reduce((s,x)=>s+(Number
 function changeWater(n){
   n=clampNum(n,-5000,5000);
   const d=getDay();const L=[...(d.waterLog||[])];
-  if(n>0){const now=nowHM();L.push({t:now,rt:now,ml:n});}
+  if(n>0){const now=nowHM();L.push({rid:newRid(),t:now,rt:now,ml:n});}
   else{
     let rem=-n;
     for(let i=L.length-1;i>=0&&rem>0;i--){const take=Math.min(L[i].ml,rem);L[i]={...L[i],ml:L[i].ml-take};rem-=take;if(L[i].ml<=0)L.splice(i,1);}
@@ -2538,7 +2585,7 @@ function changeWater(n){
   if(n>0)waterFx();else vib(4);
 }
 function setWaterTime(i,v){const d=getDay();const L=[...(d.waterLog||[])];if(!L[i])return;L[i]={...L[i],t:v};setDay({waterLog:L});}
-function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];L.splice(i,1);setDay({waterLog:L,water:L.reduce((a,x)=>a+(Number(x.ml)||0),0)});}
+function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];const row=L[i];L.splice(i,1);setDay({waterLog:L,water:L.reduce((a,x)=>a+(Number(x.ml)||0),0),...tomb(d,row)});}
 function setWaterTotal(v){const ml=clampNum(Math.round(num(v,0)*1000),0,30000);const d=getDay();const L=d.waterLog||[];if(L.length){setDay({water:Math.max(ml,waterSum(d))});}else{setDay({water:ml});}}
 function toggleField(f){const d=getDay();const nv=!d[f];setDay({[f]:nv});if((f==="slip"||f==="urge")&&nv)negFx();else vib(4);}
 const TEXT_TIME_FIELDS=new Set(["main","seq","analysis","extract","block","complaints","healthComplaints"]);
@@ -2605,7 +2652,7 @@ function copyViaTextarea(text,onOk,onFail){
 }
 function doCopy(){const btn=document.getElementById("copy-btn");copyToClipboard(exportText,()=>{btn.textContent="Скопировано ✓";vib(15);},()=>{btn.textContent="Вручную скопируй в окне";});}
 // В бэкап кладём и meta-данные (цели/задачи, кастомные БАДы, курсы) — иначе они бы не сохранялись.
-function backupMeta(){return {customTasks:meta.customTasks||[],customItems:meta.customItems||[],userSups:meta.userSups||[],supPeriods:meta.supPeriods||{},blockers:meta.blockers||[],blockerLog:meta.blockerLog||[],checkinDay:meta.checkinDay||"12:00",checkinEve:meta.checkinEve||"22:30",lifeTarget:meta.lifeTarget||40,metaUpdated:meta.metaUpdated||0};}
+function backupMeta(){return {customTasks:meta.customTasks||[],customItems:meta.customItems||[],userSups:meta.userSups||[],supPeriods:meta.supPeriods||{},blockers:meta.blockers||[],blockerLog:meta.blockerLog||[],checkinDay:meta.checkinDay||"12:00",checkinEve:meta.checkinEve||"22:30",lifeTarget:meta.lifeTarget||40,delIds:meta.delIds||[],metaUpdated:meta.metaUpdated||0};}
 function copyBackup(){const payload=JSON.stringify({_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()});copyToClipboard(payload,()=>{meta.lastBackup=Date.now();saveMeta();vib(15);toast("📋 Скопировано");render();},()=>{toast("Буфер не сработал — скопируй вручную");});}// Надёжное скачивание копии: сначала обычная загрузка файла (работает на компе и Android).
 // На iOS, где download-атрибут игнорируется, — запасной путь через «Поделиться». Всегда даём
 // понятный отклик тостом, чтобы кнопка не казалась «мёртвой».
@@ -2669,16 +2716,46 @@ function fieldTimes(d){
   for(const f in b){if(MERGE_SKIP.has(f)||grouped.has(f))continue;if(JSON.stringify(d[f])!==JSON.stringify(b[f]))setIf(f);}
   return t;
 }
-// Объединение массивов-логов при слиянии устройств. Ключ — ПОЛНОЕ содержимое записи (у логов нет
-// уникального row-id: поле id у БАДов = тип БАДа, а не строки). Одинаковые записи схлопываются в
-// одну, разные — сохраняются ОБЕ. Так обед с телефона и ужин с ноута оба живут, ничего не теряется.
-function mergeArr(a,b){
+// Уникальный id строки лога. Раньше строки логов не имели id, и слияние устройств склеивало их по
+// ПОЛНОМУ содержимому — из-за этого любая правка строки (пока набирал «6», «65») превращалась в
+// НОВУЮ строку, и на другом устройстве всплывали десятки дублей («вес 5кг» ×45, вода по 4 раза).
+// Теперь у каждой строки есть rid, и правка остаётся ОДНОЙ строкой на всех устройствах.
+function newRid(){return "r"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+// Тумбстоун: помечаем удалённую строку, чтобы она не «воскресла» с другого устройства при
+// синхронизации. Возвращает патч для setDay (или пустой объект, если у строки нет rid — старые данные).
+function tomb(day,row){
+  const rid=row&&row.rid;if(!rid)return {};
+  const cur=Array.isArray(day&&day.del)?day.del:[];
+  if(cur.includes(rid))return {};
+  return {del:[...cur,rid]};
+}
+// Объединение массивов-логов при слиянии устройств.
+// • Строки с rid — по rid: одна и та же строка не двоится, побеждает версия с более свежей стороны.
+// • Строки без rid (старые данные) — по полному содержимому, как раньше (обратная совместимость).
+// • dels — множество rid, удалённых на любом из устройств: они исчезают везде, а не воскресают.
+// preferB=true → при конфликте одного rid берём версию из B (более свежая сторона слияния).
+function mergeArr(a,b,preferB,dels){
   const A=Array.isArray(a)?a:[],B=Array.isArray(b)?b:[];
+  const D=dels instanceof Set?dels:new Set();
   const key=x=>{try{return JSON.stringify(x);}catch(e){return String(x);}};
-  const seen=new Set(),out=[];
-  for(const x of A){const k=key(x);if(seen.has(k))continue;seen.add(k);out.push(x);}
-  for(const x of B){const k=key(x);if(seen.has(k))continue;seen.add(k);out.push(x);}
+  const idx=new Map(),out=[];
+  const put=(x,fromB)=>{
+    if(!x||typeof x!=="object")return;
+    const rid=x.rid;
+    if(rid&&D.has(rid))return;              // строка удалена — не возвращаем
+    const k=rid?("rid:"+rid):("j:"+key(x));
+    if(idx.has(k)){if(fromB&&preferB)out[idx.get(k)]=x;return;}
+    idx.set(k,out.length);out.push(x);
+  };
+  for(const x of A)put(x,false);
+  for(const x of B)put(x,true);
   return out;
+}
+// Сбор всех тумбстоунов (удалённых rid) с обеих сторон слияния.
+function delSet(L,I){
+  const s=new Set();
+  for(const d of [L,I]){const a=d&&Array.isArray(d.del)?d.del:[];for(const r of a)if(r)s.add(r);}
+  return s;
 }
 function mergeDayDeep(local,imp){
   if(!local)return imp||blankDay();
@@ -2710,25 +2787,31 @@ function mergeDayDeep(local,imp){
   // Группы. Массивы-логи (еда, замеры, БАДы, вода, смены, траты, прокрастинация) ОБЪЕДИНЯЕМ по
   // записям, а не перезаписываем целиком: обед с телефона + ужин с ноута теперь оба сохраняются.
   // Производные скаляры (water, sups, замеры) пересчитываются из объединённого лога.
+  const DEL=delSet(L,I);                       // строки, удалённые на любом устройстве
+  out.del=[...DEL];                            // тумбстоуны едут дальше, чтобы удаление разошлось
   for(const g in MERGE_GROUPS){
     const wI=win(g)==='I',S=wI?I:L,O=wI?L:I;
-    if(g==="meals"){out.meals=mergeArr(L.meals,I.meals,wI);}
-    else if(g==="spends"){out.spends=mergeArr(L.spends,I.spends,wI);}
-    else if(g==="work"){out.workLog=mergeArr(L.workLog,I.workLog,wI);}
-    else if(g==="proc"){out.procLog=mergeArr(L.procLog,I.procLog,wI);}
+    if(g==="meals"){out.meals=mergeArr(L.meals,I.meals,wI,DEL);}
+    else if(g==="spends"){out.spends=mergeArr(L.spends,I.spends,wI,DEL);}
+    else if(g==="work"){out.workLog=mergeArr(L.workLog,I.workLog,wI,DEL);}
+    else if(g==="proc"){out.procLog=mergeArr(L.procLog,I.procLog,wI,DEL);}
     else if(g==="water"){
-      out.waterLog=mergeArr(L.waterLog,I.waterLog,wI);
+      out.waterLog=mergeArr(L.waterLog,I.waterLog,wI,DEL);
+      // Итог = сумма объединённого лога. Если вода вписана «итогом» без строк — берём значение
+      // ПОБЕДИТЕЛЯ по метке, а не максимум: иначе воду нельзя было уменьшить (храповик).
       const sum=(out.waterLog||[]).reduce((a,x)=>a+(Number(x.ml)||0),0);
-      out.water=Math.max(sum,Number(L.water)||0,Number(I.water)||0);
+      const lump=Number(S.water)||0;
+      out.water=Math.max(sum,lump);
     }
     else if(g==="sups"){
-      out.supsLog=mergeArr(L.supsLog,I.supsLog,wI);
-      const fromLog=supSums(out.supsLog),res={},ids=new Set([...Object.keys(L.sups||{}),...Object.keys(I.sups||{}),...Object.keys(fromLog)]);
-      for(const id of ids){const v=Math.max(Number((L.sups||{})[id])||0,Number((I.sups||{})[id])||0,Number(fromLog[id])||0);if(v>0)res[id]=v;}
+      out.supsLog=mergeArr(L.supsLog,I.supsLog,wI,DEL);
+      // Так же, как с водой: из лога + «итог» победителя, без max по обеим сторонам.
+      const fromLog=supSums(out.supsLog),res={},ids=new Set([...Object.keys(S.sups||{}),...Object.keys(fromLog)]);
+      for(const id of ids){const v=Math.max(Number((S.sups||{})[id])||0,Number(fromLog[id])||0);if(v>0)res[id]=v;}
       out.sups=res;
     }
     else if(g==="meas"){
-      out.measLog=dedupeMeasLog(mergeArr(L.measLog,I.measLog,wI)); // без дублей на тип+время
+      out.measLog=dedupeMeasLog(mergeArr(L.measLog,I.measLog,wI,DEL)); // без дублей на тип+время
       const sc=measScalars(out.measLog);
       for(const f of MERGE_GROUPS.meas){if(f==="measLog")continue;const scv=sc?sc[f]:"";out[f]=(scv!==""&&scv!=null)?scv:((S[f]!==""&&S[f]!=null)?S[f]:O[f]);}
     }
@@ -2765,6 +2848,13 @@ function mergeMetaIn(im,replace){
   if(Array.isArray(im.blockerLog)){
     if(replace)meta.blockerLog=im.blockerLog.slice();
     else{const seen=new Set((meta.blockerLog||[]).map(x=>x.t+"|"+x.name));meta.blockerLog=[...(meta.blockerLog||[]),...im.blockerLog.filter(x=>x&&!seen.has(x.t+"|"+x.name))];}
+  }
+  if(Array.isArray(im.delIds)&&im.delIds.length){
+    const s=new Set([...(meta.delIds||[]),...im.delIds]);meta.delIds=[...s].slice(-300);
+    // Удалённое (на любом устройстве) не возвращаем даже импортом старой копии.
+    const T=new Set(meta.delIds);
+    for(const f of ["customTasks","customItems","userSups","blockers"])
+      if(Array.isArray(meta[f]))meta[f]=meta[f].filter(x=>!(x&&T.has(x.id)));
   }
   if(im.checkinDay)meta.checkinDay=im.checkinDay;
   if(im.checkinEve)meta.checkinEve=im.checkinEve;
@@ -2858,16 +2948,21 @@ cloud=(function(){
     if(!rm||typeof rm!=="object")return false;
     const rt=Number(rm.metaUpdated)||0,lt=Number(meta.metaUpdated)||0;
     let changed=false,localRicher=false;
+    // Объединённые тумбстоуны обеих сторон: удалённое на одном устройстве исчезает и на другом,
+    // а не воскресает при слиянии.
+    const TOMB=new Set([...(Array.isArray(meta.delIds)?meta.delIds:[]),...(Array.isArray(rm.delIds)?rm.delIds:[])]);
+    if(TOMB.size!==((meta.delIds||[]).length)){meta.delIds=[...TOMB].slice(-300);changed=true;}
     const mergeById=(field,key)=>{
       const R=Array.isArray(rm[field])?rm[field]:null;
-      const L=Array.isArray(meta[field])?meta[field]:[];
+      const L=(Array.isArray(meta[field])?meta[field]:[]).filter(x=>!(x&&TOMB.has(x[key])));
       if(R===null){if(L.length)localRicher=true;return;} // облако вообще не прислало это поле — не трогаем локальное
-      const Rids=new Set(R.map(x=>x&&x[key]));
+      const Rf=R.filter(x=>!(x&&TOMB.has(x[key])));
+      const Rids=new Set(Rf.map(x=>x&&x[key]));
       const map=new Map();
       for(const x of L){if(x&&x[key]!=null){map.set(x[key],x);if(!Rids.has(x[key]))localRicher=true;}}
-      for(const x of R){if(!x||x[key]==null)continue;const id=x[key];if(!map.has(id)||rt>lt)map.set(id,x);}
+      for(const x of Rf){if(!x||x[key]==null)continue;const id=x[key];if(!map.has(id)||rt>lt)map.set(id,x);}
       const merged=[...map.values()];
-      if(JSON.stringify(merged)!==JSON.stringify(L)){meta[field]=merged;changed=true;}
+      if(JSON.stringify(merged)!==JSON.stringify(Array.isArray(meta[field])?meta[field]:[])){meta[field]=merged;changed=true;}
     };
     mergeById("customTasks","id");
     mergeById("customItems","id");
