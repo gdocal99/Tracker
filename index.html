@@ -413,6 +413,9 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
   min-height:40px;padding:5px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
 .qcell-t{font-size:10.5px;font-weight:700;color:var(--text-2);line-height:1;white-space:nowrap}
 .qcell-v{font-size:12.5px;font-weight:800;color:var(--text);font-family:ui-monospace,Menlo,monospace;line-height:1;min-width:34px;text-align:center}
+.qcell-ar{font-size:13px;font-weight:700;letter-spacing:.2px}
+.qcell-bad{border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.07)}
+.qcell-bad .qcell-t{color:var(--bad)}
 .qstep{display:flex;align-items:center;gap:2px}
 .qmin,.qplus{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--surface-1);
   color:var(--text-2);font-size:15px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center}
@@ -608,7 +611,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.02.0";
+const VERSION="1.03.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1637,6 +1640,12 @@ function qPrayer(){
   if(id)togglePrayer(id);else toast("Все 5 отмечены ✓");
 }
 function qToilet(){if(!qGuard())return;toggleItem("istinja_s");}
+function qSlip(d){
+  if(!qGuard())return;
+  const cur=Number(getDay().slipCount)||(getDay().slip?1:0);
+  const next=Math.max(0,cur+(d||1));
+  if(next!==cur)setSlipCount(next);
+}
 function qStool(d){
   if(!qGuard())return;
   const cur=Number(getDay().poop)||0;
@@ -1833,7 +1842,9 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
         <div class="dash-earn-sm">${earned!==0?fmtPts(earned):""}</div>
       </div>
       <div class="db-ring db-ring-big ${ringGlow}">
-        <svg viewBox="0 0 100 100" width="108" height="108">
+        <!-- Размер берём от контейнера (.db-ring-big), а не жёстким числом: при уменьшении кольца
+             прошитые 108px вылезали за рамку 76px, и круг выглядел обрезанным-«неровным». -->
+        <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
           <circle cx="50" cy="50" r="${RO}" fill="none" stroke="#1B1B26" stroke-width="7"/>
           <circle cx="50" cy="50" r="${RO}" fill="none" stroke="#818CF8" stroke-width="7" stroke-linecap="round" stroke-dasharray="${CO}" stroke-dashoffset="${CO*(1-r.obPct/100)}" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s"/>
           <circle cx="50" cy="50" r="${RI}" fill="none" stroke="#1B1B26" stroke-width="6"/>
@@ -1863,19 +1874,26 @@ function quickRowHTML(day){
   const wl=day.water||0,tgt=waterTarget(day,sel);
   const isS=!!day.items?.istinja_s;
   const poop=Number(day.poop)||0;
-  // Счётчики со СТРЕЛКАМИ В ОБЕ СТОРОНЫ. Раньше стул только прибавлялся: случайный тап
-  // оставался в данных навсегда, откатить было нечем. Любой счётчик обязан уметь убавляться.
+  const slips=Number(day.slipCount)||(day.slip?1:0);
+  // Состав выбран по реальным данным пользователя за неделю: срыв отмечался 7 дней из 10 —
+  // чаще всего остального, но был спрятан в блоке «Состояние». Вода отмечается регулярно.
+  // Туалет он сам называл тем, что «почему-то не отмечал» — раньше это стоило 8 касаний.
+  // Кнопка «Ещё» убрана: всё её содержимое доступно в блоках ниже, а место она занимала.
+  // Подписи — по-арабски, как просил.
   return `<div class="qrow">
     <div class="qcell"><span class="qcell-t">Вода</span>
       <div class="qstep"><button class="qmin" onclick="qWater(-250)" ${wl<=0?"disabled":""}>−</button>
         <span class="qcell-v">${(wl/1000).toFixed(1)}<span class="qbtn-u">/${(tgt/1000).toFixed(1)}</span></span>
         <button class="qplus" onclick="qWater(250)">+</button></div></div>
-    <div class="qcell"><span class="qcell-t">Стул <span dir="rtl" style="color:var(--text-4)">غائط</span></span>
+    <div class="qcell"><span class="qcell-t qcell-ar" dir="rtl">غائط</span>
       <div class="qstep"><button class="qmin" onclick="qStool(-1)" ${poop<=0?"disabled":""}>−</button>
         <span class="qcell-v">${poop}</span>
         <button class="qplus" onclick="qStool(1)">+</button></div></div>
-    <button class="qbtn${isS?" on":""}" onclick="qToilet()"><span class="qbtn-t" dir="rtl">استنجاء</span><span class="qbtn-v">${isS?"✓":"—"}</span></button>
-    <button class="qbtn" onclick="qSheet()"><span class="qbtn-t">Ещё</span><span class="qbtn-v">+</span></button>
+    <button class="qbtn${isS?" on":""}" onclick="qToilet()"><span class="qbtn-t qcell-ar" dir="rtl">استنجاء</span><span class="qbtn-v">${isS?"✓":"—"}</span></button>
+    <div class="qcell${slips>0?" qcell-bad":""}"><span class="qcell-t">Срыв</span>
+      <div class="qstep"><button class="qmin" onclick="qSlip(-1)" ${slips<=0?"disabled":""}>−</button>
+        <span class="qcell-v">${slips}</span>
+        <button class="qplus" onclick="qSlip(1)">+</button></div></div>
   </div>`;
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#16161C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
