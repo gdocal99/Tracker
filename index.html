@@ -23,7 +23,7 @@
   --ok:#4ADE80; --warn:#FBBF24; --next:#FB923C; --bad:#F87171; --water:#38BDF8;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
   --r-1:10px; --r-2:12px; --r-3:14px; --r-4:20px;
-  --tap:38px; --tap-lg:42px;
+  --tap:36px; --tap-lg:40px;
   --ic-sm:16px; --ic-md:20px; --ic-lg:26px;
   /* Ширина: лестница вместо жёстких 440/1080px. На ноутбуке приложение занимает экран, а не
      висит узкой полосой посередине. --cats-cols читается из JS (catsCols) — один источник правды. */
@@ -66,20 +66,20 @@ input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px s
 textarea{resize:none}
 input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0;touch-action:pan-y}
 .section-label{font-size:10.5px;letter-spacing:1.3px;color:#6B6B75;text-transform:uppercase;margin:14px 0 6px 2px}
-.row{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border-radius:10px;background:#16161C;border:1px solid transparent;margin-top:5px;width:100%;text-align:left}
+.row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:#16161C;border:1px solid transparent;margin-top:5px;width:100%;text-align:left}
 /* Невыполненное — яркое, выполненное — приглушённое. Раньше было наоборот: сделанный пункт
    становился #F5F5F7, а несделанный оставался #A1A1AA, то есть глаз тянуло к тому, о чём уже
    можно забыть. При СДВГ это прямой вред. Тот же приём уже применён в задачах (.task-lbl.done).
    Зачёркивание сознательно НЕ добавляем: привычек в списке десятки, и перечёркнутые строки
    сами превращаются в шум (в задачах их 2–5, там уместно). */
-.row-label{font-size:13.5px;color:#F5F5F7;transition:color .15s}
+.row-label{font-size:13px;color:#F5F5F7;transition:color .15s}
 /* --text-3, а не --text-4: приглушает втрое (16.6:1 → 5.3:1), но остаётся выше порога
    читаемости 4.5:1. С --text-4 было бы 3.4:1 — выполненное стало бы трудночитаемым,
    а его всё-таки нужно уметь перечитать. */
 .row-label.on{color:var(--text-3)}
 /* Рамка пустого чекбокса была #3A3A45 на фоне #16161C — контраст 1.63:1 при норме 3:1 для
    органов управления: кружок буквально сливался с карточкой. #6B6B75 даёт 3.48:1. */
-.check-box{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.check-box{width:21px;height:21px;border-radius:50%;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
 /* Галочка остаётся яркой — сатисфакция от выполнения никуда не девается. */
 .check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
@@ -363,6 +363,19 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
    Заменила нижнюю полосу с крупными эмодзи-плитками: та занимала 68px, кричала иконками и
    уменьшала количество информации на экране. Здесь то же самое одной строкой и текстом. */
 .qrow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+/* «Коробка выполненного» — спокойная, не соревнуется за внимание с несделанным. */
+.done-box{width:100%;display:flex;align-items:center;gap:8px;margin-top:12px;padding:9px 12px;
+  border-radius:11px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-3)}
+.done-box-open{border-radius:11px 11px 0 0;margin-top:0}
+.done-ic{color:var(--ok);font-weight:800;font-size:13px}
+.done-t{font-size:12.5px;font-weight:600}
+.done-n{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--ok);font-family:ui-monospace,Menlo,monospace}
+.done-car{color:var(--text-4);font-size:12px}
+.done-card{margin-top:12px;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--surface-1)}
+.done-list{padding:2px 12px 10px}
+.done-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #15151C}
+.done-lbl{flex:1;font-size:12.5px;color:var(--text-3);min-width:0}
+.done-tm{font-size:11px;color:var(--text-4);font-family:ui-monospace,Menlo,monospace}
 .qcell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   min-height:40px;padding:5px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
 .qcell-t{font-size:10.5px;font-weight:700;color:var(--text-2);line-height:1;white-space:nowrap}
@@ -432,7 +445,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .np-dots{display:flex;gap:7px;width:100%}
 /* Намаз отмечается прямо отсюда: были пять точек по 9px «для красоты», стало пять кнопок по 52px.
    Раньше тап по этому блоку лишь прокручивал к свёрнутому блоку «Дин» — отметить было нельзя. */
-.np-hit{flex:1;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+.np-hit{flex:1;min-height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface-1);color:var(--text-2);padding:0 2px}
 .np-hit .np-dot{width:12px;height:12px}
 .np-nm{font-size:11.5px;font-weight:700;line-height:1}
@@ -562,7 +575,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.00.0";
+const VERSION="1.01.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1185,6 +1198,8 @@ let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",
 // Firestore на каждое раскрытие блока, прямо в то слияние настроек, которое чинили от пропажи
 // целей. Здесь чисто локальная память экрана: в данные, экспорт и синхронизацию не попадает.
 const UI_KEY="journal_block3_ui";
+// Объявлено ДО чтения сохранённого состояния: иначе `let` ниже перезатирал бы восстановленное значение.
+let doneOpen=false;  // раскрыта ли «коробка выполненного» (состояние экрана, не данные)
 let catOpen={now:1,din:1,regime:1,health:0,delo:0,home:0,state:0,reflect:0};
 let taOpen={};
 try{
@@ -1193,9 +1208,10 @@ try{
     if(p&&typeof p==="object"){
       if(p.catOpen&&typeof p.catOpen==="object")catOpen={...catOpen,...p.catOpen};
       if(p.taOpen&&typeof p.taOpen==="object")taOpen={...p.taOpen};
+      if(p.doneOpen!==undefined)doneOpen=!!p.doneOpen;
     }}
 }catch(e){/* битое значение не должно ронять приложение — просто остаёмся на умолчаниях */}
-function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({catOpen,taOpen}));}catch(e){}}
+function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({catOpen,taOpen,doneOpen}));}catch(e){}}
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
 let qSheetOpen=""; // "" | "more" | "stool" — лист быстрых отметок
@@ -1700,6 +1716,57 @@ function guardAddHTML(){
     </div>
   </div>`;
 }
+/* Блокировки — не ежедневная история: ставятся пару раз в месяц. Поэтому сам виджет уехал в
+   настройки, а на главном экране остаётся ТОЛЬКО предупреждение — и только когда оно по делу:
+   за 3 дня до окончания или когда срок уже вышел. В остальные дни место не занимает. */
+function guardAlertHTML(){
+  try{
+    const list=meta.blockers||[];
+    if(!list.length)return "";
+    const soon=[],dead=[];
+    for(const b of list){
+      const ms=blockerMsLeft(b.until);
+      if(ms<=0)dead.push(b);
+      else if(ms<=3*86400000)soon.push([b,ms]);
+    }
+    if(!soon.length&&!dead.length)return "";
+    if(dead.length){
+      return `<div class="banner banner-warn" style="border-color:#F87171">
+        <b style="color:#F87171">🛡 Блокировка закончилась: ${dead.map(b=>escH(b.name||"?")).join(", ")}</b>
+        <div style="font-size:12px;margin-top:4px;color:#D4D4D8;line-height:1.5">Продли или сними — если снимаешь, нужно объяснить почему.</div>
+        <div class="backup-row" style="margin-top:8px"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="openGuardSettings()">Открыть защиту</button></div></div>`;
+    }
+    const s=soon.map(([b,ms])=>escH(b.name||"?")+" — "+blockerFmtShort(ms)).join(" · ");
+    return `<div class="banner" style="background:rgba(203,164,92,.10);border-color:#4A3821">
+      <b style="color:#FBBF24">🛡 Скоро заканчивается защита</b>
+      <div style="font-size:12px;margin-top:4px;color:#D4D4D8;line-height:1.5">${s}</div>
+      <div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="openGuardSettings()">Продлить</button></div></div>`;
+  }catch(e){return "";}
+}
+function openGuardSettings(){settingsOpen=true;settingsTab=1;guardOpen=1;render();}
+/* «Коробка выполненного». Из карточки «Сейчас» сделанное исчезает — это хорошо, список тает и
+   не давит. Но пропадает и ощущение сделанного. Поэтому внизу — спокойная кнопка со счётчиком:
+   нажал и увидел, что закрыл за день. Постоянно на экране не висит, места не занимает. */
+function doneBoxHTML(day,wd){
+  const done=[];
+  for(const c of CATEGORIES)for(const it of c.items){
+    if(it.type==="fact")continue;
+    if(day.items?.[it.id])done.push([it,(day.itemTimes||{})[it.id]||(day.itemRecTimes||{})[it.id]||""]);
+  }
+  const pr=PRAYERS.filter(([id])=>day.prayers?.[id]).map(([id,nm])=>[nm,(day.prayerTimes||{})[id]||(day.prayerRecTimes||{})[id]||""]);
+  const n=done.length+pr.length;
+  if(!n)return "";
+  if(!doneOpen){
+    return `<button class="done-box" onclick="doneOpen=true;saveUI();render()">
+      <span class="done-ic">✓</span><span class="done-t">Сделано сегодня</span><span class="done-n">${n}</span><span class="done-car">▸</span></button>`;
+  }
+  const rows=[...pr.map(([nm,t])=>[`🕌 ${nm}`,t]),...done.map(([it,t])=>[String(it.label).replace(/\s*\(\+[\d.]+\)\s*$/,""),t])]
+    .map(([lbl,t])=>`<div class="done-row"><span class="done-lbl">${escH(lbl)}</span><span class="done-tm">${t||""}</span></div>`).join("");
+  return `<div class="done-card">
+    <button class="done-box done-box-open" onclick="doneOpen=false;saveUI();render()">
+      <span class="done-ic">✓</span><span class="done-t">Сделано сегодня</span><span class="done-n">${n}</span><span class="done-car">▾</span></button>
+    <div class="done-list">${rows}</div></div>`;
+}
 function guardWidgetHTML(){
   const list=meta.blockers||[];
   const expired=list.filter(b=>blockerMsLeft(b.until)<=0);
@@ -1748,7 +1815,6 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
     </div>
     ${namazStatusHTML(day)}
     ${quickRowHTML(day)}
-    ${guardWidgetHTML()}
     ${weekBarsHTML(r)}
   </div>`;
 }
@@ -2567,11 +2633,12 @@ function render(){
         ${dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow)}
       </aside>
       <main class="main">
-        ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${archiveBannerHTML()}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
+        ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${archiveBannerHTML()}${guardAlertHTML()}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
         ${pendingImportHTML()}
         ${nowCardHTML(day,wd)}
         ${tasksHTML(day)}
         ${cats}
+        ${doneBoxHTML(day,wd)}
         ${markHTML(day)}
         ${storyHTML(day)}
         <div style="margin-top:16px;opacity:.85">${collapTa("complaints","🐞 Жалобы на приложение / баги","что бесит, что сломалось, что добавить — по этому дню. Я это увижу в отчёте и выкачу обновление.",day)}</div>
@@ -2667,6 +2734,9 @@ function settingsTab1HTML(day){
   return `
     ${feedbackHTML()}
     ${cloudAuthHTML()}
+    <div class="side-title" style="display:block;margin:16px 0 8px">🛡 Защита (блокировки)</div>
+    <div style="font-size:11.5px;color:#8B8B95;line-height:1.5;margin-bottom:8px">Ставится раз в несколько недель, поэтому живёт здесь, а не на главном экране. За 3 дня до конца придёт напоминание.</div>
+    ${guardWidgetHTML()}
     <div class="side-title" style="display:block;margin:16px 0 8px">Отчёт и резервная копия</div>
     <button class="export-btn" onclick="copyReport()">📋 Копировать отчёт для Claude</button>
     <button class="export-btn" style="margin-top:8px;background:#16161C;border-color:#1B1B26;color:#A1A1AA" onclick="saveBackup()">💾 Скачать резервную копию (JSON)</button>
