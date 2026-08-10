@@ -25,6 +25,21 @@
   --r-1:10px; --r-2:12px; --r-3:14px; --r-4:20px;
   --tap:36px; --tap-lg:40px;
   --ic-sm:16px; --ic-md:20px; --ic-lg:26px;
+  /* ТИПОГРАФИЧЕСКАЯ ШКАЛА. Раньше в файле было 24 разных кегля (9, 9.5, 10, 10.5, 11, 11.5, 12,
+     12.5, 13, 13.5, 14, 14.5, 15, 16, 17, 18, 19, 20, 21, 22, 24, 25, 26, 28). Разнобой сам по
+     себе шум: глаз не строит устойчивую модель «какой это уровень», и всё выглядит одинаково
+     важным. Шесть ступеней с внятным шагом (~×1.15…1.26) дают иерархию без роста плотности —
+     ступени подобраны так, чтобы почти все элементы сели на ближайшее значение и размер не
+     подскочил. Роли ступеней:
+       --fs-1 микроподписи, капс, единицы измерения
+       --fs-2 вторичное: время, счётчики, метки чипов
+       --fs-3 базовое: текст строк, названия дел
+       --fs-4 заголовки блоков и дата
+       --fs-5 крупные числа шапки
+       --fs-6 герой экрана — ровно один элемент, процент дня в кольце
+     Самый крупный элемент экрана — ответ на вопрос «как я иду сегодня», а не «какое сегодня
+     число»: при СДВГ первым должно считываться состояние, а не контекст. */
+  --fs-1:10px; --fs-2:11.5px; --fs-3:13px; --fs-4:16px; --fs-5:19px; --fs-6:24px;
   /* Ширина: лестница вместо жёстких 440/1080px. На ноутбуке приложение занимает экран, а не
      висит узкой полосой посередине. --cats-cols читается из JS (catsCols) — один источник правды. */
   --shell-max:480px; --pad-x:16px; --pad-y:18px; --pad-b:34px; --rail:0px; --cats-cols:1; --gap:12px;
@@ -80,14 +95,14 @@ input[type=range]::-webkit-slider-thumb:active{transform:scale(1.18);background:
 input[type=range]::-moz-range-track{height:10px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.04)}
 input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:#818CF8;
   box-shadow:0 2px 6px rgba(0,0,0,.45),0 0 10px rgba(129,140,248,.35)}
-.section-label{font-size:10.5px;letter-spacing:1.3px;color:#6B6B75;text-transform:uppercase;margin:14px 0 6px 2px}
+.section-label{font-size:var(--fs-1);letter-spacing:1.3px;color:#6B6B75;text-transform:uppercase;margin:14px 0 6px 2px}
 .row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:#16161C;border:1px solid transparent;margin-top:5px;width:100%;text-align:left}
 /* Невыполненное — яркое, выполненное — приглушённое. Раньше было наоборот: сделанный пункт
    становился #F5F5F7, а несделанный оставался #A1A1AA, то есть глаз тянуло к тому, о чём уже
    можно забыть. При СДВГ это прямой вред. Тот же приём уже применён в задачах (.task-lbl.done).
    Зачёркивание сознательно НЕ добавляем: привычек в списке десятки, и перечёркнутые строки
    сами превращаются в шум (в задачах их 2–5, там уместно). */
-.row-label{font-size:13px;color:#F5F5F7;transition:color .15s}
+.row-label{font-size:var(--fs-3);color:#F5F5F7;transition:color .15s}
 /* --text-3, а не --text-4: приглушает втрое (16.6:1 → 5.3:1), но остаётся выше порога
    читаемости 4.5:1. С --text-4 было бы 3.4:1 — выполненное стало бы трудночитаемым,
    а его всё-таки нужно уметь перечитать. */
@@ -122,14 +137,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .cat-block{border:1px solid #1B1B26;border-radius:14px;background:#101017;overflow:hidden;margin-top:10px}
 .cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:none;border-radius:0;background:#101017;margin-top:0}
 .cat-body{padding:2px 10px 10px}
-.cat-name{font-size:16px;font-weight:800;color:#F5F5F7;letter-spacing:.2px}
+.cat-name{font-size:var(--fs-4);font-weight:800;color:#F5F5F7;letter-spacing:.2px}
 .blk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;flex:0 0 auto;box-shadow:0 0 6px -1px currentColor}
 /* Плавное «выезжание» тела блока при раскрытии (аккордеон) — глаз успевает проследить. */
 @keyframes accOpen{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .cat-body-anim{animation:accOpen .26s cubic-bezier(.2,.7,.3,1)}
 /* Раньше счётчик был зелёным всегда — даже «0/14» светилось как достижение, то есть подавало
    ложный сигнал «всё хорошо». Теперь нейтральная плашка, а зелёным становится только при 100%. */
-.cat-count{font-size:12px;font-weight:600;color:var(--text-2);background:rgba(255,255,255,.06);padding:3px 7px;border-radius:8px}
+.cat-count{font-size:var(--fs-2);font-weight:600;color:var(--text-2);background:rgba(255,255,255,.06);padding:3px 7px;border-radius:8px}
 .cat-count.done{background:rgba(74,222,128,.15);color:var(--ok)}
 .tchip{margin-left:6px;color:#6B6B75;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #1B1B26}
 .tchip.lag{color:#FBBF24;border-color:#4A3821}
@@ -316,7 +331,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
   transition:box-shadow .25s cubic-bezier(.4,0,.2,1),border-color .25s,background .25s}
 .task-check.on .task-box{border-color:#818CF8;background:rgba(129,140,248,.18);box-shadow:0 0 12px rgba(129,140,248,.28)}
 .task-check.on .task-box{border-color:#818CF8}
-.task-lbl{font-size:14px;color:#F5F5F7}
+.task-lbl{font-size:var(--fs-3);color:#F5F5F7}
 .task-lbl.done{color:#6B6B75;text-decoration:line-through}
 .task-del{flex:0 0 40px;min-height:36px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--text-4);font-size:15px;opacity:.6;transition:opacity .15s,color .15s}
 /* Взведённое состояние («точно?») — единственный момент, когда удаление вправе кричать. */
@@ -402,33 +417,35 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .done-box-open{border-radius:11px 11px 0 0;margin-top:0}
 .done-ic{color:var(--ok);font-weight:800;font-size:13px}
 .done-t{font-size:12.5px;font-weight:600}
-.done-n{margin-left:auto;font-size:12.5px;font-weight:800;color:var(--ok);font-family:ui-monospace,Menlo,monospace}
+.done-n{margin-left:auto;font-size:var(--fs-3);font-weight:800;color:var(--ok);font-family:ui-monospace,Menlo,monospace}
 .done-car{color:var(--text-4);font-size:12px}
 .done-card{margin-top:12px;border:1px solid var(--line);border-radius:11px;overflow:hidden;background:var(--surface-1)}
 .done-list{padding:2px 12px 10px}
 .done-row{display:flex;align-items:center;gap:8px;padding:5px 0;border-top:1px solid #15151C}
-.done-lbl{flex:1;font-size:12.5px;color:var(--text-3);min-width:0}
-.done-tm{font-size:11px;color:var(--text-4);font-family:ui-monospace,Menlo,monospace}
+.done-lbl{flex:1;font-size:var(--fs-3);color:var(--text-3);min-width:0}
+.done-tm{font-size:var(--fs-2);color:var(--text-4);font-family:ui-monospace,Menlo,monospace}
 .qcell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  min-height:40px;padding:5px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
-.qcell-t{font-size:10.5px;font-weight:700;color:var(--text-2);line-height:1;white-space:nowrap}
-.qcell-v{font-size:12.5px;font-weight:800;color:var(--text);font-family:ui-monospace,Menlo,monospace;line-height:1;min-width:34px;text-align:center}
+  min-height:40px;padding:4px 2px;border-radius:var(--r-3);border:1px solid var(--line);background:var(--surface-2);min-width:0}
+.qcell-t{font-size:var(--fs-2);font-weight:700;color:var(--text-2);line-height:1;white-space:nowrap}
+.qcell-v{font-size:var(--fs-3);font-weight:800;color:var(--text);font-family:ui-monospace,Menlo,monospace;line-height:1;min-width:24px;text-align:center}
 .qcell-ar{font-size:13px;font-weight:700;letter-spacing:.2px}
 .qcell-bad{border-color:rgba(248,113,113,.35);background:rgba(248,113,113,.07)}
 .qcell-bad .qcell-t{color:var(--bad)}
-.qstep{display:flex;align-items:center;gap:2px}
-.qmin,.qplus{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--surface-1);
-  color:var(--text-2);font-size:15px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center}
-.qmin:disabled{opacity:.3}
+.qstep{display:flex;align-items:center;gap:1px}
+.qmin,.qplus{flex:0 0 26px;height:26px;border-radius:8px;border:none;background:transparent;
+  color:var(--text-4);font-size:var(--fs-4);font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;
+  transition:background .12s,color .12s}
+.qmin:active,.qplus:active{background:rgba(255,255,255,.07);color:var(--text)}
+.qmin:disabled{opacity:.25}
 .qbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
-  min-height:40px;padding:6px 2px;border-radius:10px;border:1px solid var(--line);
+  min-height:40px;padding:6px 2px;border-radius:var(--r-3);border:1px solid var(--line);min-width:0;
   background:var(--surface-2);color:var(--text-2)}
-.qbtn-t{font-size:11.5px;font-weight:700;line-height:1.1;white-space:nowrap}
-.qbtn-v{font-size:11px;font-weight:700;color:var(--text-4);line-height:1;font-family:ui-monospace,Menlo,monospace}
-.qbtn-u{font-size:9.5px;color:var(--text-4);font-weight:600}
+.qbtn-t{font-size:var(--fs-2);font-weight:700;line-height:1.1;white-space:nowrap}
+.qbtn-v{font-size:var(--fs-2);font-weight:700;color:var(--text-4);line-height:1;font-family:ui-monospace,Menlo,monospace}
+.qbtn-u{font-size:var(--fs-1);color:var(--text-4);font-weight:600}
 .qbtn.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
 .qbtn.on .qbtn-v{color:var(--accent)}
-.qrow-back{width:100%;margin-top:10px;min-height:40px;border-radius:10px;border:1px solid #4A3821;
+.qrow-back{width:100%;margin-top:10px;min-height:40px;border-radius:var(--r-3);border:1px solid #4A3821;
   background:rgba(203,164,92,.10);color:var(--warn);font-size:13px;font-weight:700}
 .upd-bar{bottom:16px}
 }
@@ -448,12 +465,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#6B6B75;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:#101017;border:1px solid #1B1B26;border-radius:18px;padding:13px 14px 11px;margin:2px 0 11px}
+.dash{background:#101017;border:1px solid #1B1B26;border-radius:18px;padding:11px 13px 10px;margin:2px 0 10px}
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
-.dash-dow{font-size:13px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
-.dash-date-txt{font-size:20px;font-weight:800;color:#F5F5F7;line-height:1.1}
+.dash-dow{font-size:var(--fs-3);letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
+.dash-date-txt{font-size:var(--fs-4);font-weight:800;color:#F5F5F7;line-height:1.1}
 /* Одна строка без переноса: «убывающий серп» раньше сползал на вторую строку и распирал шапку. */
-.dash-lunar{font-size:10.5px;color:#A78BFA;font-weight:600;margin-top:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dash-lunar{font-size:var(--fs-1);color:#A78BFA;font-weight:600;margin-top:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 /* Детальная погода: строка на каждую из 4 точек дня. */
 .wx-grid{display:flex;flex-direction:column;gap:4px}
 .wx-row{padding:6px 0;border-top:1px solid #16161C}
@@ -463,19 +480,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .wx-t{flex:0 0 44px;color:#F5F5F7;font-weight:800;font-size:14px}
 .wx-c{flex:1;color:#A1A1AA;font-size:12.5px}
 .wx-det{padding-left:56px;margin-top:2px;font-size:11.5px;color:#8B8B95;line-height:1.5}
-.dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
+.dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
 .dash-stat-block{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .dash-stat-block.right{align-items:flex-end;text-align:right}
-.dash-stat-n{font-size:19px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
-.dash-stat-u{font-size:12px;color:#6B6B75;margin-left:2px}
-.dash-stat-l{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:#6B6B75;margin-top:1px}
+.dash-stat-n{font-size:var(--fs-5);font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.dash-stat-u{font-size:var(--fs-2);color:#6B6B75;margin-left:2px}
+.dash-stat-l{font-size:var(--fs-1);letter-spacing:.6px;text-transform:uppercase;color:#6B6B75;margin-top:1px}
 .dash-earn-sm{font-size:12px;font-weight:700;color:#FBBF24;margin-top:1px;min-height:15px}
-.dash-streak-line{font-size:13.5px;color:#A1A1AA;display:flex;align-items:center;gap:5px}
+.dash-streak-line{font-size:var(--fs-3);color:#A1A1AA;display:flex;align-items:center;gap:5px}
 .db-ring-big{position:relative;width:76px;height:76px;flex:0 0 auto}
-.db-ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:21px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
-.db-ring-pct-u{font-size:14px;color:#6B6B75;font-weight:700;margin-left:1px}
-.db-ring-cap{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B75;margin-top:4px;font-weight:700}
-.dash-namaz-status{width:100%;margin-top:8px;padding:7px 9px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
+.db-ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-6);font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.db-ring-pct-u{font-size:var(--fs-3);color:#6B6B75;font-weight:700;margin-left:1px}
+.db-ring-cap{font-size:var(--fs-1);letter-spacing:1.5px;text-transform:uppercase;color:#6B6B75;margin-top:4px;font-weight:700}
+.dash-namaz-status{width:100%;margin-top:10px;padding:8px 9px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
 .np-top{display:flex;align-items:center;gap:9px;width:100%}
 .np-ic{font-size:17px;flex:0 0 auto;line-height:1}
 .np-dots{display:flex;gap:7px;width:100%}
@@ -483,19 +500,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
    Раньше тап по этому блоку лишь прокручивал к свёрнутому блоку «Дин» — отметить было нельзя. */
 .np-hit{flex:1;min-height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface-1);color:var(--text-2);padding:0 2px}
-.np-hit .np-dot{width:12px;height:12px}
-.np-nm{font-size:11.5px;font-weight:700;line-height:1}
-.np-tm{font-size:10px;color:var(--text-4);font-family:ui-monospace,Menlo,monospace;line-height:1}
+.np-hit .np-dot{width:13px;height:13px}
+.np-nm{font-size:var(--fs-2);font-weight:700;line-height:1}
+.np-tm{font-size:var(--fs-1);color:var(--text-4);font-family:ui-monospace,Menlo,monospace;line-height:1}
 .np-hit.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
 .np-hit.next{border-color:var(--next);background:rgba(251,146,60,.07)}
 .np-jump{margin-left:6px;flex:0 0 auto;width:32px;height:32px;border-radius:9px;border:1px solid var(--line);
   background:var(--surface-1);color:var(--text-4);font-size:15px}
 .np-dot{width:9px;height:9px;border-radius:50%;background:#1B1B26;flex:0 0 auto;transition:all .2s}
-.np-dot.on{background:#818CF8;box-shadow:0 0 6px rgba(129,140,248,.7)}
-.np-dot.next{background:#FB923C;box-shadow:0 0 5px rgba(251,146,60,.55)}
-.np-count{margin-left:auto;font-weight:800;font-size:15px;font-family:ui-monospace,Menlo,monospace;flex:0 0 auto}
-.np-count-u{font-size:11px;color:#6B6B75;font-weight:700}
-.np-sub{font-size:12.5px;color:#A1A1AA;font-weight:600}
+.np-dot.on{background:#818CF8;box-shadow:0 0 11px rgba(129,140,248,.75),0 0 3px rgba(129,140,248,.95)}
+.np-dot.next{background:#FB923C;box-shadow:0 0 9px rgba(251,146,60,.6),0 0 3px rgba(251,146,60,.8)}
+.np-count{margin-left:auto;font-weight:800;font-size:var(--fs-4);font-family:ui-monospace,Menlo,monospace;flex:0 0 auto}
+.np-count-u{font-size:var(--fs-2);color:#6B6B75;font-weight:700}
+.np-sub{font-size:var(--fs-3);color:#A1A1AA;font-weight:600}
 /* Чекины прямо в шапке (дашборде): две быстрые кнопки с временем. Отмечают тот же пункт,
    что и в блоке — источник данных один, просто доступ ещё и из шапки. */
 .dash-checkins{display:flex;gap:8px;margin-top:10px}
@@ -524,20 +541,20 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .gr-x.armed{background:#F87171;border-color:#F87171;color:#fff}
 .guard-add{border-top:1px solid #1B1B26;padding-top:9px}
 .guard-reason{background:rgba(224,121,91,.08);border:1px solid #4A2020;border-radius:11px;padding:11px}
-.dash-week{margin-top:9px}
+.dash-week{margin-top:10px}
 .dash-week-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
 .wk-row{display:flex;align-items:flex-end;gap:4px;height:18px}
 .wk-bar{flex:1;height:100%;border-radius:3px;background:#16161C;display:flex;align-items:flex-end;overflow:hidden}
 .wk-fill{width:100%;border-radius:3px;transition:height .4s ease}
 .wk-lbls{display:flex;gap:4px;margin-top:2px}
-.wk-lbl{flex:1;text-align:center;font-size:9.5px;color:#6B6B75;letter-spacing:.3px}
+.wk-lbl{flex:1;text-align:center;font-size:var(--fs-1);color:#6B6B75;letter-spacing:.3px}
 .wk-lbl.today{color:#818CF8;font-weight:800}
-.dash-perc{font-size:12.5px;color:#A1A1AA;white-space:nowrap}
+.dash-perc{font-size:var(--fs-3);color:#A1A1AA;white-space:nowrap}
 .spk-label{font-size:11px;color:#6B6B75;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
-.dash-foot{display:flex;align-items:center;gap:14px;margin-top:15px;flex-wrap:wrap}
+.dash-foot{display:flex;align-items:center;gap:14px;margin-top:13px;flex-wrap:wrap}
 .dash-life{display:flex;align-items:center;gap:8px;flex:1 1 150px;min-width:150px}
 .dash-life-lbl{font-size:11px;letter-spacing:.5px;text-transform:uppercase;color:#6B6B75;flex:0 0 auto}
-.dash-life-pct{font-size:11.5px;color:#FBBF24;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
+.dash-life-pct{font-size:var(--fs-2);color:#FBBF24;font-family:ui-monospace,Menlo,monospace;font-weight:700;flex:0 0 auto}
 .life-tbtn{flex:1;padding:7px 0;border-radius:9px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12px;font-weight:600}
 .life-tbtn.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 @media (prefers-reduced-motion:reduce){
@@ -598,7 +615,7 @@ const KEY="journal_block3";
 const ERR_KEY="journal_block3_errors";
 const SNAP_PREFIX="journal_block3_snap_";
 const SCHEMA=2;
-const BUILD="9 августа 2026";
+const BUILD="10 августа 2026";
 let errLog=[];
 try{const e=localStorage.getItem(ERR_KEY);if(e){const p=JSON.parse(e);if(Array.isArray(p))errLog=p.slice(0,40);}}catch(e){}
 // Чистим ранее накопленные «merge-tabs» — это не ошибки, а обычные слияния между вкладками.
@@ -611,7 +628,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.03.0";
+const VERSION="1.04.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
