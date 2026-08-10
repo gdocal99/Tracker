@@ -64,7 +64,22 @@ button{cursor:pointer;font-family:inherit;transition:transform .09s ease}
 .hist-cell.crown-cell{animation:crownPulse 2.4s ease-in-out infinite}
 input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:9px;padding:9px 10px;font-size:14px;outline:none;width:100%;min-height:38px}
 textarea{resize:none}
-input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0;touch-action:pan-y}
+/* Свой вид вместо системного. ВАЖНО: touch-action:pan-y обязателен — без него вертикальная
+   прокрутка страницы воспринимается как перетаскивание и ползунок сам выставляет значение
+   (эта ошибка уже была). Высота самого input оставлена 28px ради зоны касания, а видимый
+   трек рисуется тоньше через ::-webkit-slider-runnable-track. */
+input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:28px;padding:0;margin:6px 0;
+  background:transparent;outline:none;touch-action:pan-y}
+input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:6px;
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.04)}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+  width:22px;height:22px;border-radius:50%;background:#818CF8;margin-top:-7px;
+  box-shadow:0 2px 6px rgba(0,0,0,.45),0 0 10px rgba(129,140,248,.35);
+  transition:transform .15s ease,background .15s ease}
+input[type=range]::-webkit-slider-thumb:active{transform:scale(1.18);background:#A5B4FC}
+input[type=range]::-moz-range-track{height:10px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.04)}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-radius:50%;background:#818CF8;
+  box-shadow:0 2px 6px rgba(0,0,0,.45),0 0 10px rgba(129,140,248,.35)}
 .section-label{font-size:10.5px;letter-spacing:1.3px;color:#6B6B75;text-transform:uppercase;margin:14px 0 6px 2px}
 .row{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;border-radius:10px;background:#16161C;border:1px solid transparent;margin-top:5px;width:100%;text-align:left}
 /* Невыполненное — яркое, выполненное — приглушённое. Раньше было наоборот: сделанный пункт
@@ -79,10 +94,21 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .row-label.on{color:var(--text-3)}
 /* Рамка пустого чекбокса была #3A3A45 на фоне #16161C — контраст 1.63:1 при норме 3:1 для
    органов управления: кружок буквально сливался с карточкой. #6B6B75 даёт 3.48:1. */
-.check-box{width:21px;height:21px;border-radius:50%;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+/* Кружок «вдавлен» внутренней тенью — так он читается как элемент управления, а не как дырка
+   в фоне. Размер сознательно оставлен прежним: интерфейс только что уплотняли. */
+.check-box{width:21px;height:21px;border-radius:50%;border:1.5px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.25);box-shadow:inset 0 2px 4px rgba(0,0,0,.32);
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+  transition:box-shadow .25s cubic-bezier(.4,0,.2,1),border-color .25s,background .25s}
 .check-box svg{display:none}.check-box.on svg{display:block}
 /* Галочка остаётся яркой — сатисфакция от выполнения никуда не девается. */
-.check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
+/* Выполнено — мягкое свечение вместо плоской заливки: микро-награда за действие. */
+.check-box.on{border-color:#818CF8;background:rgba(129,140,248,.18);box-shadow:0 0 12px rgba(129,140,248,.28),inset 0 1px 2px rgba(255,255,255,.06)}
+/* Подсветка «приглашения к нажатию» — ТОЛЬКО для мыши. На тач-экране :hover залипает после
+   тапа, и элемент выглядит нажатым, хотя это не так. */
+@media (hover:hover) and (pointer:fine){
+  .row:hover .check-box,.task-check:hover .task-box{border-color:rgba(129,140,248,.45);background:rgba(129,140,248,.07)}
+}
 .prayer-btn{position:relative;overflow:hidden;flex:1;padding:11px 2px;min-height:42px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#818CF8;background:rgba(129,140,248,.14);color:#818CF8}
 .prayers-row{display:flex;gap:6px;margin-top:7px}
@@ -91,17 +117,20 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .wbtn{flex:1;padding:10px 0;min-height:40px;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:14px;font-weight:600}
 .tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
 .tag-fact{background:#1B1B26;color:#A8A29E}
-.tag-sched{background:rgba(203,164,92,.14);color:#FBBF24}
+.tag-sched{background:rgba(203,164,92,.14);color:#FBBF24;border:1px solid rgba(251,191,36,.22);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px}
 /* Каждая категория — чётко очерченный блок (карта: ясно, что к чему относится). */
 .cat-block{border:1px solid #1B1B26;border-radius:14px;background:#101017;overflow:hidden;margin-top:10px}
 .cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:none;border-radius:0;background:#101017;margin-top:0}
 .cat-body{padding:2px 10px 10px}
-.cat-name{font-size:15px;font-weight:700;color:#F5F5F7;letter-spacing:.2px}
+.cat-name{font-size:16px;font-weight:800;color:#F5F5F7;letter-spacing:.2px}
 .blk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;flex:0 0 auto;box-shadow:0 0 6px -1px currentColor}
 /* Плавное «выезжание» тела блока при раскрытии (аккордеон) — глаз успевает проследить. */
 @keyframes accOpen{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
 .cat-body-anim{animation:accOpen .26s cubic-bezier(.2,.7,.3,1)}
-.cat-count{font-size:12.5px;color:#4ADE80;font-weight:600}
+/* Раньше счётчик был зелёным всегда — даже «0/14» светилось как достижение, то есть подавало
+   ложный сигнал «всё хорошо». Теперь нейтральная плашка, а зелёным становится только при 100%. */
+.cat-count{font-size:12px;font-weight:600;color:var(--text-2);background:rgba(255,255,255,.06);padding:3px 7px;border-radius:8px}
+.cat-count.done{background:rgba(74,222,128,.15);color:var(--ok)}
 .tchip{margin-left:6px;color:#6B6B75;font-weight:700;padding:1px 5px;border-radius:6px;border:1px solid #1B1B26}
 .tchip.lag{color:#FBBF24;border-color:#4A3821}
 .wlog{display:flex;flex-wrap:wrap;gap:5px}
@@ -281,7 +310,11 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .task-row{display:flex;gap:6px}
 .task-check{flex:1;display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
 .task-check.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14)}
-.task-box{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-4);display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
+.task-box{width:20px;height:20px;border-radius:50%;border:1.5px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.25);box-shadow:inset 0 2px 4px rgba(0,0,0,.32);
+  display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:12px;font-weight:800;flex:0 0 auto;
+  transition:box-shadow .25s cubic-bezier(.4,0,.2,1),border-color .25s,background .25s}
+.task-check.on .task-box{border-color:#818CF8;background:rgba(129,140,248,.18);box-shadow:0 0 12px rgba(129,140,248,.28)}
 .task-check.on .task-box{border-color:#818CF8}
 .task-lbl{font-size:14px;color:#F5F5F7}
 .task-lbl.done{color:#6B6B75;text-decoration:line-through}
@@ -575,7 +608,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.01.0";
+const VERSION="1.02.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2436,7 +2469,7 @@ function blockShell(id,title,cnt,innerFn,warn){
   const anim=(animBlock===id&&open)?" cat-body-anim":"";if(animBlock===id)animBlock="";
   return `<div class="cat-block" id="blk-${id}" style="border-left:3px solid ${ac}"><button class="cat-header" style="${hStyle}" onclick="toggleCat('${id}')"><span class="cat-name" style="display:flex;align-items:center">${dot}${title}</span><span style="display:flex;align-items:center;gap:10px">${cnt||""}<span style="color:#6B6B75;font-size:13px">${open?"▾":"▸"}</span></span></button>${open?`<div class="cat-body${anim}">${innerFn()}</div>`:""}</div>`;
 }
-function cntChip(done,total,warn){if(!total)return "";return `<span class="cat-count" style="${warn?"color:#FB923C":""}">${done}/${total}</span>`;}
+function cntChip(done,total,warn){if(!total)return "";const full=done>=total;return `<span class="cat-count${full?" done":""}" style="${(warn&&!full)?"color:#FB923C":""}">${done}/${total}</span>`;}
 function blocksHTML(day,wd){
   const B=[];const push=(id,html)=>{if(html)B.push([id,html]);};
   // 1) 🕌 Дин — намаз, обязательное/желательное, уход по сунне (день-специфично).
