@@ -23,11 +23,11 @@
   --ok:#4ADE80; --warn:#FBBF24; --next:#FB923C; --bad:#F87171; --water:#38BDF8;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
   --r-1:10px; --r-2:12px; --r-3:14px; --r-4:20px;
-  --tap:44px; --tap-lg:52px;
+  --tap:38px; --tap-lg:42px;
   --ic-sm:16px; --ic-md:20px; --ic-lg:26px;
   /* Ширина: лестница вместо жёстких 440/1080px. На ноутбуке приложение занимает экран, а не
      висит узкой полосой посередине. --cats-cols читается из JS (catsCols) — один источник правды. */
-  --shell-max:480px; --pad-x:16px; --pad-y:18px; --pad-b:104px; --rail:0px; --cats-cols:1; --gap:16px;
+  --shell-max:480px; --pad-x:16px; --pad-y:18px; --pad-b:34px; --rail:0px; --cats-cols:1; --gap:12px;
 }
 @media (min-width:700px){ :root{--shell-max:660px;--pad-x:24px} }
 @media (min-width:1000px){:root{--shell-max:1180px;--pad-x:28px;--rail:320px;--cats-cols:2;--pad-b:40px} }
@@ -43,9 +43,9 @@ body{background:#060609;color:#F5F5F7;font-family:system-ui,-apple-system,sans-s
 ::-webkit-scrollbar-corner{background:transparent}
 /* position:relative обязателен: .gear и .cloud-dot заданы absolute, и без позиционированного
    предка они цеплялись к углу СТРАНИЦЫ — на широком экране шестерёнка улетала от контента. */
-#app{position:relative;width:100%;max-width:var(--shell-max);margin:0 auto;padding:var(--pad-y) var(--pad-x) var(--pad-b)}
+#app{position:relative;width:100%;max-width:var(--shell-max);margin:0 auto;padding:12px var(--pad-x) var(--pad-b)}
 /* Ручной переключатель вида перебивает лестницу. */
-#app.force-mobile{--shell-max:480px;--rail:0px;--cats-cols:1;--pad-b:104px}
+#app.force-mobile{--shell-max:480px;--rail:0px;--cats-cols:1;--pad-b:34px}
 #app.force-desktop{--rail:330px;--cats-cols:3}
 /* Каркас: слева липкая панель управления, справа блоки. На телефоне — обычный поток. */
 .shell{display:block}
@@ -62,40 +62,40 @@ button{cursor:pointer;font-family:inherit;transition:transform .09s ease}
 .prayer-btn.on{box-shadow:0 0 10px rgba(129,140,248,.22)}
 @keyframes crownPulse{0%,100%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}50%{box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.42),0 0 9px rgba(165,180,252,.6)}}
 .hist-cell.crown-cell{animation:crownPulse 2.4s ease-in-out infinite}
-input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:10px;padding:12px;font-size:14px;outline:none;width:100%;min-height:var(--tap)}
+input,textarea{font-family:inherit;color:#F5F5F7;background:#101017;border:1px solid #1B1B26;border-radius:9px;padding:9px 10px;font-size:14px;outline:none;width:100%;min-height:38px}
 textarea{resize:none}
 input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;padding:0;touch-action:pan-y}
-.section-label{font-size:11px;letter-spacing:1.5px;color:#6B6B75;text-transform:uppercase;margin:20px 0 9px 2px}
-.row{display:flex;align-items:center;justify-content:space-between;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid transparent;margin-top:7px;width:100%;text-align:left}
+.section-label{font-size:10.5px;letter-spacing:1.3px;color:#6B6B75;text-transform:uppercase;margin:14px 0 6px 2px}
+.row{display:flex;align-items:center;justify-content:space-between;padding:8px 11px;border-radius:10px;background:#16161C;border:1px solid transparent;margin-top:5px;width:100%;text-align:left}
 /* Невыполненное — яркое, выполненное — приглушённое. Раньше было наоборот: сделанный пункт
    становился #F5F5F7, а несделанный оставался #A1A1AA, то есть глаз тянуло к тому, о чём уже
    можно забыть. При СДВГ это прямой вред. Тот же приём уже применён в задачах (.task-lbl.done).
    Зачёркивание сознательно НЕ добавляем: привычек в списке десятки, и перечёркнутые строки
    сами превращаются в шум (в задачах их 2–5, там уместно). */
-.row-label{font-size:14.5px;color:#F5F5F7;transition:color .15s}
+.row-label{font-size:13.5px;color:#F5F5F7;transition:color .15s}
 /* --text-3, а не --text-4: приглушает втрое (16.6:1 → 5.3:1), но остаётся выше порога
    читаемости 4.5:1. С --text-4 было бы 3.4:1 — выполненное стало бы трудночитаемым,
    а его всё-таки нужно уметь перечитать. */
 .row-label.on{color:var(--text-3)}
 /* Рамка пустого чекбокса была #3A3A45 на фоне #16161C — контраст 1.63:1 при норме 3:1 для
    органов управления: кружок буквально сливался с карточкой. #6B6B75 даёт 3.48:1. */
-.check-box{width:25px;height:25px;border-radius:50%;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
+.check-box{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--text-4);background:transparent;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0}
 .check-box svg{display:none}.check-box.on svg{display:block}
 /* Галочка остаётся яркой — сатисфакция от выполнения никуда не девается. */
 .check-box.on{border-color:#818CF8;background:rgba(129,140,248,.20)}
-.prayer-btn{position:relative;overflow:hidden;flex:1;padding:15px 2px;min-height:var(--tap-lg);border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
+.prayer-btn{position:relative;overflow:hidden;flex:1;padding:11px 2px;min-height:42px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:12.5px;font-weight:600;transition:all .15s}
 .prayer-btn.on{border-color:#818CF8;background:rgba(129,140,248,.14);color:#818CF8}
 .prayers-row{display:flex;gap:6px;margin-top:7px}
 .step-btn{width:var(--tap);height:var(--tap);border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#F5F5F7;font-size:20px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
 .water-count{font-size:15px;font-weight:700;min-width:118px;text-align:center}
-.wbtn{flex:1;padding:14px 0;min-height:48px;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:14px;font-weight:600}
+.wbtn{flex:1;padding:10px 0;min-height:40px;border-radius:10px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:14px;font-weight:600}
 .tag{font-size:10px;padding:2px 7px;border-radius:6px;font-weight:600;white-space:nowrap}
 .tag-fact{background:#1B1B26;color:#A8A29E}
 .tag-sched{background:rgba(203,164,92,.14);color:#FBBF24}
 /* Каждая категория — чётко очерченный блок (карта: ясно, что к чему относится). */
-.cat-block{border:1px solid #1B1B26;border-radius:18px;background:#101017;overflow:hidden;margin-top:12px}
-.cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:13px 13px;border:none;border-radius:0;background:#101017;margin-top:0}
-.cat-body{padding:4px 13px 14px}
+.cat-block{border:1px solid #1B1B26;border-radius:14px;background:#101017;overflow:hidden;margin-top:10px}
+.cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:none;border-radius:0;background:#101017;margin-top:0}
+.cat-body{padding:2px 10px 10px}
 .cat-name{font-size:15px;font-weight:700;color:#F5F5F7;letter-spacing:.2px}
 .blk-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;flex:0 0 auto;box-shadow:0 0 6px -1px currentColor}
 /* Плавное «выезжание» тела блока при раскрытии (аккордеон) — глаз успевает проследить. */
@@ -229,7 +229,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .modal-hint{font-size:12.5px;color:#A1A1AA;margin-bottom:10px}
 .copy-btn{margin-top:12px;padding:13px;border-radius:13px;border:none;background:#818CF8;color:#16161C;font-size:15px;font-weight:700;width:100%}
 .mark-row{display:flex;gap:6px;margin-top:4px}
-.mark-btn{flex:1;padding:14px 4px;min-height:48px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:13px;font-weight:600}
+.mark-btn{flex:1;padding:10px 4px;min-height:40px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#A1A1AA;font-size:13px;font-weight:600}
 .banner{border-radius:14px;padding:13px 14px;font-size:13px;line-height:1.5;margin-bottom:6px}
 .banner-empty{background:rgba(203,164,92,.10);border:1px solid #4A3821;color:#FBBF24}
 .banner-warn{background:rgba(224,121,91,.12);border:1px solid #4A2020;color:#FDBA74}
@@ -267,7 +267,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .q-btn{padding:11px 14px;min-height:40px;border-radius:9px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:12px;font-weight:600}
 .q-btn.good.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .q-btn.meh.on{border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.12)}
-.tasks-card{background:#101017;border:1px solid #1B1B26;border-radius:18px;padding:14px;margin-bottom:14px}
+.tasks-card{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:11px;margin-bottom:11px}
 .tasks-card.locked{border-color:#4A2020}
 .tasks-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
 .tk-title{font-size:14px;font-weight:700;color:#F5F5F7}
@@ -279,7 +279,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .task-add{width:var(--tap);height:var(--tap);border-radius:11px;border:1px solid rgba(129,140,248,.5);background:rgba(129,140,248,.15);color:#A5B4FC;font-size:24px;font-weight:700;line-height:1;padding:0}
 .tasks-list{display:flex;flex-direction:column;gap:6px}
 .task-row{display:flex;gap:6px}
-.task-check{flex:1;display:flex;align-items:center;gap:10px;padding:11px 12px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
+.task-check{flex:1;display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;text-align:left}
 .task-check.on{border-color:rgba(129,140,248,.55);background:rgba(129,140,248,.14)}
 .task-box{width:20px;height:20px;border-radius:50%;border:1.5px solid var(--text-4);display:flex;align-items:center;justify-content:center;color:#818CF8;font-size:13px;font-weight:700;flex:0 0 auto}
 .task-check.on .task-box{border-color:#818CF8}
@@ -301,7 +301,7 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .subblock:first-child{margin-top:2px}
 .sb-head{font-size:12px;font-weight:700;letter-spacing:.4px;color:#86EFAC;padding:6px 2px 3px;border-top:1px solid #1B1B26;margin-top:6px;display:flex;align-items:center;gap:6px}
 .subblock:first-child .sb-head{border-top:none;margin-top:0}
-.meas-card{background:#101017;border:1px solid transparent;border-radius:18px;padding:14px;margin-top:14px}
+.meas-card{background:#101017;border:1px solid transparent;border-radius:14px;padding:11px;margin-top:11px}
 .cf{position:fixed;top:-14px;width:8px;height:13px;border-radius:2px;z-index:99;pointer-events:none;animation:cfFall linear forwards}
 .cat-pulse{animation:catGlow .7s ease}
 @keyframes catGlow{0%{box-shadow:0 0 0 0 rgba(129,140,248,.5)}70%{box-shadow:0 0 0 16px rgba(129,140,248,0)}100%{box-shadow:0 0 0 0 rgba(129,140,248,0)}}
@@ -359,26 +359,29 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .toast{position:fixed;top:38%;left:50%;transform:translate(-50%,-50%) scale(.92);background:rgba(18,24,19,.97);border:1px solid #6366F1;color:#818CF8;padding:14px 24px;border-radius:16px;font-size:15px;font-weight:700;z-index:70;pointer-events:none;animation:toastPop 1.8s ease forwards;white-space:nowrap}
 @keyframes toastPop{0%{opacity:0;transform:translate(-50%,-50%) scale(.9)}14%{opacity:1;transform:translate(-50%,-50%) scale(1)}78%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(.96)}}
 /* Тихая плашка «доступно обновление» — снизу по центру, не перекрывает контент, легко нажать. */
-/* ── Полоса быстрых действий: главное лекарство от «заполнять тяжело».
-   Живёт внизу, в зоне большого пальца (раньше все кнопки были вверху экрана — на телефоне
-   до них надо было перехватывать руку). Одно касание = одна отметка, без раскрытия блоков. */
-.qbar{position:fixed;left:0;right:0;bottom:0;z-index:60;display:grid;grid-template-columns:repeat(6,1fr);gap:6px;
-  padding:8px 10px calc(8px + env(safe-area-inset-bottom));
-  background:linear-gradient(180deg,rgba(6,6,9,0),#060609 26%);backdrop-filter:blur(6px)}
-.qb{min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
-  border-radius:var(--r-3);border:1px solid var(--line);background:var(--surface-2);color:var(--text-2);padding:0 2px}
-.qb-ic{font-size:var(--ic-lg);line-height:1}
-.qb-l{font-size:10.5px;font-weight:700;line-height:1}
-.qb-v{font-size:10px;font-weight:700;color:var(--text-4);min-height:12px;line-height:1}
-.qb.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
-.qb.on .qb-v{color:var(--accent)}
-.qb-next{border-color:var(--next);box-shadow:0 0 0 1.5px rgba(251,146,60,.32)}
-.qbar-past{grid-template-columns:1fr}
-.qbar-past .qb{min-height:52px;flex-direction:row;gap:8px;border-color:var(--warn);color:var(--warn)}
-@media (min-width:1000px){
-  .upd-bar{bottom:16px}
-  #app:not(.force-mobile) .qbar{position:static;grid-template-columns:repeat(3,1fr);background:none;padding:0;margin:12px 0 0;backdrop-filter:none}
-  #app:not(.force-mobile) .qb{min-height:66px}
+/* ── Компактная строка быстрых отметок (в шапке).
+   Заменила нижнюю полосу с крупными эмодзи-плитками: та занимала 68px, кричала иконками и
+   уменьшала количество информации на экране. Здесь то же самое одной строкой и текстом. */
+.qrow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+.qcell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+  min-height:40px;padding:5px 2px;border-radius:10px;border:1px solid var(--line);background:var(--surface-2)}
+.qcell-t{font-size:10.5px;font-weight:700;color:var(--text-2);line-height:1;white-space:nowrap}
+.qcell-v{font-size:12.5px;font-weight:800;color:var(--text);font-family:ui-monospace,Menlo,monospace;line-height:1;min-width:34px;text-align:center}
+.qstep{display:flex;align-items:center;gap:2px}
+.qmin,.qplus{width:26px;height:26px;border-radius:7px;border:1px solid var(--line);background:var(--surface-1);
+  color:var(--text-2);font-size:15px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center}
+.qmin:disabled{opacity:.3}
+.qbtn{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+  min-height:40px;padding:6px 2px;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface-2);color:var(--text-2)}
+.qbtn-t{font-size:11.5px;font-weight:700;line-height:1.1;white-space:nowrap}
+.qbtn-v{font-size:11px;font-weight:700;color:var(--text-4);line-height:1;font-family:ui-monospace,Menlo,monospace}
+.qbtn-u{font-size:9.5px;color:var(--text-4);font-weight:600}
+.qbtn.on{border-color:var(--accent);background:var(--accent-soft);color:var(--text)}
+.qbtn.on .qbtn-v{color:var(--accent)}
+.qrow-back{width:100%;margin-top:10px;min-height:40px;border-radius:10px;border:1px solid #4A3821;
+  background:rgba(203,164,92,.10);color:var(--warn);font-size:13px;font-weight:700}
+.upd-bar{bottom:16px}
 }
 .upd-bar{position:fixed;left:50%;bottom:calc(84px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:75;background:rgba(18,24,19,.98);border:1px solid #6366F1;color:#A5B4FC;padding:9px 10px 9px 16px;border-radius:14px;font-size:13.5px;font-weight:700;box-shadow:0 6px 22px rgba(0,0,0,.45);display:flex;align-items:center;gap:10px;animation:updIn .4s ease;max-width:calc(100% - 24px)}
 .upd-go{padding:9px 16px;border-radius:10px;border:none;background:#818CF8;color:#0B0B12;font-size:13.5px;font-weight:800}
@@ -396,11 +399,12 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#6B6B75;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:#101017;border:1px solid #1B1B26;border-radius:24px;padding:18px 18px 15px;margin:2px 0 14px}
+.dash{background:#101017;border:1px solid #1B1B26;border-radius:18px;padding:13px 14px 11px;margin:2px 0 11px}
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
 .dash-dow{font-size:13px;letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
 .dash-date-txt{font-size:20px;font-weight:800;color:#F5F5F7;line-height:1.1}
-.dash-lunar{font-size:11px;color:#A78BFA;font-weight:600;margin-top:3px;line-height:1.3}
+/* Одна строка без переноса: «убывающий серп» раньше сползал на вторую строку и распирал шапку. */
+.dash-lunar{font-size:10.5px;color:#A78BFA;font-weight:600;margin-top:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 /* Детальная погода: строка на каждую из 4 точек дня. */
 .wx-grid{display:flex;flex-direction:column;gap:4px}
 .wx-row{padding:6px 0;border-top:1px solid #16161C}
@@ -410,25 +414,25 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .wx-t{flex:0 0 44px;color:#F5F5F7;font-weight:800;font-size:14px}
 .wx-c{flex:1;color:#A1A1AA;font-size:12.5px}
 .wx-det{padding-left:56px;margin-top:2px;font-size:11.5px;color:#8B8B95;line-height:1.5}
-.dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:16px}
+.dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:8px}
 .dash-stat-block{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .dash-stat-block.right{align-items:flex-end;text-align:right}
-.dash-stat-n{font-size:23px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.dash-stat-n{font-size:19px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
 .dash-stat-u{font-size:12px;color:#6B6B75;margin-left:2px}
 .dash-stat-l{font-size:10.5px;letter-spacing:.6px;text-transform:uppercase;color:#6B6B75;margin-top:1px}
 .dash-earn-sm{font-size:12px;font-weight:700;color:#FBBF24;margin-top:1px;min-height:15px}
 .dash-streak-line{font-size:13.5px;color:#A1A1AA;display:flex;align-items:center;gap:5px}
-.db-ring-big{position:relative;width:108px;height:108px;flex:0 0 auto}
-.db-ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:29px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
+.db-ring-big{position:relative;width:76px;height:76px;flex:0 0 auto}
+.db-ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:21px;font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
 .db-ring-pct-u{font-size:14px;color:#6B6B75;font-weight:700;margin-left:1px}
 .db-ring-cap{font-size:10px;letter-spacing:1.5px;text-transform:uppercase;color:#6B6B75;margin-top:4px;font-weight:700}
-.dash-namaz-status{width:100%;margin-top:16px;padding:11px 13px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
+.dash-namaz-status{width:100%;margin-top:8px;padding:7px 9px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
 .np-top{display:flex;align-items:center;gap:9px;width:100%}
 .np-ic{font-size:17px;flex:0 0 auto;line-height:1}
 .np-dots{display:flex;gap:7px;width:100%}
 /* Намаз отмечается прямо отсюда: были пять точек по 9px «для красоты», стало пять кнопок по 52px.
    Раньше тап по этому блоку лишь прокручивал к свёрнутому блоку «Дин» — отметить было нельзя. */
-.np-hit{flex:1;min-height:var(--tap-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+.np-hit{flex:1;min-height:44px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface-1);color:var(--text-2);padding:0 2px}
 .np-hit .np-dot{width:12px;height:12px}
 .np-nm{font-size:11.5px;font-weight:700;line-height:1}
@@ -471,13 +475,13 @@ input[type=range]{background:none;accent-color:#818CF8;width:100%;height:28px;pa
 .gr-x.armed{background:#F87171;border-color:#F87171;color:#fff}
 .guard-add{border-top:1px solid #1B1B26;padding-top:9px}
 .guard-reason{background:rgba(224,121,91,.08);border:1px solid #4A2020;border-radius:11px;padding:11px}
-.dash-week{margin-top:16px}
-.dash-week-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
-.wk-row{display:flex;align-items:flex-end;gap:5px;height:26px}
+.dash-week{margin-top:9px}
+.dash-week-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:5px}
+.wk-row{display:flex;align-items:flex-end;gap:4px;height:18px}
 .wk-bar{flex:1;height:100%;border-radius:3px;background:#16161C;display:flex;align-items:flex-end;overflow:hidden}
 .wk-fill{width:100%;border-radius:3px;transition:height .4s ease}
-.wk-lbls{display:flex;gap:5px;margin-top:4px}
-.wk-lbl{flex:1;text-align:center;font-size:10px;color:#6B6B75;letter-spacing:.3px}
+.wk-lbls{display:flex;gap:4px;margin-top:2px}
+.wk-lbl{flex:1;text-align:center;font-size:9.5px;color:#6B6B75;letter-spacing:.3px}
 .wk-lbl.today{color:#818CF8;font-weight:800}
 .dash-perc{font-size:12.5px;color:#A1A1AA;white-space:nowrap}
 .spk-label{font-size:11px;color:#6B6B75;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
@@ -558,7 +562,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="0.99.0";
+const VERSION="1.00.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},checkinDay:"12:00",checkinEve:"22:30",metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1576,7 +1580,7 @@ function qGuard(){
   try{commitFocused();}catch(e){}   // досохраняем поле в фокусе перед перерисовкой
   return true;
 }
-function qWater(){if(!qGuard())return;changeWater(250);}
+function qWater(n){if(!qGuard())return;changeWater(n||250);}
 function qPrayer(){
   if(!qGuard())return;
   const d=getDay();
@@ -1584,16 +1588,18 @@ function qPrayer(){
   if(id)togglePrayer(id);else toast("Все 5 отмечены ✓");
 }
 function qToilet(){if(!qGuard())return;toggleItem("istinja_s");}
-function qStool(){
+function qStool(d){
   if(!qGuard())return;
-  const d=getDay();
-  // Флаг листа ставим ДО setDay: setDay сам перерисовывает экран, и лист должен попасть в этот
-  // же рендер, иначе он просто не откроется.
-  qSheetOpen="stool";
-  setDay({poop:String((Number(d.poop)||0)+1)});
-  vib(8);
-  toast("Стул +1 · отметь истинджу");
+  const cur=Number(getDay().poop)||0;
+  const next=Math.max(0,cur+(d||1));      // ниже нуля не опускаем
+  if(next===cur)return;
+  // Лист с истинджой предлагаем только при УВЕЛИЧЕНИИ и только на первом за день разе,
+  // чтобы не мозолил глаза при каждом исправлении.
+  if((d||1)>0&&cur===0)qSheetOpen="stool";
+  setDay({poop:next?String(next):""});
+  vib(6);
 }
+
 function qCheckin(){
   if(!qGuard())return;
   const h=tzParts(nowMs()).h;
@@ -1601,28 +1607,6 @@ function qCheckin(){
 }
 function qSheet(){if(sel!==todayKey()){goToday();return;}qSheetOpen=qSheetOpen?"":"more";render();}
 function closeQSheet(){qSheetOpen="";render();}
-function qbarHTML(day){
-  if(sel!==todayKey()){
-    return `<div class="qbar qbar-past"><button class="qb" onclick="goToday()"><span class="qb-ic">↩</span><span class="qb-l">Вернуться в сегодня</span></button></div>`;
-  }
-  const pt=ptFor(sel),nx=nextPrayerId(pt);
-  const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
-  const nxName=nx?((PRAYERS.find(([id])=>id===nx)||[])[1]||"Намаз"):"Намаз";
-  const wl=day.water||0,tgt=waterTarget(day,sel);
-  const isS=!!day.items?.istinja_s;
-  const h=tzParts(nowMs()).h;
-  const ciId=h>=17?"checkin_eve":"checkin_day";
-  const ciOn=!!day.items?.[ciId];
-  const ciTm=h>=17?(meta.checkinEve||"22:30"):(meta.checkinDay||"12:00");
-  return `<div class="qbar">
-    <button class="qb${wl>0?" on":""}" onclick="qWater()"><span class="qb-ic">💧</span><span class="qb-l">+250</span><span class="qb-v">${(wl/1000).toFixed(1)}/${(tgt/1000).toFixed(1)}</span></button>
-    <button class="qb${pn===5?" on":""}${pn<5?" qb-next":""}" onclick="qPrayer()"><span class="qb-ic">🕌</span><span class="qb-l">${pn===5?"Все ✓":nxName}</span><span class="qb-v">${pn}/5</span></button>
-    <button class="qb${isS?" on":""}" onclick="qToilet()"><span class="qb-ic">🚻</span><span class="qb-l">Истинджа</span><span class="qb-v">${isS?"✓":""}</span></button>
-    <button class="qb${Number(day.poop)>0?" on":""}" onclick="qStool()"><span class="qb-ic">💩</span><span class="qb-l">Стул</span><span class="qb-v">${Number(day.poop)||0}</span></button>
-    <button class="qb${ciOn?" on":""}" onclick="qCheckin()"><span class="qb-ic">⏰</span><span class="qb-l">Чекин</span><span class="qb-v">${ciTm}</span></button>
-    <button class="qb" onclick="qSheet()"><span class="qb-ic">➕</span><span class="qb-l">Ещё</span><span class="qb-v"></span></button>
-  </div>`;
-}
 // Лист «Ещё» — второй ярус частых действий, тоже по одному касанию.
 function qSheetHTML(day){
   if(!qSheetOpen)return "";
@@ -1647,14 +1631,6 @@ function qSheetHTML(day){
     ${sliderHTML("Фокус / собранность","focus",day.focus)}
     ${sliderHTML("Самоконтроль","control",day.control)}
   </div></div>`;
-}
-function checkinStatusHTML(day){
-  const list=[["checkin_day","☀️ День",meta.checkinDay||"12:00"],["checkin_eve","🌙 Вечер",meta.checkinEve||"22:30"]];
-  const chips=list.map(([id,lbl,tm])=>{
-    const on=!!day.items?.[id];
-    return `<button class="ci-chip${on?" on":""}" onclick="toggleItem('${id}')"><span class="ci-box">${on?"✓":""}</span>${lbl} <span class="ci-tm">${tm}</span></button>`;
-  }).join("");
-  return `<div class="dash-checkins">${chips}</div>`;
 }
 // === Защита (блокировки) — целиком в шапке, отдельного блока «Защита» больше нет. ===
 // Компактно: чипы с именем и остатком; тап разворачивает управление (продлить/дата/снять/добавить).
@@ -1771,9 +1747,36 @@ function dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow){
       </div>
     </div>
     ${namazStatusHTML(day)}
-    ${checkinStatusHTML(day)}
+    ${quickRowHTML(day)}
     ${guardWidgetHTML()}
     ${weekBarsHTML(r)}
+  </div>`;
+}
+/* Компактная строка быстрых отметок прямо в шапке. Пришла на замену нижней полосе с крупными
+   эмодзи-плитками: та занимала 68px высоты, кричала иконками и съедала место, которого и так
+   не хватает. Здесь то же самое — вода, истинджа, стул — но одной строкой, текстом, без
+   картинок. Чекины (день/вечер) убраны совсем: пользы не давали, а место занимали.
+   Термины по-арабски: استنجاء — очищение после нужды, غائط — испражнение. */
+function quickRowHTML(day){
+  if(sel!==todayKey()){
+    return `<button class="qrow-back" onclick="goToday()">↩ Вернуться в сегодня</button>`;
+  }
+  const wl=day.water||0,tgt=waterTarget(day,sel);
+  const isS=!!day.items?.istinja_s;
+  const poop=Number(day.poop)||0;
+  // Счётчики со СТРЕЛКАМИ В ОБЕ СТОРОНЫ. Раньше стул только прибавлялся: случайный тап
+  // оставался в данных навсегда, откатить было нечем. Любой счётчик обязан уметь убавляться.
+  return `<div class="qrow">
+    <div class="qcell"><span class="qcell-t">Вода</span>
+      <div class="qstep"><button class="qmin" onclick="qWater(-250)" ${wl<=0?"disabled":""}>−</button>
+        <span class="qcell-v">${(wl/1000).toFixed(1)}<span class="qbtn-u">/${(tgt/1000).toFixed(1)}</span></span>
+        <button class="qplus" onclick="qWater(250)">+</button></div></div>
+    <div class="qcell"><span class="qcell-t">Стул <span dir="rtl" style="color:var(--text-4)">غائط</span></span>
+      <div class="qstep"><button class="qmin" onclick="qStool(-1)" ${poop<=0?"disabled":""}>−</button>
+        <span class="qcell-v">${poop}</span>
+        <button class="qplus" onclick="qStool(1)">+</button></div></div>
+    <button class="qbtn${isS?" on":""}" onclick="qToilet()"><span class="qbtn-t" dir="rtl">استنجاء</span><span class="qbtn-v">${isS?"✓":"—"}</span></button>
+    <button class="qbtn" onclick="qSheet()"><span class="qbtn-t">Ещё</span><span class="qbtn-v">+</span></button>
   </div>`;
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#16161C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
@@ -2375,7 +2378,9 @@ function blocksHTML(day,wd){
     const dinItems=catItems("din"),sunnah=catItems("sunnah");
     const c=countItems(dinItems,day,wd);const pd=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
     push("din",blockShell("din","🕌 Дин (вера)",cntChip(pd,5),()=>{
-      let h=namazHTML(day)+itemsBlock(dinItems,day,wd);
+      // Ряд кнопок намаза НЕ дублируем: он уже есть в шапке, где его и отмечают.
+      // Здесь остаются только времена отметок (их можно поправить) — это не дубль, а другая функция.
+      let h=prayerTimesHTML(day)+`<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>`+itemsBlock(dinItems,day,wd);
       h+=subHTML("🤲","Иман (состояние веры)",sliderHTML("Иман","spirit",day.spirit));
       if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`);
       return h;
@@ -2560,7 +2565,6 @@ function render(){
     <div class="shell">
       <aside class="rail">
         ${dashHTML(day,r,bal,earned,streak,clean,lifePct,sl,isToday,ringGlow)}
-        ${qbarHTML(day)}
       </aside>
       <main class="main">
         ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${archiveBannerHTML()}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
