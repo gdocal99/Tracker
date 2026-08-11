@@ -219,6 +219,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .slider-row{display:flex;flex-direction:column;gap:6px}
 .slider-header{display:flex;justify-content:space-between}
 .slider-val{font-size:14.5px;font-weight:700;color:#818CF8}
+.dash-mark{font-size:11.5px;font-weight:700;line-height:1.25;text-align:right;margin-top:3px;max-width:96px;margin-left:auto}
+.dash-mark.muted{color:#6B6B75;font-weight:600}
 .slider-val.muted{color:#6B6B75;font-weight:600;font-size:12px}
 .sdots{display:flex;gap:6px;margin:6px 0 2px}
 .sdot{flex:1;min-height:44px;border-radius:12px;border:1px solid #23232E;background:#131319;
@@ -629,7 +631,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.13.0";
+const VERSION="1.14.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1942,6 +1944,15 @@ function guardWidgetHTML(){
   if(!open)return header;
   return header+`<div class="guard-panel">${guardReasonHTML()}${guardRowsHTML()}${guardAddHTML()}</div>`;
 }
+// Оценка дня в шапке. Днём её нет намеренно: судить рано, день ещё идёт — та же логика, что и
+// у самооценки внизу. Вечером и на прошлых днях видна сразу, без прокрутки.
+function dashMarkHTML(day){
+  if(sel===todayKey()&&tzParts(nowMs()).h<20)return `<div class="dash-mark muted">оценка вечером</div>`;
+  const q=dayQualification(day,sel);
+  if(!q||q.tier==="none")return `<div class="dash-mark muted">нет данных</div>`;
+  const tc={ideal:"#A5B4FC",good:"#4ADE80",mid:"#FBBF24",weak:"#FB923C",fail:"#F87171",narrated:"#A1A1AA"}[q.tier]||"#A1A1AA";
+  return `<div class="dash-mark" style="color:${tc}">${q.label}</div>`;
+}
 function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
   // Два концентрических кольца: внешнее — % обязательного (главная метрика, крупная
   // цифра в центре), внутреннее — % желательного. Раньше было одно кольцо с декоративным
@@ -1988,8 +1999,8 @@ function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
           : `<span>${r.obPct}<span class="db-ring-pct-u">%</span></span><span class="db-ring-cap">день</span>`}</div>
       </div>
       <div class="dash-stat-block right">
-        <div class="dash-streak-line">🕌 <b class="${streakTier(streak)}" style="color:${streak>0?"#FBBF24":"#6B6B75"}">${streak}</b></div>
         <div class="dash-streak-line">🛡 <b class="${streakTier(clean)}" style="color:${clean>0?"#818CF8":"#6B6B75"}">${clean}</b></div>
+        ${dashMarkHTML(day)}
       </div>
     </div>
     ${namazStatusHTML(day)}
@@ -2009,7 +2020,6 @@ function quickRowHTML(day){
   const wl=day.water||0,tgt=waterTarget(day,sel);
   const isS=!!day.items?.istinja_s;
   const poop=Number(day.poop)||0;
-  const slips=Number(day.slipCount)||(day.slip?1:0);
   // Состав выбран по реальным данным пользователя за неделю: срыв отмечался 7 дней из 10 —
   // чаще всего остального, но был спрятан в блоке «Состояние». Вода отмечается регулярно.
   // Туалет он сам называл тем, что «почему-то не отмечал» — раньше это стоило 8 касаний.
@@ -2025,10 +2035,6 @@ function quickRowHTML(day){
         <span class="qcell-v">${poop}</span>
         <button class="qplus" onclick="qStool(1)">+</button></div></div>
     <button class="qbtn${isS?" on":""}" onclick="qToilet()"><span class="qbtn-t qcell-ar" dir="rtl">استنجاء</span><span class="qbtn-v">${isS?"✓":"—"}</span></button>
-    <div class="qcell${slips>0?" qcell-bad":""}"><span class="qcell-t">Срыв</span>
-      <div class="qstep"><button class="qmin" onclick="qSlip(-1)" ${slips<=0?"disabled":""}>−</button>
-        <span class="qcell-v">${slips}</span>
-        <button class="qplus" onclick="qSlip(1)">+</button></div></div>
   </div>`;
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#16161C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
@@ -2509,6 +2515,11 @@ function catItems(id){return (CATEGORIES.find(c=>c.id===id)||{items:[]}).items;}
    задвоить отметку невозможно (тот же id). Выполненное ИСЧЕЗАЕТ из карточки: видимое сокращение
    списка вознаграждает сильнее абстрактного процента. */
 function hOfTime(s){const p=String(s||"").split(":");const h=Number(p[0]),m=Number(p[1]);return (isFinite(h)?h:0)+(isFinite(m)?m:0)/60;}
+// Утро или вечер — по тому же порогу, что и подбор дел в «Сейчас» (16:00).
+function nowPart(){const np=tzParts(nowMs());return (np.h+np.mi/60)<16?"morning":"evening";}
+function nowAccent(){return nowPart()==="morning"?"#FB923C":"#7DD3FC";}
+// Какие пункты «Сейчас» показывает прямо сейчас — чтобы блок ритуалов их НЕ повторял.
+function nowItemIds(day,wd){return new Set(nowItems(day,wd).map(i=>i.id));}
 function nowItems(day,wd){
   const out=[],seen=new Set();
   const np=tzParts(nowMs()),h=np.h+np.mi/60;
@@ -2562,7 +2573,8 @@ function nowCardHTML(day,wd){
            <span style="display:block;font-size:12px;color:var(--text-3);margin-top:2px">Отметить сделанное можно в блоках ниже</span></span>
          </div>`;
   }
-  return blockShell("now","⚡ Сейчас",list.length?cntChip(0,list.length):"",()=>inner);
+  const title=nowPart()==="morning"?"🌅 Утро · сейчас":"🌙 Вечер · сейчас";
+  return blockShell("now",title,list.length?cntChip(0,list.length):"",()=>inner);
 }
 function countItems(items,day,wd){let done=0,total=0;for(const it of items){if(it.type==="fact")continue;if(it.id==="istinja_b"&&!(Number(day.poop)>0))continue;if(!isDue(it,wd))continue;total++;if(day.items?.[it.id])done++;}return{done,total};}
 // Рендер списка пунктов (по графику на сегодня + выполненные вне графика + «по факту»).
@@ -2596,11 +2608,15 @@ function ritualVisible(part){
 // Ритуалы: утро/вечер карточками. Группа рисуется только если её окно активно (для сегодня).
 function regimeInner(day,wd){
   let inner="";const cat=CATEGORIES.find(c=>c.id==="regime");
+  // Не дублируем: то, что прямо сейчас висит в «Сейчас», второй раз здесь не рисуем.
+  // Раньше вечером один и тот же список стоял в двух блоках подряд.
+  const skip=(sel===todayKey())?nowItemIds(day,wd):new Set();
   const groups=[["morning","☀️","Утро",["bed","warmwater","lymph","charge"]],["evening","🌙","Вечер",["phone","groin","teeth","facemassage","expander"]]];
   for(const [cls,icon,title,ids] of groups){
     if(!ritualVisible(cls))continue;
     inner+=`<div class="daypart ${cls}"><span class="daypart-ic">${icon}</span><span>${title}</span></div>`;
-    for(const id of ids){if(id==="charge"){inner+=chargeHTML(day);continue;}const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
+    for(const id of ids){if(skip.has(id))continue;
+      if(id==="charge"){inner+=chargeHTML(day);continue;}const it=cat.items.find(i=>i.id===id);if(it)inner+=catRowHTML(it,day,wd);}
     for(const it of cat.items)if(it.custom&&it.part===cls)inner+=catRowHTML(it,day,wd);
   }
   return inner;
@@ -2640,10 +2656,10 @@ function collapTa(f,label,ph,day){
   return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button>${taLockNote()}<textarea class="field-ta ta-grow" placeholder="${ph}"${taLockedAttrs(f)} onfocus="startWriting('${f}')" oninput="growTa(this);taInput('${f}',this.value)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
-const BLOCK_ACCENT={now:"#FB923C",din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
+const BLOCK_ACCENT={now:"#FB923C",din:"#4ADE80",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
-  const ac=BLOCK_ACCENT[id]||"#1B1B26";
+  const ac=(id==="now"?nowAccent():BLOCK_ACCENT[id])||"#1B1B26";
   // Цветная заливка заголовка — ТОЛЬКО у раскрытого блока. Раньше градиент рисовался у всех
   // восьми одновременно, и они конкурировали за внимание, превращаясь в фоновый шум.
   // Раскрытый блок — текущий контекст, его подсветить полезно; свёрнутые остаются спокойными.
@@ -2671,7 +2687,11 @@ function blocksHTML(day,wd){
     }));
   }
   // 2) ☀️ Ритуалы дня — утро / вечер.
-  if(ritualVisible("morning")||ritualVisible("evening"))push("regime",blockShell("regime","☀️ Ритуалы дня","",()=>regimeInner(day,wd)));
+  if(ritualVisible("morning")||ritualVisible("evening")){
+    const ri=regimeInner(day,wd);
+    // Остались одни заголовки «Утро/Вечер» без пунктов — блока нет: пустая рамка это шум.
+    if(ri.replace(/<div class="daypart[\s\S]*?<\/div>/g,"").trim())push("regime",blockShell("regime","☀️ Ритуалы дня","",()=>ri));
+  }
   // 3) 💪 Здоровье и тело — активность/тренировки, вода, питание, замеры+сон+стул, БАДы.
   {
     const bodyItems=catItems("body"),healthItems=catItems("health");
@@ -2693,22 +2713,21 @@ function blocksHTML(day,wd){
   }
   // 4) 💼 Дело — работа (+смены, доход) и обучение.
   {
-    const workItems=catItems("work"),eduItems=catItems("edu");
-    const wc=countItems(workItems,day,wd);const eduDone=eduItems.filter(it=>day.items?.[it.id]).length;
-    const done=wc.done+Math.min(2,eduDone),total=wc.total+2;
-    push("delo",blockShell("delo","💼 Дело",cntChip(done,total,eduDone<2),()=>{
+    // Быт живёт здесь же: раньше он был отдельным блоком, и «куда записать уборку» требовало
+    // открыть другой блок. По смыслу это те же дела — работа, обучение, быт.
+    const workItems=catItems("work"),eduItems=catItems("edu"),homeItems=catItems("home");
+    const wc=countItems(workItems,day,wd),hc=countItems(homeItems,day,wd);
+    const eduDone=eduItems.filter(it=>day.items?.[it.id]).length;
+    const done=wc.done+hc.done+Math.min(2,eduDone),total=wc.total+hc.total+2;
+    push("delo",blockShell("delo","💼 Дело и быт",cntChip(done,total,eduDone<2),()=>{
       let h="";
       h+=subHTML("💼","Работа",itemsBlock(workItems,day,wd,{mergeFact:true}));
       h+=workHTML(day);
       h+=`<div style="margin-top:8px"><div class="field-label">💰 Заработано за день, ₴</div><input type="number" inputmode="numeric" value="${day.income||""}" placeholder="0" onchange="setField('income',this.value)"></div>`;
       h+=subHTML("📚","Обучение · мин. 2",itemsBlock(eduItems,day,wd));
+      h+=subHTML("🏠","Быт",itemsBlock(homeItems,day,wd,{mergeFact:true}));
       return h;
     },eduDone<2));
-  }
-  // 5) 🏠 Быт.
-  {
-    const homeItems=catItems("home");const c=countItems(homeItems,day,wd);
-    push("home",blockShell("home","🏠 Быт",cntChip(c.done,c.total),()=>itemsBlock(homeItems,day,wd,{mergeFact:true})));
   }
   // 6) 🧠 Состояние — ползунки, прокрастинация, срыв, самоконтроль, общение, «как прошёл день».
   {
@@ -2775,8 +2794,8 @@ function storyHTML(day){
 // того, что сосед раскрылся (прыгающие блоки — худшее, что можно сделать при СДВГ).
 // Группировка смысловая: обязательное каждый день → тело и быт → ситуативное и итоги.
 const BLOCK_COLS={
-  2:[["din","regime","health"],["home","delo","state","reflect","offsched"]],
-  3:[["din","regime"],["health","home"],["delo","state","reflect","offsched"]]
+  2:[["din","regime","health"],["delo","state","reflect","offsched"]],
+  3:[["din","regime"],["health","delo"],["state","reflect","offsched"]]
 };
 function layoutBlocks(blocks,cols){
   if(!(cols>=2))return `<div class="cats-wrap">${blocks.map(([,h])=>h).join("")}</div>`;
