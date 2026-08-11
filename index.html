@@ -623,7 +623,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.06.0";
+const VERSION="1.07.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -3131,18 +3131,21 @@ function backupMeta(){return {customTasks:meta.customTasks||[],customItems:meta.
 function copyBackup(){const payload=JSON.stringify({_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()});copyToClipboard(payload,()=>{meta.lastBackup=Date.now();saveMeta();vib(15);toast("📋 Скопировано");render();},()=>{toast("Буфер не сработал — скопируй вручную");});}// Надёжное скачивание копии: сначала обычная загрузка файла (работает на компе и Android).
 // На iOS, где download-атрибут игнорируется, — запасной путь через «Поделиться». Всегда даём
 // понятный отклик тостом, чтобы кнопка не казалась «мёртвой».
-function saveBackup(auto){
+async function saveBackup(auto){
   const payload={_app:"block3",_v:VERSION,_exported:new Date().toISOString(),days,meta:backupMeta()};
   const text=JSON.stringify(payload);
   const fname=`block3-backup-${todayKey()}${auto?"-auto":""}.json`;
-  meta.lastBackup=Date.now();saveMeta();
+  // lastBackup отмечаем ТОЛЬКО после реального успеха: иначе неудачная выгрузка на 5 дней
+  // гасила бы предупреждение «нет свежей копии» — то есть скрывала бы именно ту беду, о которой
+  // должна кричать.
+  const done=()=>{meta.lastBackup=nowMs();saveMeta();};
   const iOS=/iP(hone|ad|od)/.test(navigator.platform||"")||(/Mac/.test(navigator.platform||"")&&navigator.maxTouchPoints>1);
   // На iOS скачивание файла ненадёжно — сразу пробуем «Поделиться» (можно сохранить в Файлы).
   if(!auto&&iOS&&navigator.share){
     try{const file=new File([text],fname,{type:"application/json"});
       if(navigator.canShare&&navigator.canShare({files:[file]})){
-        navigator.share({files:[file],title:fname}).then(()=>toast("💾 Копия сохранена")).catch(()=>{});
-        return;
+        try{await navigator.share({files:[file],title:fname});done();vib(12);toast("💾 Копия сохранена");render();return true;}
+        catch(e){toast("Сохранение отменено — копия НЕ создана");render();return false;}
       }
     }catch(e){}
   }
@@ -3156,12 +3159,14 @@ function saveBackup(auto){
     ok=true;
   }catch(e){logError("backup-download",e);}
   if(!auto){
-    if(ok){vib(12);toast("💾 Копия скачана в «Загрузки»");}
-    else{ // совсем не вышло — спасаем в буфер, чтобы данные точно не потерялись
-      copyToClipboard(text,()=>{vib(12);toast("💾 Скачать не вышло — копия в буфере");},()=>toast("Не удалось сохранить копию"));
-    }
-    render();
+    if(ok){done();vib(12);toast("💾 Копия скачана в «Загрузки»");render();return true;}
+    // совсем не вышло — спасаем в буфер; успехом считаем только реально сработавший буфер
+    return await new Promise(res=>copyToClipboard(text,
+      ()=>{done();vib(12);toast("💾 Скачать не вышло — копия в буфере");render();res(true);},
+      ()=>{toast("НЕ УДАЛОСЬ сохранить копию — стирать нельзя");render();res(false);}));
   }
+  if(ok)done();
+  return ok;
 }
 
 /* ═══ ПОЛУГОДОВОЙ АРХИВ (1 марта и 1 сентября) ═══
@@ -3188,7 +3193,14 @@ function archiveDue(){
   return Object.keys(days).length>0;
 }
 function openArchive(){archiveOpen=true;archiveSaved=false;archiveWord="";settingsOpen=true;settingsTab=1;render();}
-function archiveDownload(){saveBackup();archiveSaved=true;render();}
+// Флаг «архив скачан» ставим ТОЛЬКО если файл действительно сохранился. Иначе шаг стирания
+// остаётся заблокированным — это последнее, что стоит между пользователем и потерей истории.
+async function archiveDownload(){
+  const ok=await saveBackup();
+  archiveSaved=!!ok;
+  if(!ok)archiveWord="";      // сбрасываем и введённое слово, чтобы стирание не осталось взведённым
+  render();
+}
 function archiveWordInput(v){archiveWord=String(v||"").trim().toUpperCase();render();}
 async function archiveWipe(){
   if(!archiveSaved){toast("Сначала скачай архив");return;}
