@@ -22,7 +22,7 @@
   --accent:#818CF8; --accent-soft:rgba(129,140,248,.14); --accent-line:#6366F1;
   --ok:#4ADE80; --warn:#FBBF24; --next:#FB923C; --bad:#F87171; --water:#38BDF8;
   --sp-1:4px; --sp-2:8px; --sp-3:12px; --sp-4:16px; --sp-5:24px;
-  --r-1:10px; --r-2:12px; --r-3:14px; --r-4:20px;
+  --r-0:8px; --r-1:10px; --r-2:12px; --r-3:16px; --r-4:20px;
   --tap:36px; --tap-lg:40px;
   --ic-sm:16px; --ic-md:20px; --ic-lg:26px;
   /* ТИПОГРАФИЧЕСКАЯ ШКАЛА. Раньше в файле было 24 разных кегля (9, 9.5, 10, 10.5, 11, 11.5, 12,
@@ -134,7 +134,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .tag-fact{background:#1B1B26;color:#A8A29E}
 .tag-sched{background:rgba(203,164,92,.14);color:#FBBF24;border:1px solid rgba(251,191,36,.22);padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;letter-spacing:.4px}
 /* Каждая категория — чётко очерченный блок (карта: ясно, что к чему относится). */
-.cat-block{border:1px solid #1B1B26;border-radius:14px;background:linear-gradient(180deg,#13131B,#0E0E15);
+.cat-block{border:1px solid #1B1B26;border-radius:var(--r-3);background:linear-gradient(180deg,#13131B,#0E0E15);
   overflow:hidden;margin-top:10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
 .cat-header{width:100%;display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:none;border-radius:0;background:#101017;margin-top:0}
 .cat-body{padding:2px 10px 10px}
@@ -312,7 +312,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .q-btn{padding:11px 14px;min-height:40px;border-radius:9px;border:1px solid #1B1B26;background:#101017;color:#A1A1AA;font-size:12px;font-weight:600}
 .q-btn.good.on{border-color:#818CF8;color:#818CF8;background:rgba(129,140,248,.12)}
 .q-btn.meh.on{border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.12)}
-.tasks-card{background:linear-gradient(180deg,#13131B,#0E0E15);border:1px solid #1B1B26;border-radius:14px;
+.tasks-card{background:linear-gradient(180deg,#13131B,#0E0E15);border:1px solid #1B1B26;border-radius:var(--r-3);
   padding:11px;margin-bottom:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
 .tasks-card.locked{border-color:#4A2020}
 .tasks-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
@@ -351,7 +351,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .subblock:first-child{margin-top:2px}
 .sb-head{font-size:12px;font-weight:700;letter-spacing:.4px;color:#86EFAC;padding:6px 2px 3px;border-top:1px solid #1B1B26;margin-top:6px;display:flex;align-items:center;gap:6px}
 .subblock:first-child .sb-head{border-top:none;margin-top:0}
-.meas-card{background:linear-gradient(180deg,#13131B,#0E0E15);border:1px solid transparent;border-radius:14px;
+.meas-card{background:linear-gradient(180deg,#13131B,#0E0E15);border:1px solid transparent;border-radius:var(--r-3);
   padding:11px;margin-top:11px;box-shadow:inset 0 1px 0 rgba(255,255,255,.045)}
 .cf{position:fixed;top:-14px;width:8px;height:13px;border-radius:2px;z-index:99;pointer-events:none;animation:cfFall linear forwards}
 .cat-pulse{animation:catGlow .7s ease}
@@ -468,13 +468,14 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
 .life-cap{font-size:10.5px;color:#6B6B75;margin-top:6px;text-align:center}
 .life-targets{display:flex;gap:6px;margin-top:11px}
-.dash{background:linear-gradient(180deg,#14141D,#0D0D14);border:1px solid #1B1B26;border-radius:18px;
+.dash{background:linear-gradient(180deg,#14141D,#0D0D14);border:1px solid #1B1B26;border-radius:var(--r-4);
   padding:11px 13px 10px;margin:2px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.055)}
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
+.dash-dline{display:flex;align-items:baseline;justify-content:center;gap:9px;min-width:0}
 .dash-dow{font-size:var(--fs-3);letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
 .dash-date-txt{font-size:var(--fs-4);font-weight:800;color:#F5F5F7;line-height:1.1}
 /* Одна строка без переноса: «убывающий серп» раньше сползал на вторую строку и распирал шапку. */
-.dash-lunar{font-size:var(--fs-1);color:#A78BFA;font-weight:600;margin-top:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.dash-lunar{font-size:var(--fs-1);color:var(--text-4);font-weight:600;margin-top:1px;line-height:1.2;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 /* Детальная погода: строка на каждую из 4 точек дня. */
 .wx-grid{display:flex;flex-direction:column;gap:4px}
 .wx-row{padding:6px 0;border-top:1px solid #16161C}
@@ -609,7 +610,7 @@ const KEY="journal_block3";
 const ERR_KEY="journal_block3_errors";
 const SNAP_PREFIX="journal_block3_snap_";
 const SCHEMA=2;
-const BUILD="10 августа 2026";
+const BUILD="11 августа 2026";
 let errLog=[];
 try{const e=localStorage.getItem(ERR_KEY);if(e){const p=JSON.parse(e);if(Array.isArray(p))errLog=p.slice(0,40);}}catch(e){}
 // Чистим ранее накопленные «merge-tabs» — это не ошибки, а обычные слияния между вкладками.
@@ -622,7 +623,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.05.0";
+const VERSION="1.06.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -863,6 +864,7 @@ function computeRing(day,k){
   const AS=activeSups();desTotal+=AS.length;desDone+=AS.filter(([id])=>(day.sups?.[id]||0)>0).length;
   return {obDone,obTotal,desDone,desTotal,obPct:obTotal?Math.round(obDone/obTotal*100):0,desPct:desTotal?Math.round(desDone/desTotal*100):0};
 }
+function dayNarrated(d){return !!String(d&&d.story||"").trim();}
 function dayComplete(day){if(!day)return false;for(const p of PRAYERS){if(!day.prayers?.[p[0]])return false;}return true;}
 function dayTouched(d){if(!d)return false;if(d.items&&Object.values(d.items).some(Boolean))return true;if(d.prayers&&Object.values(d.prayers).some(Boolean))return true;if(d.water>0)return true;if(d.slip||d.onTime||d.bounced||d.urge)return true;if(d.energy!==""&&d.energy!=null)return true;if(d.drift!==""&&d.drift!=null)return true;if(d.story||d.main||d.block||d.seq||d.extract||d.analysis||d.mark||d.poop||d.income||d.weight||d.pulse||d.bpSys||d.sleepDown||d.sleepUp)return true;if(d.sups&&Object.values(d.sups).some(v=>v>0))return true;if((d.workLog&&d.workLog.length)||(d.meals&&d.meals.length))return true;return false;}
 const PENALTY_FROM="2026-07-09";
@@ -871,7 +873,10 @@ const TRACK_START="2026-07-26";
 // Пропущенный день = ПРОШЛЫЙ день (строго до сегодня) в диапазоне ведения, где заполнено
 // МЕНЬШЕ 5 ОТДЕЛЬНЫХ ОТВЕТОВ (галочки, намазы, ползунки, поля, записи логов — поштучно).
 // Текущий и будущие дни НИКОГДА не помечаются — чтобы не ломать ввод за сегодня.
-function isSkippedDay(dk){return dk<todayKey()&&dk>=TRACK_START&&answersCount(days[dk])<5;}
+function isSkippedDay(dk){
+  if(dayNarrated(days[dk]))return false;   // день рассказан словами — это не пропуск
+  return dk<todayKey()&&dk>=TRACK_START&&answersCount(days[dk])<5;
+}
 // Поштучный счёт ответов за день. Именно он решает, ставить ли крестик:
 // один заполненный день легко набирает десятки ответов, крестик — только на почти пустых.
 function answersCount(d){
@@ -1183,18 +1188,19 @@ function restoreSnapshot(k){
 // набирал «6», «65», «5») превращалось в отдельную строку — так и рождались десятки дублей
 // «вес 5кг / вес —». Здесь схлопываем: выбрасываем пустые значения и оставляем по одной (последней
 // непустой) записи на пару тип+время. Порядок сохраняем по первому появлению.
-function dedupeMeasLog(L){
-  if(!Array.isArray(L)||L.length<2)return Array.isArray(L)?L.filter(x=>x&&x.v!==""&&x.v!=null):[];
+function dedupeMeasLog(L,prune){
+  if(!Array.isArray(L))return [];
   const idx=new Map(),out=[];
   for(const x of L){
-    if(!x||typeof x!=="object"||x.v===""||x.v==null)continue;
+    if(!x||typeof x!=="object")continue;
+    if(x.v===""||x.v==null){if(prune)continue;out.push(x);continue;} // пустая = в неё сейчас вводят
     const k=(x.type||"")+"|"+(x.t||"");
     if(idx.has(k))out[idx.get(k)]=x;      // тот же тип+время → обновляем на последнее значение
     else{idx.set(k,out.length);out.push(x);}
   }
   return out;
 }
-function repairDay(v){
+function repairDay(v,prune){
   const b=blankDay();const out={...b};
   for(const f in b){
     const val=v[f];
@@ -1207,7 +1213,7 @@ function repairDay(v){
     else out[f]=val;
   }
   for(const f in v)if(!(f in b))out[f]=v[f];
-  if(Array.isArray(out.measLog))out.measLog=dedupeMeasLog(out.measLog); // чистим дубли замеров
+  if(Array.isArray(out.measLog))out.measLog=dedupeMeasLog(out.measLog,prune); // дубли замеров; пустые чистим только при prune
   return out;
 }
 function validateDays(raw){
@@ -1217,7 +1223,7 @@ function validateDays(raw){
     if(!isDayKey(k)){issues.push("выброшен неверный ключ дня: "+String(k).slice(0,20));continue;}
     const v=raw[k];
     if(!v||typeof v!=="object"||Array.isArray(v)){issues.push("день не объект: "+k);continue;}
-    clean[k]=repairDay(v);
+    clean[k]=repairDay(v,true);
   }
   return{clean,issues};
 }
@@ -1554,6 +1560,11 @@ function toggleBadLogging(){const d=getDay();setDay({badLogging:!d.badLogging});
 function dayQualification(day,k){
   if(!dayTouched(day))return {mark:"",tier:"none",label:"нет данных",reason:""};
   const r=computeRing(day,k);
+  // День рассказан, а галочек почти нет: судить по процентам нечестно — их просто не по чему
+  // считать. Отдельное нейтральное состояние вместо приговора «Слабый».
+  if(dayNarrated(day)&&r.obPct<40)
+    return {mark:"",tier:"narrated",label:"📝 День рассказан",
+            reason:"описан словами — в процентах не измеряется",obPct:r.obPct,pn:PRAYERS.filter(([id])=>day.prayers?.[id]).length};
   const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
   const sc=Math.max(Number(day.slipCount)||0, day.slip?1:0);
   const anySlip=sc>0&&day.slipType!=="planned";
@@ -1570,7 +1581,7 @@ function dayQualification(day,k){
 function recoHTML(day){
   const q=dayQualification(day,sel);
   if(q.tier==="none")return "";
-  const tc={ideal:"#A5B4FC",good:"#4ADE80",mid:"#FBBF24",weak:"#FB923C",fail:"#F87171"}[q.tier]||"#A1A1AA";
+  const tc={ideal:"#A5B4FC",good:"#4ADE80",mid:"#FBBF24",weak:"#FB923C",fail:"#F87171",narrated:"#A1A1AA"}[q.tier]||"#A1A1AA";
   // Кнопка «Принять» только если есть чёткая отметка (👑/🔴) и она ещё не выставлена вручную.
   const canAccept=q.mark&&day.mark!==q.mark&&dayEditable(sel);
   const matches=q.mark&&day.mark===q.mark;
@@ -1843,7 +1854,10 @@ function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
   return `<div class="dash">
     <div class="dash-datebar">
       <button class="nav-btn" onclick="navDay(-1)">‹</button>
-      <div style="text-align:center"><div class="dash-dow">${sl.dow}</div><div class="dash-date-txt">${sl.txt}</div><div class="dash-lunar">${lunarLine(sel)}</div></div>
+      <div style="text-align:center;min-width:0">
+        <div class="dash-dline"><span class="dash-dow">${sl.dow}</span><span class="dash-date-txt">${sl.txt}</span></div>
+        <div class="dash-lunar">${lunarLine(sel)}</div>
+      </div>
       <button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button>
     </div>
     ${!isToday?`<button class="today-btn" onclick="goToday()">↩ Сегодня</button>`:""}
@@ -1872,7 +1886,9 @@ function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
           <circle cx="50" cy="50" r="${RI}" fill="none" stroke="#16161C" stroke-width="6"/>
           <circle cx="50" cy="50" r="${RI}" fill="none" stroke="url(#ringDes)" stroke-width="6" stroke-linecap="round" stroke-dasharray="${CI}" stroke-dashoffset="${CI*(1-r.desPct/100)}" transform="rotate(-90 50 50)" style="transition:stroke-dashoffset .5s"/>
         </svg>
-        <div class="db-ring-pct"><span>${r.obPct}<span class="db-ring-pct-u">%</span></span><span class="db-ring-cap">день</span></div>
+        <div class="db-ring-pct">${(dayNarrated(day)&&r.obPct<40)
+          ? `<span style="font-size:22px;line-height:1">📝</span><span class="db-ring-cap">рассказан</span>`
+          : `<span>${r.obPct}<span class="db-ring-pct-u">%</span></span><span class="db-ring-cap">день</span>`}</div>
       </div>
       <div class="dash-stat-block right">
         <div class="dash-streak-line">🕌 <b class="${streakTier(streak)}" style="color:${streak>0?"#FBBF24":"#6B6B75"}">${streak}</b></div>
@@ -2674,7 +2690,8 @@ function render(){
     const crownCls=(d&&d.mark==="crown")?" crown-cell":"";
     const skipped=isSkippedDay(kk);
     const cellBg=skipped?"#16161C":hbg;
-    const inner=(d&&d.mark==="crown")?"👑":(skipped?'<span style="color:#F87171;font-weight:700;opacity:.9">✕</span>':"");
+    const inner=(d&&d.mark==="crown")?"👑":(skipped?'<span style="color:#F87171;font-weight:700;opacity:.9">✕</span>'
+      :(dayNarrated(d)&&computeRing(d,kk).obPct<40?'<span style="opacity:.75;font-size:10px">📝</span>':""));
     histHTML+=`<button class="hist-cell${kk===sel?" sel":""}${crownCls}${skipped?" skip-cell":""}" style="background:${cellBg};${mkRing};font-size:11px;line-height:20px;padding:0" onclick="selDay('${kk}')" title="${kk}${skipped?" · пропущен (мало данных)":""}">${inner}</button>`;
     kk=addDays(kk,1);
   }
@@ -3387,12 +3404,12 @@ function applyImport(mode){if(!pendingImport)return;
   if(mode==="merge"){
     let added=0,combined=0;
     for(const k in pendingImport.days){
-      if(!days[k]||dayIsEmpty(days[k])){days[k]=repairDay(pendingImport.days[k]);added++;}
-      else if(!dayIsEmpty(pendingImport.days[k])){days[k]=mergeDayDeep(days[k],repairDay(pendingImport.days[k]));combined++;}
+      if(!days[k]||dayIsEmpty(days[k])){days[k]=repairDay(pendingImport.days[k],true);added++;}
+      else if(!dayIsEmpty(pendingImport.days[k])){days[k]=mergeDayDeep(days[k],repairDay(pendingImport.days[k],true));combined++;}
     }
     mergeMetaIn(pendingImport.meta,false);
     save();meta.lastBackup=Date.now();saveMeta();vib(15);pendingImport.result={added,combined};
-  } else if(mode==="replace"){const nd={};for(const k in pendingImport.days)nd[k]=repairDay(pendingImport.days[k]);days=nd;mergeMetaIn(pendingImport.meta,true);save();meta.lastBackup=Date.now();saveMeta();vib(15);}
+  } else if(mode==="replace"){const nd={};for(const k in pendingImport.days)nd[k]=repairDay(pendingImport.days[k],true);days=nd;mergeMetaIn(pendingImport.meta,true);save();meta.lastBackup=Date.now();saveMeta();vib(15);}
   const wasPaste=pendingImport.source==="paste";pendingImport=null;
   if(mode!=="cancel"&&wasPaste){pasteOpen=false;pasteText="";}
   render();
