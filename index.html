@@ -629,7 +629,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.09.0";
+const VERSION="1.10.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2549,11 +2549,34 @@ function subHTML(icon,title,inner){if(!inner)return "";return `<div class="subbl
 function toggleTa(f){taOpen[f]=!taOpen[f];saveUI();render();}
 function sizeTa(el){try{el.style.height="auto";const lh=parseFloat(getComputedStyle(el).lineHeight)||21;el.style.height=(el.scrollHeight+lh*5)+"px";}catch(e){}}
 function growTa(el){sizeTa(el);}
+/* ═══ ЗАКРЫТЫЙ ДЕНЬ НЕ ДОЛЖЕН ПРИНИМАТЬ ТЕКСТ В ПУСТОТУ ═══
+   Было так: на прошлом (закрытом) дне поле выглядело обычным — курсор ставится, буквы
+   печатаются, — но taInput молча выбрасывал каждое нажатие, потому что день не редактируем.
+   Текст не попадал ни на диск, ни в память. А при сворачивании commitFocused пытался
+   «довести» правку через confirm(), который в этот момент браузер уже не показывает, — и
+   надиктованное пропадало целиком. Худший вид потери: человек видит свой текст на экране и
+   уверен, что он сохранён.
+   Теперь поле закрытого дня — только для чтения, а касание по нему предлагает снять замок. */
+function askUnlockDay(f){
+  const lbl=dayLabel(sel);
+  if(!confirm("День закрыт — "+lbl.txt+" ("+lbl.dow+").\n\nОткрыть его для правки?\nВсё, что напишешь, ляжет на этот день, а не на сегодня."))
+    {vib(8);return;}
+  unlockedDay=sel;vibNice();toast("Открыт для правки: "+lbl.txt);
+  render(true);
+  // Сразу возвращаем курсор в то же поле, чтобы не искать его заново.
+  try{setTimeout(()=>{const e=document.querySelector('textarea[oninput*="'+f+'"]');if(e){e.focus();}},60);}catch(e){}
+}
+function taLockedAttrs(f){
+  return dayEditable(sel)?"":` readonly onclick="askUnlockDay('${f}')" style="opacity:.75;cursor:pointer"`;
+}
+function taLockNote(){
+  return dayEditable(sel)?"":`<div style="font-size:11.5px;color:#FBBF24;margin:6px 2px 4px;line-height:1.5">🔒 День закрыт — нажми на поле, чтобы открыть его для правки.</div>`;
+}
 function collapTa(f,label,ph,day){
   const val=String(day[f]||"");const open=!!taOpen[f];const filled=val.trim().length>0;
   const tm=(filled&&day[f+"Time"])?` <span style="color:#6B6B75;font-weight:500">· в ${day[f+"Time"]}</span>`:"";
   if(!open)return `<button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}${filled?' <span style="color:#818CF8;font-weight:600">· заполнено</span>'+tm:""}</span><span style="color:#6B6B75">＋</span></button>`;
-  return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button><textarea class="field-ta ta-grow" placeholder="${ph}" onfocus="startWriting('${f}')" oninput="growTa(this);taInput('${f}',this.value)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
+  return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button>${taLockNote()}<textarea class="field-ta ta-grow" placeholder="${ph}"${taLockedAttrs(f)} onfocus="startWriting('${f}')" oninput="growTa(this);taInput('${f}',this.value)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
 const BLOCK_ACCENT={now:"#FB923C",din:"#FBBF24",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
@@ -2684,7 +2707,7 @@ function storyHTML(day){
   return `<div style="margin-top:10px">
     <button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('story')"><span>➕ Рассказ о дне</span><span style="color:#6B6B75">▾</span></button>
     <div class="muted-note" style="padding:8px 2px;color:#8B8B95;font-size:12px;line-height:1.55">Наговори ИИ, как прошёл день, и вставь сюда готовый отчёт. Этот день будет считаться заполненным — галочки ставить не нужно.</div>
-    <textarea class="field-ta ta-grow" placeholder="вставь сюда отчёт о дне" onfocus="startWriting('story')" oninput="growTa(this);taInput('story',this.value)" onchange="setField('story',this.value)">${v.replace(/</g,"&lt;")}</textarea>
+    ${taLockNote()}<textarea class="field-ta ta-grow" placeholder="вставь сюда отчёт о дне"${taLockedAttrs("story")} onfocus="startWriting('story')" oninput="growTa(this);taInput('story',this.value)" onchange="setField('story',this.value)">${v.replace(/</g,"&lt;")}</textarea>
   </div>`;
 }
 // Раскладка блоков. Позиции ФИКСИРОВАННЫЕ: блок никогда не переезжает в другую колонку из-за
@@ -3152,7 +3175,10 @@ function taInput(f,v){
 function commitFocused(){
   try{
     const a=document.activeElement;
-    if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")){
+    // Поле только для чтения (закрытый прошлый день) «доводить» нельзя: его onchange повёл бы
+    // в setDay, а тот в этот момент попытался бы показать confirm(), который браузер при уходе
+    // страницы уже не рисует. Получался зависший диалог вместо сохранения.
+    if(a&&(a.tagName==="INPUT"||a.tagName==="TEXTAREA"||a.tagName==="SELECT")&&!a.readOnly&&!a.disabled){
       try{a.dispatchEvent(new Event("change",{bubbles:true}));}catch(e){}
     }
   }catch(e){}
