@@ -562,6 +562,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 <div id="lock-screen" style="position:fixed;inset:0;background:#060609;z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;"><div style="max-width:300px;width:100%;text-align:center;"><div style="font-size:28px;font-weight:700;color:#818CF8;margin-bottom:16px;font-family:'Traditional Arabic','Scheherazade New',serif;" dir="rtl">بِسْمِ اللَّهِ</div><div style="background:#0E0E14;border:1px solid #1E1E2A;border-radius:16px;padding:18px;"><input type="password" id="pass-input" placeholder="Введите пароль" style="width:100%;padding:11px;border-radius:10px;background:#0A0A0D;border:1px solid #1E1E2A;color:#F5F5F7;outline:none;text-align:center;margin-bottom:12px;" onkeydown="if(event.key==='Enter')checkPass()"><button onclick="checkPass()" style="width:100%;padding:11px;border-radius:10px;background:#6366F1;border:none;color:#F5F5F7;font-weight:700;width:100%">Войти</button></div><div id="lock-err" style="color:#F87171;font-size:13px;margin-top:10px;display:none;">Неверный пароль</div></div></div>
 
 <input type="file" id="file-input" accept=".json,application/json" style="display:none" onchange="onFile(event)">
+<input type="file" id="arch-file" accept=".json,application/json" style="display:none" onchange="onArchiveFile(event)">
 <div id="app"></div>
 <script>
 const HASH = "03ac674216f3e15c761ee1a5e255f067953623c8b388b4459e13f978d7c846f4"; // дефолтный хеш для "1234"
@@ -623,7 +624,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.07.0";
+const VERSION="1.08.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -826,6 +827,29 @@ function tzParts(ms){
 const _z2=n=>String(n).padStart(2,"0");
 function todayKey(){const p=tzParts(nowMs());return p.y+"-"+_z2(p.mo)+"-"+_z2(p.d);}
 function nowHM(){const p=tzParts(nowMs());return _z2(p.h)+":"+_z2(p.mi);}
+/* ═══ ОТПЕЧАТОК ДАННЫХ ДЛЯ АРХИВА ═══
+   Чтобы стереть историю, мало «нажать кнопку скачивания» — нужно ДОКАЗАТЬ, что файл на диске
+   читается и содержит ровно то, что было в приложении. Для этого при выгрузке запоминаем
+   отпечаток (сколько дней, диапазон дат, контрольная сумма содержимого), а потом просим
+   загрузить тот же файл обратно и сверяем отпечатки. Совпало — файл настоящий и полный. */
+function _stableStr(v){
+  // Каноническая сериализация: ключи объектов по алфавиту. Без этого сумма зависела бы от
+  // порядка вставки полей, и сверка ломалась бы на ровном месте.
+  if(v===null||typeof v!=="object")return JSON.stringify(v)??"null";
+  if(Array.isArray(v))return "["+v.map(_stableStr).join(",")+"]";
+  return "{"+Object.keys(v).sort().map(k=>JSON.stringify(k)+":"+_stableStr(v[k])).join(",")+"}";
+}
+function _hash(str){
+  let h=2166136261>>>0;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
+  return h.toString(36);
+}
+function daysFingerprint(D){
+  const keys=Object.keys(D||{}).filter(isDayKey).sort();
+  const body=keys.map(k=>k+":"+_stableStr(D[k])).join("|");
+  return {n:keys.length,from:keys[0]||"",to:keys[keys.length-1]||"",sum:_hash(body)};
+}
+function fpEqual(a,b){return !!a&&!!b&&a.n===b.n&&a.from===b.from&&a.to===b.to&&a.sum===b.sum;}
 function isDayKey(k){
   if(typeof k!=="string"||!/^\d{4}-\d{2}-\d{2}$/.test(k))return false;
   const[y,m,d]=k.split("-").map(Number);
@@ -1262,6 +1286,11 @@ const UI_KEY="journal_block3_ui";
 let doneOpen=false;  // раскрыта ли «коробка выполненного» (состояние экрана, не данные)
 let catOpen={now:1,din:1,regime:1,health:0,delo:0,home:0,state:0,reflect:0};
 let taOpen={};
+// Состояние полугодового архива. Живёт здесь (а не в meta), потому что НЕ должно синхронизироваться:
+// «файл скачан и проверен» — свойство конкретного устройства, на котором лежит файл.
+//   fp        — отпечаток того, что ушло в файл: сколько дней, диапазон дат, контрольная сумма
+//   verifiedAt— когда файл сверили загрузкой обратно (0 = ещё не сверяли)
+let archState={fp:null,verifiedAt:0};
 try{
   const u=localStorage.getItem(UI_KEY);
   if(u){const p=JSON.parse(u);
@@ -1269,12 +1298,14 @@ try{
       if(p.catOpen&&typeof p.catOpen==="object")catOpen={...catOpen,...p.catOpen};
       if(p.taOpen&&typeof p.taOpen==="object")taOpen={...p.taOpen};
       if(p.doneOpen!==undefined)doneOpen=!!p.doneOpen;
+      if(p.archState&&typeof p.archState==="object")archState={fp:p.archState.fp||null,verifiedAt:Number(p.archState.verifiedAt)||0};
     }}
 }catch(e){/* битое значение не должно ронять приложение — просто остаёмся на умолчаниях */}
-function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({catOpen,taOpen,doneOpen}));}catch(e){}}
+function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({catOpen,taOpen,doneOpen,archState}));}catch(e){}}
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
 let qSheetOpen=""; // "" | "more" | "stool" — лист быстрых отметок
+let archiveErr="";   // сообщение о неудачной сверке файла архива
 // Состояние конструктора привычек (Таб «Кастом»)
 let ncCat="regime:morning",ncLabel="",ncType="ob",ncPts="1",ncPen=false,ncSched=[];
 const LIFE_BIRTH=new Date(2006,4,6);
@@ -3178,6 +3209,8 @@ async function saveBackup(auto){
      3) и только потом чистится локальная база и облако.
    НАСТРОЙКИ (цели, блокировки, кастомные пункты, БАДы) НЕ стираются — это не история. */
 let archiveOpen=false,archiveSaved=false,archiveWord="";
+const ARCH_HOLD_MS=15*60*1000;   // окно на проверку файла: 15 минут, БЕЗ автостирания
+let _archTick=null;
 // Полугодие, к которому относится текущий момент. Сентябрьское полугодие тянется через Новый
 // год, поэтому январь и февраль принадлежат сентябрю ПРОШЛОГО года, а не текущего.
 function archiveSeason(){
@@ -3192,48 +3225,116 @@ function archiveDue(){
   if(meta.lastArchive===archiveSeason())return false;      // за это полугодие уже архивировали
   return Object.keys(days).length>0;
 }
-function openArchive(){archiveOpen=true;archiveSaved=false;archiveWord="";settingsOpen=true;settingsTab=1;render();}
-// Флаг «архив скачан» ставим ТОЛЬКО если файл действительно сохранился. Иначе шаг стирания
-// остаётся заблокированным — это последнее, что стоит между пользователем и потерей истории.
+function openArchive(){archiveOpen=true;archiveWord="";settingsOpen=true;settingsTab=1;archTickStart();render();}
+function closeArchive(){archiveOpen=false;archTickStop();render();}
+// Пока идёт 15-минутное окно, экран должен обновлять обратный отсчёт сам.
+function archTickStart(){archTickStop();_archTick=setInterval(()=>{
+  if(!archiveOpen||!settingsOpen){archTickStop();return;}
+  if(archHoldLeft()<=0){archTickStop();}
+  try{render();}catch(e){}
+},1000);}
+function archTickStop(){if(_archTick){clearInterval(_archTick);_archTick=null;}}
+function archHoldLeft(){
+  if(!archState.verifiedAt)return ARCH_HOLD_MS;
+  return Math.max(0,ARCH_HOLD_MS-(nowMs()-archState.verifiedAt));
+}
+function fmtLeft(ms){const t=Math.ceil(ms/1000);return Math.floor(t/60)+":"+String(t%60).padStart(2,"0");}
+// Шаг 1. Флаг «архив скачан» ставим ТОЛЬКО если файл действительно сохранился, и тут же
+// запоминаем отпечаток выгруженного — по нему потом сверим файл.
 async function archiveDownload(){
+  const fp=daysFingerprint(days);
   const ok=await saveBackup();
   archiveSaved=!!ok;
-  if(!ok)archiveWord="";      // сбрасываем и введённое слово, чтобы стирание не осталось взведённым
+  if(ok){archState={fp,verifiedAt:0};saveUI();}
+  else{archiveWord="";}   // не оставляем стирание взведённым
   render();
 }
+// Шаг 2. Сверка: пользователь выбирает ТОЛЬКО ЧТО скачанный файл, приложение читает его с диска
+// и сравнивает отпечаток. Это доказательство, что файл существует, читается и полон, — в отличие
+// от «кнопку нажали, наверное сохранилось».
+function archiveVerifyPick(){const el=document.getElementById("arch-file");if(el){el.value="";el.click();}}
+function onArchiveFile(e){
+  const f=e.target.files&&e.target.files[0];e.target.value="";
+  if(!f)return;
+  const rd=new FileReader();
+  rd.onerror=()=>{archiveErr="Файл не прочитался. Скачай архив заново.";render();};
+  rd.onload=()=>{
+    try{
+      const obj=JSON.parse(rd.result);
+      const D=extractDays(obj);
+      if(!D||typeof D!=="object"){archiveErr="Это не похоже на архив дневника.";render();return;}
+      const fp=daysFingerprint(D);
+      if(!archState.fp){archiveErr="Сначала скачай архив — не с чем сверять.";render();return;}
+      if(!fpEqual(fp,archState.fp)){
+        archiveErr="Файл НЕ совпал с выгрузкой: в нём "+fp.n+" дн. ("+(fp.from||"—")+" … "+(fp.to||"—")+
+                   "), а выгружали "+archState.fp.n+" дн. ("+archState.fp.from+" … "+archState.fp.to+
+                   "). Возможно, выбран старый файл. Скачай архив заново.";
+        render();return;
+      }
+      archiveErr="";
+      archState={...archState,verifiedAt:nowMs()};saveUI();
+      archTickStart();vibNice();toast("✓ Файл проверен — всё на месте");render();
+    }catch(err){archiveErr="Файл повреждён или это не JSON. Скачай архив заново.";render();}
+  };
+  rd.readAsText(f);
+}
 function archiveWordInput(v){archiveWord=String(v||"").trim().toUpperCase();render();}
+// Шаг 4. Стирание. Помимо слова СТЕРЕТЬ проверяем ЕЩЁ РАЗ, что с момента выгрузки в приложении
+// не появилось новых записей: иначе стёрли бы то, чего в файле нет.
 async function archiveWipe(){
-  if(!archiveSaved){toast("Сначала скачай архив");return;}
+  if(!archiveSaved||!archState.fp){toast("Сначала скачай архив");return;}
+  if(!archState.verifiedAt){toast("Сначала проверь файл — загрузи его обратно");return;}
+  if(archHoldLeft()>0){toast("Ещё "+fmtLeft(archHoldLeft())+" на проверку файла");return;}
   if(archiveWord!=="СТЕРЕТЬ"){toast("Введи слово СТЕРЕТЬ");return;}
+  const nowFp=daysFingerprint(days);
+  if(!fpEqual(nowFp,archState.fp)){
+    archiveErr="После выгрузки в дневнике появились новые записи (сейчас "+nowFp.n+" дн., в файле "+
+               archState.fp.n+" дн.). Их в архиве нет — скачай архив заново и проверь снова.";
+    archiveSaved=false;archState={fp:null,verifiedAt:0};archiveWord="";saveUI();render();return;
+  }
   const n=Object.keys(days).length;
-  if(!confirm("Стереть все "+n+" дней из приложения и облака?\n\nНастройки (цели, блокировки, БАДы) останутся.\nАрхив уже скачан — без него историю не вернуть."))return;
-  // 1) облако
+  if(!confirm("Стереть все "+n+" дней из приложения и облака?\n\nФайл проверен и содержит все "+n+" дн.\nНастройки (цели, блокировки, БАДы) останутся.\nБез файла историю не вернуть."))return;
   try{if(cloud&&cloud.wipeDays)await cloud.wipeDays();}catch(e){logError("archive-cloud",e);}
-  // 2) локально
   try{
     days={};
     safeWrite(KEY,days);
     for(const k of snapKeys()){try{localStorage.removeItem(k);}catch(e){}}
   }catch(e){logError("archive-local",e);}
   meta.lastArchive=archiveSeason();saveMeta();
-  archiveOpen=false;archiveSaved=false;archiveWord="";
+  archiveOpen=false;archiveSaved=false;archiveWord="";archiveErr="";
+  archState={fp:null,verifiedAt:0};saveUI();archTickStop();
   vibNice();toast("Архив сохранён · начинаем с чистого листа");
   render();
 }
 function archiveHTML(){
   if(!archiveOpen)return "";
   const n=Object.keys(days).length;
-  const canWipe=archiveSaved&&archiveWord==="СТЕРЕТЬ";
-  return `<div class="meas-card" style="margin-top:2px;border-color:#4A3821;background:#101017">
-    <div class="side-title" style="display:block;margin:0 0 6px;color:#FBBF24;font-size:13px;font-weight:700">🗄 Полугодовой архив</div>
-    <div style="font-size:12px;color:#A1A1AA;line-height:1.55;margin-bottom:10px">В приложении <b>${n}</b> дн. Сначала скачай архив, проверь файл, и только потом стирай. Настройки (цели, блокировки, БАДы) <b>останутся</b>.</div>
-    <button class="export-btn" onclick="archiveDownload()">${archiveSaved?"✓ Архив скачан — скачать ещё раз":"1. 💾 Скачать полный архив"}</button>
-    <div style="margin-top:12px;opacity:${archiveSaved?1:.45};pointer-events:${archiveSaved?"auto":"none"}">
-      <div style="font-size:12px;color:#A1A1AA;line-height:1.5;margin-bottom:6px">2. Проверь, что файл открылся и данные на месте. Затем впиши слово <b style="color:#F87171">СТЕРЕТЬ</b>:</div>
-      <input value="${escA(archiveWord)}" placeholder="СТЕРЕТЬ" oninput="archiveWordInput(this.value)" style="text-align:center;letter-spacing:2px;font-weight:700">
-      <button class="export-btn" style="margin-top:8px;background:${canWipe?"rgba(224,121,91,.14)":"#16161C"};border-color:${canWipe?"#F87171":"#1B1B26"};color:${canWipe?"#F87171":"#6B6B75"}" onclick="archiveWipe()">3. Стереть историю и начать с чистого листа</button>
+  const fp=archState.fp;
+  const verified=!!archState.verifiedAt;
+  const left=archHoldLeft();
+  const canWipe=archiveSaved&&verified&&left<=0&&archiveWord==="СТЕРЕТЬ";
+  const step=(k,txt,on)=>`<div style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:6px;color:${on?"var(--ok)":"var(--text-2)"}"><span style="flex:0 0 18px;text-align:center">${on?"✓":k}</span><span>${txt}</span></div>`;
+  const err=archiveErr?`<div style="margin:8px 0;padding:9px 10px;border-radius:var(--r-2);background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.4);color:#FCA5A5;font-size:12px;line-height:1.5">${archiveErr}</div>`:"";
+  return `<div class="meas-card" style="margin-top:2px;border-color:#4A3821">
+    <div class="side-title" style="display:block;margin:0 0 8px;color:#FBBF24;font-size:13px;font-weight:700">🗄 Полугодовой архив</div>
+    <div style="font-size:12px;color:var(--text-2);line-height:1.55;margin-bottom:10px">В дневнике <b>${n}</b> дн. История уйдёт в файл и будет стёрта из приложения. Настройки (цели, блокировки, БАДы) <b>останутся</b>.</div>
+    ${step(1,"Скачать архив",archiveSaved)}
+    ${step(2,"Проверить файл — загрузить обратно",verified)}
+    ${step(3,"Подождать 15 минут"+(verified&&left>0?" · осталось "+fmtLeft(left):""),verified&&left<=0)}
+    ${step(4,"Стереть историю",false)}
+    ${err}
+    <button class="export-btn" style="margin-top:8px" onclick="archiveDownload()">${archiveSaved?"✓ Скачано — скачать ещё раз":"1. 💾 Скачать полный архив"}</button>
+    ${fp?`<div style="font-size:11px;color:var(--text-4);margin-top:5px;line-height:1.45">В файле: <b>${fp.n}</b> дн., ${fp.from} … ${fp.to}</div>`:""}
+    <div style="margin-top:12px;opacity:${archiveSaved?1:.4};pointer-events:${archiveSaved?"auto":"none"}">
+      <div style="font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:6px">2. Открой скачанный файл и убедись, что он на месте. Затем выбери его здесь — я сверю, что в нём ровно те же записи.</div>
+      <button class="export-btn" style="${verified?"border-color:#4ADE80;color:#4ADE80;background:rgba(74,222,128,.1)":""}" onclick="archiveVerifyPick()">${verified?"✓ Файл проверен — сверить другой":"2. 📂 Выбрать файл для сверки"}</button>
     </div>
-    <button class="backup-btn" style="width:100%;margin-top:10px" onclick="archiveOpen=false;render()">Отмена</button>
+    <div style="margin-top:12px;opacity:${verified?1:.4};pointer-events:${verified?"auto":"none"}">
+      <div style="font-size:12px;color:var(--text-2);line-height:1.5;margin-bottom:6px">${left>0?`3. Окно на проверку: <b style="color:#FBBF24">${fmtLeft(left)}</b>. Ничего не сотрётся само — по истечении просто откроется кнопка.`:"3. Окно прошло. Впиши слово <b style=\"color:#F87171\">СТЕРЕТЬ</b>:"}</div>
+      <input value="${escA(archiveWord)}" placeholder="СТЕРЕТЬ" ${left>0?"disabled":""} oninput="archiveWordInput(this.value)" style="text-align:center;letter-spacing:2px;font-weight:700">
+      <button class="export-btn" style="margin-top:8px;background:${canWipe?"rgba(224,121,91,.14)":"#16161C"};border-color:${canWipe?"#F87171":"#1B1B26"};color:${canWipe?"#F87171":"var(--text-4)"}" onclick="archiveWipe()">4. Стереть историю и начать с чистого листа</button>
+    </div>
+    <button class="backup-btn" style="width:100%;margin-top:10px" onclick="closeArchive()">Закрыть</button>
   </div>`;
 }
 function archiveBannerHTML(){
