@@ -220,7 +220,12 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .slider-header{display:flex;justify-content:space-between}
 .slider-val{font-size:14.5px;font-weight:700;color:#818CF8}
 .slider-val.muted{color:#6B6B75;font-weight:600;font-size:12px}
-.slider-row.unset input[type=range]{opacity:.4}
+.sdots{display:flex;gap:6px;margin:6px 0 2px}
+.sdot{flex:1;min-height:44px;border-radius:12px;border:1px solid #23232E;background:#131319;
+  color:#5A5A66;font-size:15px;font-weight:700;padding:0;transition:background .12s ease,border-color .12s ease,color .12s ease}
+.sdot:active{transform:scale(.96)}
+.sdot.on{background:rgba(129,140,248,.18);border-color:#818CF8;color:#A5B4FC;
+  box-shadow:0 0 10px rgba(129,140,248,.25)}
 .states-row{display:flex;gap:6px;flex-wrap:wrap}
 .export-btn{width:100%;margin-top:14px;padding:13px;border-radius:13px;background:rgba(129,140,248,.10);border:1px solid #6366F1;color:#818CF8;font-size:15px;font-weight:700;display:flex;justify-content:center;align-items:center;gap:8px}
 .backup-row{display:flex;gap:10px;margin-top:10px}
@@ -624,7 +629,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.08.0";
+const VERSION="1.09.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2247,7 +2252,23 @@ const SLIDER_HINTS={energy:"1 (Труп) · 3 (Норм) · 5 (Заряжен)",
 function sliderSet(v){if(v===""||v==null)return false;const n=Number(v);return Number.isFinite(n)&&n>0;}
 // Конвертация старой шкалы 1–10 в 1–5 (делим на 2). Вызывается только для заданных значений.
 function norm5(v){let n=Number(v);if(!Number.isFinite(n))return "";if(n>5)n=Math.round(n/2);return Math.min(5,Math.max(1,n));}
-function sliderHTML(label,f,val,max,step,suffix){suffix=suffix||"";const touched=sliderSet(val);const v=touched?norm5(val):"";const pos=touched?v:3;const disp=touched?(v+suffix):"не отмечено";const clr=touched?`<button style="border:none;background:none;color:#6B6B75;font-size:13px;padding:0 3px" onclick="setField('${f}','')">✕</button>`:"";const hint=SLIDER_HINTS[f]?`<div style="font-size:10.5px;color:#6B6B75;margin-top:3px">${SLIDER_HINTS[f]}</div>`:"";return `<div class="slider-row${touched?"":" unset"}"><div class="slider-header"><span style="font-size:14.5px;color:#A1A1AA">${label}</span><span style="display:flex;align-items:center;gap:5px"><span class="slider-val${touched?"":" muted"}">${disp}</span>${clr}</span></div><input type="range" min="1" max="5" step="1" value="${pos}" oninput="setField('${f}',Number(this.value))">${hint}</div>`;}
+function sliderHTML(label,f,val,max,step,suffix){
+  // ПОЧЕМУ НЕ ПОЛЗУНОК. Дорожка type=range врала дважды: (1) у незаполненной оценки бегунок
+  // всё равно стоял ПОСЕРЕДИНЕ — глаз читал это как «уже стоит 3», хотя в данных пусто;
+  // (2) тап по любому месту дорожки мгновенно писал значение, поэтому случайное касание при
+  // прокрутке подставляло оценку, которую человек не ставил. touch-action:pan-y спасал только
+  // от вертикального протягивания, но не от тапа. Ложная оценка хуже пустой: она попадает в
+  // отчёт и создаёт неверную картину недели. Пять кнопок: пусто выглядит пусто, а записать
+  // значение можно только осознанным попаданием в конкретную цифру.
+  suffix=suffix||"";
+  const touched=sliderSet(val);
+  const v=touched?norm5(val):"";
+  const disp=touched?(v+suffix):"не отмечено";
+  const clr=touched?`<button style="border:none;background:none;color:#6B6B75;font-size:13px;padding:0 3px" onclick="setField('${f}','')">✕</button>`:"";
+  const hint=SLIDER_HINTS[f]?`<div style="font-size:10.5px;color:#6B6B75;margin-top:3px">${SLIDER_HINTS[f]}</div>`:"";
+  const dots=[1,2,3,4,5].map(n=>`<button type="button" class="sdot${touched&&v===n?" on":""}" onclick="setField('${f}',${n})">${n}</button>`).join("");
+  return `<div class="slider-row${touched?"":" unset"}"><div class="slider-header"><span style="font-size:14.5px;color:#A1A1AA">${label}</span><span style="display:flex;align-items:center;gap:5px"><span class="slider-val${touched?"":" muted"}">${disp}</span>${clr}</span></div><div class="sdots">${dots}</div>${hint}</div>`;
+}
 
 function vib(ms){try{if(navigator.vibrate)navigator.vibrate(ms||10);}catch(e){}}
 function vibNice(){vib([22,26,38]);}
@@ -3095,7 +3116,7 @@ function delWater(i){const d=getDay();const L=[...(d.waterLog||[])];const row=L[
 function setWaterTotal(v){const ml=clampNum(Math.round(num(v,0)*1000),0,30000);const d=getDay();const L=d.waterLog||[];if(L.length){setDay({water:Math.max(ml,waterSum(d))});}else{setDay({water:ml});}}
 function toggleField(f){const d=getDay();const nv=!d[f];setDay({[f]:nv});if((f==="slip"||f==="urge")&&nv)negFx();else vib(4);}
 const TEXT_TIME_FIELDS=new Set(["main","seq","analysis","extract","block","complaints","healthComplaints","story"]);
-function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}const patch={[f]:v};if(TEXT_TIME_FIELDS.has(f)&&String(v||"").trim())patch[f+"Time"]=nowHM();setDay(patch);}
+function setField(f,v){if(["energy","drift","focus","spirit","control"].includes(f)&&v!==""&&!getDay().sliderTime){const d=getDay();days[sel]={...d,sliderTime:nowHM()};}const patch={[f]:v};if(TEXT_TIME_FIELDS.has(f)&&String(v||"").trim())patch[f+"Time"]=nowHM();setDay(patch);}
 // ЖИВОЕ СОХРАНЕНИЕ ТЕКСТА (защита от потери данных на телефоне).
 // Проблема была: textarea сохранялся только по onchange, а он срабатывает при потере фокуса
 // (blur). На телефоне пользователь набирает текст и сворачивает/закрывает приложение, НЕ снимая
