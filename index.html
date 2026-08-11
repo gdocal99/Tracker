@@ -631,7 +631,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.15.0";
+const VERSION="1.16.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -4142,7 +4142,28 @@ window.addEventListener("resize",()=>{
   },180);
 });
 // Досинхронизация при сворачивании/закрытии вкладки — чтобы облако получило свежие правки.
-document.addEventListener("visibilitychange",()=>{try{if(document.visibilityState==="hidden"){commitFocused();if(cloud)cloud.flushNow();}else{checkForUpdate();}}catch(e){}});
+// НОВЫЙ ДЕНЬ, ПОКА ПРИЛОЖЕНИЕ ЛЕЖАЛО В ФОНЕ.
+// Телефон почти не закрывает вкладки: человек уходит спать с открытым трекером, а утром на экране
+// всё ещё вчерашняя дата. Дальше он отмечает сегодняшнее — и попадает во вчера (либо упирается в
+// замок и думает, что приложение сломалось). Поэтому: если в фон уходили НА СЕГОДНЯ, а вернулись
+// уже в другой день — сами переводим экран на новый день. Если же человек ушёл, специально
+// открыв прошлый день, ничего не трогаем — он там осознанно.
+let _bgKey="";
+document.addEventListener("visibilitychange",()=>{try{
+  if(document.visibilityState==="hidden"){
+    _bgKey=(sel===todayKey())?sel:"";
+    commitFocused();if(cloud)cloud.flushNow();
+  }else{
+    const t=todayKey();
+    if(_bgKey&&sel===_bgKey&&t!==_bgKey){
+      sel=t;unlockedDay="";
+      try{toast("Наступил новый день — "+dayLabel(t).txt);}catch(e){}
+      try{render(true);}catch(e){}
+    }
+    _bgKey="";
+    checkForUpdate();
+  }
+}catch(e){}});
 // Телефон замораживает/выгружает вкладку без надёжного blur — досбрасываем на диск ЗАРАНЕЕ.
 window.addEventListener("pagehide",()=>{try{commitFocused();if(cloud)cloud.flushNow();}catch(e){}});
 window.addEventListener("beforeunload",()=>{try{commitFocused();}catch(e){}});
