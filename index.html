@@ -631,7 +631,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.14.0";
+const VERSION="1.15.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2750,12 +2750,23 @@ function blocksHTML(day,wd){
   // 7) 🌡 Погода — с главного экрана УБРАНА (не отвлекает). Детали — в ⚙ Настройках и в отчёте.
   // 8) 🛡️ Защита (блокировки) теперь целиком в шапке (guardWidgetHTML) — отдельного блока нет.
   // 9) 📒 Дневник — дневниковые поля, все свёртываемые (закрыто по умолчанию).
-  push("reflect",blockShell("reflect","📒 Дневник","",()=>{
-    return collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
-      +collapTa("analysis","Анализ (мысли, эмоции, наблюдения)","что чувствовал и заметил",day)
-      +collapTa("extract","Выводы (что извлёк из дня)","вывод",day)
-      +collapTa("block","Помеха дня","что сбило",day);
-  }));
+  {
+    // Задачи (краткосрочные и долгосрочные) раньше стояли ОТДЕЛЬНОЙ карточкой между блоками —
+    // и это было не на месте: план дня и разбор дня относятся к одному и тому же, к дневнику.
+    // Счётчик в заголовке — по краткосрочным: видно, сколько осталось, не раскрывая блок.
+    const _T=meta.customTasks||[];
+    const _sh=_T.filter(t=>t.term!=="long");
+    const _sDone=_sh.filter(t=>day.items?.[t.id]).length;
+    // Счётчик оранжевый, пока краткосрочные не закрыты: блок свёрнут по умолчанию, и незакрытые
+    // задачи не имеют права молча спрятаться внутри него.
+    push("reflect",blockShell("reflect","📒 Дневник",_sh.length?cntChip(_sDone,_sh.length,_sDone<_sh.length):"",()=>{
+      return subHTML("🎯","Задачи",tasksHTML(day))
+        +collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
+        +collapTa("analysis","Анализ (мысли, эмоции, наблюдения)","что чувствовал и заметил",day)
+        +collapTa("extract","Выводы (что извлёк из дня)","вывод",day)
+        +collapTa("block","Помеха дня","что сбило",day);
+    }));
+  }
   push("offsched",offSchedHTML(day,wd));
   return B;
 }
@@ -2874,7 +2885,6 @@ function render(){
         ${pendingImportHTML()}
         ${nowCardHTML(day,wd)}
         ${cats}
-        ${tasksHTML(day)}
         ${doneBoxHTML(day,wd)}
         ${markHTML(day)}
         ${storyHTML(day)}
