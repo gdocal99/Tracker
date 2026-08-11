@@ -629,7 +629,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.10.0";
+const VERSION="1.11.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -3560,7 +3560,22 @@ function mergeMetaIn(im,replace){
   if(im.lifeTarget)meta.lifeTarget=im.lifeTarget;
   saveMeta();applyCustomItems();
 }
+// «Заменить всё» — единственная кнопка в приложении, которая стирает историю целиком. Раньше она
+// срабатывала С ПЕРВОГО касания и стояла вплотную к «Объединить»: промах пальцем — и дневника нет.
+// Остальные удаления в приложении (привычки, задачи, БАДы, снимки) давно просят второе касание;
+// эта была исключением. Теперь: подтверждение касанием + диалог с цифрами, сколько потеряется.
+let importArm=false;
 function applyImport(mode){if(!pendingImport)return;
+  if(mode==="replace"){
+    const ex=Object.keys(days).filter(isDayKey).length;
+    if(ex>0){
+      if(!importArm){importArm=true;vib(8);render();setTimeout(()=>{if(importArm){importArm=false;render();}},4000);return;}
+      importArm=false;
+      const n=Object.keys(pendingImport.days).length;
+      if(!confirm("ЗАМЕНИТЬ ВСЁ?\n\nСейчас в дневнике: "+ex+" дн.\nВ файле: "+n+" дн.\n\nВсё, чего нет в файле, исчезнет навсегда.\nЕсли не уверен — жми Отмена и выбери «Объединить (без потерь)».")){render();return;}
+    }
+  }
+  importArm=false;
   if(mode==="merge"){
     let added=0,combined=0;
     for(const k in pendingImport.days){
@@ -3575,7 +3590,7 @@ function applyImport(mode){if(!pendingImport)return;
   render();
 }
 function importErrHTML(){if(!importErr)return"";return `<div class="banner banner-warn" style="border-color:#F87171"><b style="color:#F87171">Импорт не прошёл</b><div style="font-size:12.5px;margin-top:4px;color:#F5F5F7">${importErr.replace(/</g,"&lt;")}</div><button class="backup-btn" style="width:100%;margin-top:8px" onclick="importErr='';render()">Понятно</button></div>`;}
-function pendingImportHTML(){if(!pendingImport)return"";const n=Object.keys(pendingImport.days).length,ex=Object.keys(days).length;const range=pendingImport.from?(pendingImport.from===pendingImport.to?pendingImport.from:pendingImport.from+" … "+pendingImport.to):"—";const warn=n<=1?`<div style="color:#FB923C;font-size:12px;margin-top:6px;line-height:1.4">⚠️ Всего ${n} день (${range}). Если ждал больше — файл, скорее всего, слит в один день. НЕ загружай, жми «Отмена».</div>`:"";const drop=pendingImport.dropped?`<div style="font-size:11px;color:#6B6B75;margin-top:4px">Пропущено записей без даты: ${pendingImport.dropped}</div>`:"";return `<div class="banner banner-warn"><b>Импорт:</b> ${n} дн. · <b>${range}</b>${ex?` · локально уже ${ex} дн.`:""}${warn}${drop}<div class="backup-row" style="margin-top:8px">${ex?`<button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="applyImport('merge')">Объединить (без потерь)</button>`:""}<button class="backup-btn" ${ex?'style="border-color:#4A2020;color:#F87171"':'style="border-color:#6366F1;color:#818CF8"'} onclick="applyImport('replace')">${ex?"Заменить всё":"Загрузить"}</button></div><button class="backup-btn" style="margin-top:8px;width:100%" onclick="applyImport('cancel')">Отмена</button></div>`;}
+function pendingImportHTML(){if(!pendingImport)return"";const n=Object.keys(pendingImport.days).length,ex=Object.keys(days).length;const range=pendingImport.from?(pendingImport.from===pendingImport.to?pendingImport.from:pendingImport.from+" … "+pendingImport.to):"—";const warn=n<=1?`<div style="color:#FB923C;font-size:12px;margin-top:6px;line-height:1.4">⚠️ Всего ${n} день (${range}). Если ждал больше — файл, скорее всего, слит в один день. НЕ загружай, жми «Отмена».</div>`:"";const drop=pendingImport.dropped?`<div style="font-size:11px;color:#6B6B75;margin-top:4px">Пропущено записей без даты: ${pendingImport.dropped}</div>`:"";return `<div class="banner banner-warn"><b>Импорт:</b> ${n} дн. · <b>${range}</b>${ex?` · локально уже ${ex} дн.`:""}${warn}${drop}<div class="backup-row" style="margin-top:8px">${ex?`<button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="applyImport('merge')">Объединить (без потерь)</button>`:""}<button class="backup-btn" ${ex?(importArm?'style="border-color:#F87171;color:#F87171;background:rgba(248,113,113,.14)"':'style="border-color:#4A2020;color:#F87171"'):'style="border-color:#6366F1;color:#818CF8"'} onclick="applyImport('replace')">${ex?(importArm?"точно? сотрёт "+ex+" дн.":"Заменить всё"):"Загрузить"}</button></div><button class="backup-btn" style="margin-top:8px;width:100%" onclick="applyImport('cancel')">Отмена</button></div>`;}
 function extractDays(obj){if(obj&&typeof obj==="object"&&obj.days&&typeof obj.days==="object")return obj.days;return obj;}
 // Пропускаем в импорт ТОЛЬКО дни с ключом-датой ГГГГ-ММ-ДД. Мусорные ключи (поля дня и т.п.)
 // отбрасываем, чтобы данные никогда не сваливались в один «день». Плюс считаем диапазон дат.
