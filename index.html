@@ -629,7 +629,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.12.0";
+const VERSION="1.13.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1204,6 +1204,35 @@ function pruneOldLogs(){
     if(touched)days[k]=nd;
   }
   return freed;
+}
+/* ═══ ТРИ КОНТУРА СОХРАННОСТИ ═══
+   1) Живая синхронизация — день пишется в облако сразу. Защищает от потери телефона,
+      но НЕ защищает от удаления: сотрёшь данные — сотрутся и там.
+   2) Облачный автоархив (здесь) — раз в 10 дней полная копия журнала кладётся в ОТДЕЛЬНУЮ
+      коллекцию, до которой стирание дней не дотягивается. Полный автомат, участия не требует.
+   3) Файл на диск — раз в месяц напоминание с одной кнопкой. Единственное, что браузер не может
+      сделать сам: скачивание файла требует касания человека.
+   Документ Firestore ограничен ~1 МБ, поэтому журнал режется на части и собирается обратно. */
+const ARCH_CHUNK=600000;      // символов в одной части
+const ARCH_KEEP=4;            // сколько облачных архивов держим
+const ARCH_EVERY=10*86400000; // раз в 10 дней
+function archSplit(json){const out=[];for(let i=0;i<json.length;i+=ARCH_CHUNK)out.push(json.slice(i,i+ARCH_CHUNK));return out.length?out:[""];}
+function archJoin(parts){return (parts||[]).slice().sort((a,b)=>a.i-b.i).map(x=>x.data||"").join("");}
+// Слияние архива в текущие данные. Как и снимок, архив может только ДОБАВИТЬ: победитель в
+// mergeDayDeep определяется метками полей, а у нынешних записей они свежее.
+function mergeArchiveDays(D){
+  let added=0,combined=0;
+  for(const k in D){
+    if(!isDayKey(k))continue;
+    if(!days[k]||dayIsEmpty(days[k])){days[k]=repairDay(D[k],true);added++;}
+    else{days[k]=mergeDayDeep(days[k],repairDay(D[k],true));combined++;}
+  }
+  return {added,combined};
+}
+function monthlyBackupDue(){
+  const last=Number(meta.lastBackup)||0;
+  if(!last)return Object.keys(days).filter(isDayKey).length>0;
+  return (Date.now()-last)>=30*86400000;
 }
 function makeSnapshot(){
   const k=SNAP_PREFIX+todayKey();
@@ -2822,7 +2851,7 @@ function render(){
         ${dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow)}
       </aside>
       <main class="main">
-        ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${archiveBannerHTML()}${guardAlertHTML()}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
+        ${(!saveState.ok||loadState.corrupt)?alarmHTML():""}${archiveBannerHTML()}${backupDueHTML()}${guardAlertHTML()}${cloudGuardHTML()}${importErrHTML()}${lockHTML()}${topBanner}
         ${pendingImportHTML()}
         ${nowCardHTML(day,wd)}
         ${cats}
@@ -2910,6 +2939,9 @@ function settingsHTML(){
 }
 // Поле обратной связи: пользователь пишет пожелания/проблемы, они уходят в отчёт для Claude.
 function setFeedback(v){meta.feedback=v;saveMeta();}
+// Поле убрано из настроек: оно дублировало «🐞 Жалобы на приложение» внизу дня, и было непонятно,
+// куда писать. Осталось одно место. Уже написанный сюда текст НЕ потерян — он по-прежнему уходит
+// в начало отчёта (см. _fbLine в buildExport). Функция сохранена для совместимости.
 function feedbackHTML(){
   const v=meta.feedback||"";
   return `<div class="meas-card" style="margin-top:2px;border-color:#4A3821;background:#101017">
@@ -2921,12 +2953,12 @@ function feedbackHTML(){
 }
 function settingsTab1HTML(day){
   return `
-    ${feedbackHTML()}
     ${cloudAuthHTML()}
     <div class="side-title" style="display:block;margin:16px 0 8px">🛡 Защита (блокировки)</div>
     <div style="font-size:11.5px;color:#8B8B95;line-height:1.5;margin-bottom:8px">Ставится раз в несколько недель, поэтому живёт здесь, а не на главном экране. За 3 дня до конца придёт напоминание.</div>
     ${guardWidgetHTML()}
     <div class="side-title" style="display:block;margin:16px 0 8px">Отчёт и резервная копия</div>
+    ${safetyPanelHTML()}
     ${(()=>{const n=reportDaysN(),sz=reportSize(n);
       const chips=REPORT_PERIODS.map(([v,l])=>`<button class="sdot${v===n?" on":""}" style="min-height:36px;font-size:12.5px;font-weight:600" onclick="setReportDays(${v})">${l}</button>`).join("");
       const warn=sz>REPORT_SAFE?`<div style="font-size:11px;color:#FB923C;margin-top:4px;line-height:1.45">⚠️ ${fmtK(sz)} символов — для одного сообщения многовато. Возьми окно короче.</div>`:"";
@@ -2944,9 +2976,7 @@ function settingsTab1HTML(day){
     <div class="side-title" style="display:block;margin:16px 0 8px">Приложение</div>
     <button class="backup-btn" style="width:100%;border-color:#6366F1;color:#818CF8" onclick="forceReload()">🔄 Обновить приложение (сбросить кэш)</button>
     <div style="font-size:11px;color:#6B6B75;margin-top:6px;line-height:1.5">Текущая версия: <b style="color:#A1A1AA">v${VERSION}</b>. Нажми, если сайт показывает старое — принудительно загрузит свежую версию мимо кэша.</div>
-    <div class="side-title" style="display:block;margin:16px 0 8px">Вид приложения</div>
-    ${viewSwitchHTML()}
-    <div style="font-size:11px;color:#6B6B75;margin-top:6px">Обычно определяется само. Переключи вручную, если хочешь проверить, как выглядит на телефоне с компа.</div>
+    ${((meta.view==="mobile"||meta.view==="desktop")?`<div style="font-size:11px;color:#FB923C;margin-top:12px;line-height:1.5">Вид зафиксирован вручную: <b>${meta.view==="mobile"?"телефон":"компьютер"}</b>. <button class="backup-btn" style="display:inline-block;width:auto;padding:3px 8px;font-size:11px;margin-left:4px" onclick="setView('auto')">вернуть автоопределение</button></div>`:`<div style="font-size:11px;color:#6B6B75;margin-top:12px;line-height:1.5">Вид определяется сам по ширине экрана. <button class="backup-btn" style="display:inline-block;width:auto;padding:3px 8px;font-size:11px" onclick="setView('mobile')">телефон</button> <button class="backup-btn" style="display:inline-block;width:auto;padding:3px 8px;font-size:11px" onclick="setView('desktop')">компьютер</button></div>`)}
     <div style="margin-top:14px">${spendHTML(day)}</div>
     <div style="margin-top:14px">${lifeHTML()}</div>`;
 }
@@ -3068,6 +3098,47 @@ function openCloudSettings(){settingsOpen=true;settingsTab=1;render();setTimeout
 // (особенно iPhone/Safari) со временем сам вычищает локальные данные сайта → всё пропадает без
 // следа. Маленький серый кружок это не доносил. Баннер висит, пока не войдёшь, и сам исчезает
 // после входа. Это прямая защита от «заполнял пару дней, не заметил серый значок, всё потерял».
+function backupDueHTML(){
+  try{
+    if(!monthlyBackupDue())return "";
+    const n=Object.keys(days).filter(isDayKey).length;
+    if(!n)return "";
+    const last=Number(meta.lastBackup)||0;
+    const when=last?("последняя копия "+Math.floor((Date.now()-last)/86400000)+" дн. назад"):"файла копии ещё не было ни разу";
+    return `<div class="banner banner-warn" style="border-color:#FBBF24;background:rgba(251,191,36,.10)">
+      <b style="color:#FBBF24;font-size:14px">💾 Пора скачать копию за месяц</b>
+      <div style="font-size:12.5px;margin-top:5px;color:#F5F5F7;line-height:1.55">В дневнике <b>${n}</b> дн., ${when}. Облако держит копию само, но файл на диске — единственное, что переживёт что угодно. Одно касание.</div>
+      <button class="backup-btn" style="width:100%;margin-top:8px;border-color:#FBBF24;color:#FBBF24" onclick="saveBackup()">💾 Скачать копию сейчас</button>
+    </div>`;
+  }catch(e){return "";}
+}
+// Панель состояния всех трёх контуров: человек должен ВИДЕТЬ, что где лежит, а не верить на слово.
+function safetyPanelHTML(){
+  const n=Object.keys(days).filter(isDayKey).length;
+  const row=(icon,name,ok,txt)=>`<div style="display:flex;gap:8px;align-items:flex-start;margin-bottom:7px">
+    <span style="flex:0 0 16px">${ok?"🟢":"🟡"}</span>
+    <span style="flex:1;font-size:12px;line-height:1.45;color:var(--text-2)"><b style="color:#D4D4D8">${icon} ${name}</b><br>${txt}</span></div>`;
+  const signed=cloud&&cloud.isSignedIn&&cloud.isSignedIn();
+  const st=cloud&&cloud.state?cloud.state():"off";
+  const ca=Number(meta.lastCloudArchive)||0;
+  const lb=Number(meta.lastBackup)||0;
+  const ago=t=>t?(Math.floor((Date.now()-t)/86400000)+" дн. назад"):"никогда";
+  return `<div class="meas-card" style="margin-top:8px">
+    <div class="side-title" style="display:block;margin:0 0 8px;font-size:13px">🛟 Где лежат твои ${n} дн.</div>
+    ${row("1.","Живая синхронизация",!!signed,signed?("включена ("+st+") — каждая отметка уходит в облако сразу"):"выключена — записи только на этом устройстве")}
+    ${row("2.","Облачный архив",ca>0,ca?("последняя "+ago(ca)+", хранится "+ARCH_KEEP+" копии. Стирание дней сюда не дотягивается"):"ещё не создавался — появится автоматически при связи с облаком")}
+    ${row("3.","Файл на диске",lb>0&&!monthlyBackupDue(),lb?("последний "+ago(lb)):"ни разу не скачивался")}
+    <button class="backup-btn" style="width:100%;margin-top:4px" onclick="forceCloudArchive()">☁️ Сделать облачную копию сейчас</button>
+  </div>`;
+}
+async function forceCloudArchive(){
+  if(!cloud||!cloud.pushArchive){toast("Облако недоступно");return;}
+  toast("Делаю копию…");
+  const r=await cloud.pushArchive(true);
+  if(r&&r.ok){vibNice();toast("☁️ Копия в облаке: "+r.n+" дн.");}
+  else toast("Не вышло: "+((r&&r.why)||"нет связи"));
+  render();
+}
 function cloudGuardHTML(){
   try{
     if(!cloud||typeof cloud.isSignedIn!=="function")return "";
@@ -3783,6 +3854,37 @@ cloud=(function(){
   function dayRef(k){const {doc}=S.api;return doc(S.db,userPath("days")+"/"+k);}
   function metaRef(){const {doc}=S.api;return doc(S.db,userPath("meta")+"/settings");}
 
+  // ── КОНТУР 2: облачный автоархив. Живёт в отдельной коллекции, поэтому стирание дней
+  //    (в том числе полугодовое) до него НЕ дотягивается.
+  async function pushArchiveNow(force){
+      try{
+        if(!S.ready||!S.user||!online())return {ok:false,why:"нет связи"};
+        if(!force&&(Date.now()-(Number(meta.lastCloudArchive)||0))<ARCH_EVERY)return {ok:false,why:"рано"};
+        const {doc,setDoc,getDocs,deleteDoc,collection}=S.api;
+        const n=Object.keys(days).filter(isDayKey).length;
+        if(!n)return {ok:false,why:"нечего архивировать"};
+        const parts=archSplit(JSON.stringify(days));
+        const id="a"+todayKey().replace(/-/g,"")+"_"+Date.now().toString(36);
+        for(let i=0;i<parts.length;i++){
+          await setDoc(doc(S.db,userPath("archparts")+"/"+id+"_"+i),{i,data:parts[i]});
+        }
+        await setDoc(doc(S.db,userPath("archives")+"/"+id),
+          {at:Date.now(),date:todayKey(),n,parts:parts.length,v:VERSION});
+        meta.lastCloudArchive=Date.now();meta.lastCloudArchiveN=n;saveMeta();
+        // подчищаем старые архивы, оставляя последние ARCH_KEEP
+        try{
+          const snap=await getDocs(collection(S.db,userPath("archives")));
+          const list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
+          list.sort((a,b)=>(b.at||0)-(a.at||0));
+          for(const old of list.slice(ARCH_KEEP)){
+            for(let i=0;i<(old.parts||1);i++){try{await deleteDoc(doc(S.db,userPath("archparts")+"/"+old.id+"_"+i));}catch(e){}}
+            try{await deleteDoc(doc(S.db,userPath("archives")+"/"+old.id));}catch(e){}
+          }
+        }catch(e){logError("arch-prune",e);}
+        return {ok:true,n,parts:parts.length};
+      }catch(e){logError("arch-push",e);return {ok:false,why:(e&&e.message)||String(e)};}
+  }
+
   async function initialSync(){
     if(!S.ready||!S.user)return;
     const {getDocs,getDoc,writeBatch}=S.api;
@@ -3820,6 +3922,8 @@ cloud=(function(){
     }catch(e){logError("cloud-meta",e);}
     S.seeded=true;
     attachListeners();
+    // Раз в 10 дней — полная копия в отдельную коллекцию. Тихо, без участия человека.
+    try{const r=await pushArchiveNow(false);if(r&&r.ok)logError("arch-ok","облачная копия: "+r.n+" дн.");}catch(e){}
     if(localChanged&&!_typing()){try{render();}catch(e){}}
     setState(online()?"synced":"offline");S.lastSync=Date.now();paintDot();
   }
@@ -3896,6 +4000,36 @@ cloud=(function(){
         if(n>0)await batch.commit();
         S.dirtyDays.clear();
       }catch(e){logError("cloud-wipe",e);throw e;}
+    },
+    async pushArchive(force){return pushArchiveNow(force);},
+    async listArchives(){
+      try{
+        if(!S.ready||!S.user)return [];
+        const {getDocs,collection}=S.api;
+        const snap=await getDocs(collection(S.db,userPath("archives")));
+        const list=[];snap.forEach(d=>list.push({id:d.id,...d.data()}));
+        return list.sort((a,b)=>(b.at||0)-(a.at||0));
+      }catch(e){logError("arch-list",e);return [];}
+    },
+    // Восстановление ТОЛЬКО слиянием: облачный архив может вернуть недостающее, но никогда
+    // не стирает нынешнее.
+    async restoreArchive(id){
+      try{
+        if(!S.ready||!S.user)return {ok:false,why:"нет связи"};
+        const {getDoc,doc}=S.api;
+        const man=await getDoc(doc(S.db,userPath("archives")+"/"+id));
+        if(!man.exists())return {ok:false,why:"копия не найдена"};
+        const m=man.data(),parts=[];
+        for(let i=0;i<(m.parts||1);i++){
+          const d=await getDoc(doc(S.db,userPath("archparts")+"/"+id+"_"+i));
+          if(!d.exists())return {ok:false,why:"часть "+(i+1)+" не найдена"};
+          parts.push(d.data());
+        }
+        const D=JSON.parse(archJoin(parts));
+        const r=mergeArchiveDays(D);
+        save();
+        return {ok:true,...r};
+      }catch(e){logError("arch-restore",e);return {ok:false,why:(e&&e.message)||String(e)};}
     },
     isConfigured(){return !!effectiveFirebaseConfig();},
     usingDefault(){return !meta.firebaseConfig;},
