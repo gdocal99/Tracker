@@ -629,7 +629,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.11.0";
+const VERSION="1.12.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1032,7 +1032,25 @@ function lastSlip(days,upto){
 // Серия 5/5 намазов. Пустые (пропущенные) дни — нейтральны: не считаются и НЕ рвут серию,
 // чтобы забытый/незаполненный день не обнулял реальную серию. Рвёт только непустой день без 5/5.
 function calcStreak(days,upto){let k=upto,n=0,guard=0;while(guard++<800){if(dayComplete(days[k]))n++;else if(!isSkippedDay(k))break;k=addDays(k,-1);}return n;}
-function buildExport(days){
+/* ═══ ОТЧЁТ ЗА ПЕРИОД ═══
+   Измерено на живых данных: насыщенный день весит ≈2.9 тыс. символов отчёта, обычный ≈1 тыс.
+   Значит месяц плотного ведения — ≈86 тыс., а полгода — ≈514 тыс. Столько в одно сообщение не
+   влезает, и «Копировать отчёт» рано или поздно упёрся бы в предел. Поэтому копируем окно
+   от сегодня назад, а размер показываем ДО нажатия. */
+const REPORT_PERIODS=[[5,"5 дн."],[10,"10 дн."],[14,"2 нед."],[30,"месяц"],[0,"всё"]];
+const REPORT_SAFE=120000;   // выше этого одно сообщение уже неудобно читать
+function reportDaysN(){const n=Number(meta.reportDays);return REPORT_PERIODS.some(([v])=>v===n)?n:14;}
+function setReportDays(n){meta.reportDays=Number(n)||0;saveMeta();render();}
+function reportSlice(n){
+  if(!n)return days;
+  const from=addDays(todayKey(),-(n-1));
+  const out={};
+  for(const k in days)if(isDayKey(k)&&k>=from&&k<=todayKey())out[k]=days[k];
+  return out;
+}
+function reportSize(n){try{return buildExport(reportSlice(n)).length;}catch(e){return 0;}}
+function fmtK(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1)+" тыс.":String(n);}
+function buildExport(days,_rw){
   const keys=Object.keys(days).sort();
   if(!keys.length)return "Журнал пуст.";
   const OL={own:"своё место",all:"весь стол",self:"сам",asked:"попросили",good:"качественно",meh:"так себе",little:"мало",mid:"средне",much:"много",reward:"в награду",slipc:"срыв",shower:"душ",bath:"ванна",short:"менее часа",long:"час и больше",athome:"дома",atwork:"на работе"};
@@ -1143,7 +1161,7 @@ function buildExport(days){
   const _fbLine=_fb?"‼️ ОБРАТНАЯ СВЯЗЬ ОТ ПОЛЬЗОВАТЕЛЯ — пожелания/проблемы (учти в первую очередь):\n"+_fb+"\n\n":"";
   const _cd=keys.filter(k=>String((days[k]||{}).complaints||"").trim());
   const _cLine=_cd.length?"🐞 ЖАЛОБЫ НА ПРИЛОЖЕНИЕ ПО ДНЯМ (собрать в обновление):\n"+_cd.map(k=>"  • "+k+": "+String(days[k].complaints).replace(/</g,"&lt;")).join("\n")+"\n\n":"";
-  return _fbLine+_cLine+"═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(nowMs())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)\n\n"+blocks.join("\n\n");
+  return _fbLine+_cLine+"═══ ЖУРНАЛ BLOCK3 ═══\nСформирован: "+fmtTs(nowMs())+" · v"+VERSION+"\nБаланс: "+calcBalance(days)+" · потрачено: "+totalSpent(days)+"\nСерия намазов 5/5: "+calcStreak(days,todayKey())+" дн. · Без срывов: "+cleanStreak(days,todayKey())+" дн."+" · Серия: "+calcStreak(days,todayKey())+" дн · Реальные деньги: ₴"+inc+ltLine+blLine+blLogLine+"\nПериод: "+keys[0]+" … "+keys[keys.length-1]+" ("+keys.length+" дн.)"+(_rw?" — ОТЧЁТ ЗА ОКНО "+_rw+", более ранние дни в приложении есть, но в это сообщение не вошли":"")+"\n\n"+blocks.join("\n\n");
 }
 
 let lastWritten="";
@@ -1208,8 +1226,22 @@ function restoreSnapshot(k){
     const o=JSON.parse(localStorage.getItem(k));
     if(!o||!o.days)throw new Error("снимок пуст");
     const v=validateDays(o.days);
-    days=v.clean;loadState={ok:true,corrupt:false,raw:"",restoredFrom:k,repaired:v.issues.length,issues:v.issues,ackCorrupt:true};
-    save();vib(15);toast("Восстановлено из снимка");render();
+    // РАНЬШЕ здесь было days=v.clean — снимок ЗАМЕЩАЛ всё, и любая запись, сделанная после снимка,
+    // исчезала. Два касания — и работа за сегодня пропала. Кнопка «восстановить» не имеет права
+    // ничего терять: восстановление — это спасение данных, а не откат системы.
+    // Теперь снимок ДОБАВЛЯЕТСЯ: недостающие дни и поля возвращаются, всё нынешнее остаётся
+    // (в слиянии побеждает более поздняя метка, а она у текущих записей).
+    const now=Object.keys(days).filter(isDayKey).length;
+    const inSnap=Object.keys(v.clean).filter(isDayKey).length;
+    if(!confirm("Восстановить из снимка?\n\nСейчас в дневнике: "+now+" дн.\nВ снимке: "+inSnap+" дн.\n\nСнимок будет ДОБАВЛЕН к нынешним данным: вернётся то, чего не хватает.\nНичего из сегодняшнего не пропадёт.")){render();return;}
+    let added=0,combined=0;
+    for(const dk in v.clean){
+      if(!isDayKey(dk))continue;
+      if(!days[dk]||dayIsEmpty(days[dk])){days[dk]=repairDay(v.clean[dk],true);added++;}
+      else{days[dk]=mergeDayDeep(days[dk],repairDay(v.clean[dk],true));combined++;}
+    }
+    loadState={...loadState,ok:true,corrupt:false,raw:"",restoredFrom:k,ackCorrupt:true};
+    save();vib(15);toast("Из снимка добавлено: "+added+" дн., дополнено: "+combined);render();
   }catch(e){logError("restore",e);toast("Снимок повреждён");render();}
 }
 // Замеры (вес/пульс/давление/…) НЕ суммируются, в отличие от воды: на один тип+время должна быть
@@ -2895,6 +2927,12 @@ function settingsTab1HTML(day){
     <div style="font-size:11.5px;color:#8B8B95;line-height:1.5;margin-bottom:8px">Ставится раз в несколько недель, поэтому живёт здесь, а не на главном экране. За 3 дня до конца придёт напоминание.</div>
     ${guardWidgetHTML()}
     <div class="side-title" style="display:block;margin:16px 0 8px">Отчёт и резервная копия</div>
+    ${(()=>{const n=reportDaysN(),sz=reportSize(n);
+      const chips=REPORT_PERIODS.map(([v,l])=>`<button class="sdot${v===n?" on":""}" style="min-height:36px;font-size:12.5px;font-weight:600" onclick="setReportDays(${v})">${l}</button>`).join("");
+      const warn=sz>REPORT_SAFE?`<div style="font-size:11px;color:#FB923C;margin-top:4px;line-height:1.45">⚠️ ${fmtK(sz)} символов — для одного сообщения многовато. Возьми окно короче.</div>`:"";
+      return `<div style="font-size:11.5px;color:#8B8B95;margin-bottom:6px;line-height:1.5">За какой период копировать (считая сегодня):</div>
+      <div class="sdots" style="margin-bottom:6px">${chips}</div>
+      <div style="font-size:11px;color:#6B6B75;margin-bottom:6px">Выйдет примерно <b style="color:#A1A1AA">${fmtK(sz)}</b> символов${n?"":" — весь журнал целиком"}.</div>${warn}`;})()}
     <button class="export-btn" onclick="copyReport()">📋 Копировать отчёт для Claude</button>
     <button class="export-btn" style="margin-top:8px;background:#16161C;border-color:#1B1B26;color:#A1A1AA" onclick="saveBackup()">💾 Скачать резервную копию (JSON)</button>
     ${archiveOpen?archiveHTML():`<button class="backup-btn" style="width:100%;margin-top:8px" onclick="openArchive()">🗄 Полугодовой архив (выгрузить и начать заново)</button>`}
@@ -3033,6 +3071,7 @@ function openCloudSettings(){settingsOpen=true;settingsTab=1;render();setTimeout
 function cloudGuardHTML(){
   try{
     if(!cloud||typeof cloud.isSignedIn!=="function")return "";
+    if(typeof cloud.authResolved==="function"&&!cloud.authResolved())return ""; // вход ещё проверяется — молчим
     if(cloud.isSignedIn())return "";               // вошёл → бэкап в облаке есть, тревоги нет
     let has=false;for(const k in days){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&!dayIsEmpty(days[k])){has=true;break;}}
     if(!has)return "";                              // терять нечего — не пугаем
@@ -3185,11 +3224,12 @@ function commitFocused(){
   try{clearTimeout(_taSaveT);save();}catch(e){} // синхронный сброс всей памяти на диск
 }
 function toggleDetails(){detailsOpen=!detailsOpen;render();}
-function openExport(){exportText=buildExport(days);modalOpen=true;render();}
+function openExport(){const n=reportDaysN();exportText=buildExport(reportSlice(n),n?n+" дн.":"");modalOpen=true;render();}
 // «Копировать отчёт для Claude» — сразу в буфер. Если буфер недоступен — открываем модалку с текстом.
 function copyReport(){
-  let text="";try{text=buildExport(days);}catch(e){logError("report",e);toast("Отчёт не собрался");return;}
-  copyToClipboard(text,()=>{vib(12);toast("📋 Отчёт скопирован");},()=>{exportText=text;modalOpen=true;render();});
+  const n=reportDaysN();
+  let text="";try{text=buildExport(reportSlice(n),n?n+" дн.":"");}catch(e){logError("report",e);toast("Отчёт не собрался");return;}
+  copyToClipboard(text,()=>{vib(12);toast("📋 Скопировано: "+(reportDaysN()?reportDaysN()+" дн.":"весь журнал")+" · "+fmtK(text.length)+" симв.");},()=>{exportText=text;modalOpen=true;render();});
 }
 function closeModal(){modalOpen=false;render();}
 function copyToClipboard(text,onOk,onFail){
@@ -3617,6 +3657,7 @@ cloud=(function(){
   const S={ // внутреннее состояние модуля
     fb:null,app:null,auth:null,db:null,api:null,
     user:null,ready:false,initing:false,
+    authResolved:false,   // firebase ответил, вошли мы или нет (до этого судить нельзя)
     state:"off",           // off | config | connecting | synced | syncing | offline | error
     lastSync:0,lastErr:"",
     dirtyDays:new Set(),metaDirty:false,
@@ -3704,7 +3745,7 @@ cloud=(function(){
   async function ensureInit(){
     if(S.ready)return true;
     if(S.initing)return false;
-    if(!effectiveFirebaseConfig()){setState("off");return false;}
+    if(!effectiveFirebaseConfig()){S.authResolved=true;setState("off");return false;}
     S.initing=true;setState("connecting");
     try{
       const [appM,authM,fsM]=await Promise.all([
@@ -3725,12 +3766,12 @@ cloud=(function(){
       authM.onAuthStateChanged(S.auth,u=>{onAuth(u);});
       return true;
     }catch(e){
-      logError("cloud-init",e);setState("error",(e&&e.message)||e);S.initing=false;return false;
+      logError("cloud-init",e);S.authResolved=true;setState("error",(e&&e.message)||e);S.initing=false;return false;
     }finally{S.initing=false;}
   }
 
   function onAuth(u){
-    S.user=u||null;
+    S.user=u||null;S.authResolved=true;
     detachListeners();
     if(!u){setState("config");return;}
     setState("syncing");
@@ -3859,6 +3900,12 @@ cloud=(function(){
     isConfigured(){return !!effectiveFirebaseConfig();},
     usingDefault(){return !meta.firebaseConfig;},
     isSignedIn(){return !!S.user;},
+    // Пока firebase грузится по сети и восстанавливает сессию, S.user пуст — но это НЕ значит
+    // «не вошёл». Раньше на этом секундном окне рисовалась красная тревога «данные только на
+    // этом устройстве», и пользователь видел её при КАЖДОМ запуске, хотя вход был выполнен.
+    // Для человека, который боится потерять записи, это худший из возможных сигналов — и он
+    // был ложным. Теперь тревога ждёт настоящего ответа.
+    authResolved(){return !!S.authResolved;},
     email(){return S.user&&S.user.email||"";},
     state(){return S.state;},
     statusText,paintDot,
