@@ -1,6 +1,6 @@
 {
-  "name": "BLOCK 3 — трекер",
-  "short_name": "BLOCK 3",
+  "name": "Трекер",
+  "short_name": "Трекер",
   "description": "Личный трекер привычек и дневник дня",
   "start_url": "./index.html",
   "scope": "./",
