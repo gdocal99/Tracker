@@ -717,7 +717,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.23.0";
+const VERSION="1.24.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1677,11 +1677,30 @@ function weatherSummaryTxt(w){
   return parts.join(" · ");
 }
 // Хиджра (исламская лунная дата) — через встроенный исламский календарь браузера (Умм аль-Кура).
-function hijriStr(k){
-  try{const [y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d,12,0,0);
-    return new Intl.DateTimeFormat("ru-u-ca-islamic-umalqura",{day:"numeric",month:"long",year:"numeric"}).format(dt).replace(/\s*г\..*/,"").trim();
-  }catch(e){return "";}
+/* ═══ ДАТА ПО ХИДЖРЕ ═══
+   Раньше название месяца брали у системы: Intl с календарём islamic-umalqura и month:"long".
+   На телефоне пользователя это дало «29 февраля»: в его сборке нет русских названий месяцев
+   хиджры, и система подставила ГРИГОРИАНСКИЕ по номеру месяца (сафар — второй, февраль — второй).
+   Числа Intl отдаёт верно на любом устройстве, а вот названия — как повезёт.
+   Поэтому берём у системы только ЧИСЛА, а название подставляем своё. */
+const HIJRI_MONTHS=["мухаррам","сафар","раби I","раби II","джумада I","джумада II",
+                    "раджаб","шаабан","рамадан","шавваль","зуль-каада","зуль-хиджа"];
+function hijriParts(k){
+  try{
+    const [y,m,d]=k.split("-").map(Number);const dt=new Date(y,m-1,d,12,0,0);
+    const parts=new Intl.DateTimeFormat("en-u-ca-islamic-umalqura",
+      {day:"numeric",month:"numeric",year:"numeric"}).formatToParts(dt);
+    const get=t=>Number((parts.find(x=>x.type===t)||{}).value);
+    const hy=get("year"),hm=get("month"),hd=get("day");
+    if(!hy||!hm||!hd)return null;
+    // Календарь мог не примениться (старый движок) — тогда вернулся бы обычный год вроде 2026.
+    // Лучше не показать ничего, чем показать неверную дату.
+    if(hy>1900||hm<1||hm>12)return null;
+    return {d:hd,m:hm,y:hy};
+  }catch(e){return null;}
 }
+function hijriStr(k){const p=hijriParts(k);return p?(p.d+" "+HIJRI_MONTHS[p.m-1]+" "+p.y):"";}
+function hijriShort(k){const p=hijriParts(k);return p?(p.d+" "+HIJRI_MONTHS[p.m-1]):"";}
 // Фаза Луны — по синодическому месяцу от известного новолуния (без интернета).
 const MOON_PH=[["🌑","новолуние"],["🌒","растущий серп"],["🌓","первая четверть"],["🌔","растущая луна"],["🌕","полнолуние"],["🌖","убывающая луна"],["🌗","последняя четверть"],["🌘","убывающий серп"]];
 function moonPhase(k){
@@ -1692,8 +1711,7 @@ function moonPhase(k){
   return {emoji:MOON_PH[idx][0],name:MOON_PH[idx][1],age:Math.round(age)};
 }
 // Короткая версия для шапки: год хиджры и словесная фаза не влезают в одну строку на телефоне.
-function lunarShort(k){const h=hijriStr(k),mp=moonPhase(k);
-  const hs=h?String(h).replace(/\s*\d{4}\s*$/,""):"";
+function lunarShort(k){const hs=hijriShort(k),mp=moonPhase(k);
   return (hs?("☪ "+hs):"")+(hs&&mp?" ":"")+(mp?mp.emoji:"");}
 function lunarLine(k){const h=hijriStr(k),mp=moonPhase(k);return (h?("☪ "+h):"")+(h&&mp?" · ":"")+(mp?(mp.emoji+" "+mp.name):"");}
 function weatherRefresh(k){delete weatherFailed[k];delete weatherPending[k];delete weatherTried[k];if(days[k]&&days[k].weather){const d={...days[k]};delete d.weather;days[k]=d;save();}ensureWeather(k);render();}
