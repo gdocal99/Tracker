@@ -676,7 +676,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.20.0";
+const VERSION="1.21.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -3247,7 +3247,17 @@ function cloudGuardHTML(){
     if(typeof cloud.authResolved==="function"&&!cloud.authResolved())return ""; // вход ещё проверяется — молчим
     if(cloud.isSignedIn())return "";               // вошёл → бэкап в облаке есть, тревоги нет
     let has=false;for(const k in days){if(/^\d{4}-\d{2}-\d{2}$/.test(k)&&!dayIsEmpty(days[k])){has=true;break;}}
-    if(!has)return "";                              // терять нечего — не пугаем
+    if(!has){
+      // ПУСТОЙ ЖУРНАЛ В НОВОМ БРАУЗЕРЕ. Данные хранятся отдельно для каждого браузера, поэтому
+      // при переезде (другой браузер, новый телефон, значок на экране) человек видит чистый
+      // трекер — и решает, что всё пропало. Раньше здесь молчали «терять нечего», но молчание
+      // и есть источник паники: подсказать, что записи в облаке и вернутся после входа.
+      return `<div class="banner" style="background:rgba(99,102,241,.10);border-color:#3A3A55">
+        <b style="color:#818CF8;font-size:14px">☁️ Журнал пуст</b>
+        <div style="font-size:12.5px;margin-top:5px;color:#F5F5F7;line-height:1.55">Если ты уже вёл трекер — <b>на другом устройстве, в другом браузере или до переустановки</b> — записи целы и лежат в облаке. Войди в тот же аккаунт, и они вернутся сюда.</div>
+        <button class="backup-btn" style="width:100%;margin-top:8px;border-color:#6366F1;color:#818CF8" onclick="openCloudSettings()">☁️ Войти и забрать свои записи</button>
+      </div>`;
+    }
     return `<div class="banner banner-warn" style="border-color:#F87171;background:rgba(224,121,91,.14)">
       <b style="color:#F87171;font-size:14.5px">☁️⚠️ Данные только на этом устройстве</b>
       <div style="font-size:12.5px;margin-top:6px;color:#F5F5F7;line-height:1.55">Ты <b>не вошёл в аккаунт</b> — записи сохраняются только в браузере этого устройства и <b>в облако не уходят</b>. Телефон может очистить их сам, и тогда всё пропадёт. Войди один раз — данные будут в облаке и появятся на всех устройствах.</div>
