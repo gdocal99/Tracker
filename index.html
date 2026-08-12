@@ -232,7 +232,8 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .done-row:active{background:rgba(255,255,255,.05)}
 .done-undo{margin-left:auto;color:#6B6B75;font-size:13px;flex:0 0 auto}
 .done-hint{font-size:11px;color:#6B6B75;padding:2px 4px 6px}
-.dash-mark-box{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
+.dash-mark-box{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+.mark-row-sm .mark-btn{min-height:34px;font-size:12px;padding:0 8px}
 .dash-mark{font-size:11.5px;font-weight:700;line-height:1.25;text-align:right;margin-top:3px;max-width:96px;margin-left:auto}
 .dash-mark.muted{color:#6B6B75;font-weight:600}
 .slider-val.muted{color:#6B6B75;font-weight:600;font-size:12px}
@@ -434,7 +435,19 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 /* ── Компактная строка быстрых отметок (в шапке).
    Заменила нижнюю полосу с крупными эмодзи-плитками: та занимала 68px, кричала иконками и
    уменьшала количество информации на экране. Здесь то же самое одной строкой и текстом. */
-.qrow{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:8px}
+.qrow{display:flex;gap:4px;margin-top:7px;align-items:stretch}
+.qc{flex:1 1 0;min-width:0;display:flex;align-items:center;justify-content:center;gap:4px;min-height:34px;padding:0 5px;
+  border:1px solid var(--line);border-radius:10px;background:var(--surface-2)}
+.qc-ic{font-size:12.5px;line-height:1;flex:0 0 auto;color:var(--text-3)}
+.qc-ar{font-weight:700}
+.qc-v{font-family:ui-monospace,Menlo,monospace;font-weight:800;font-size:12.5px;color:var(--text);min-width:20px;text-align:center}
+.qc-u{font-size:10px;color:var(--text-4);font-weight:600}
+.qc-b{width:23px;height:23px;flex:0 0 23px;border-radius:7px;border:1px solid var(--line);
+  background:rgba(255,255,255,.03);color:var(--text-2);font-size:14px;line-height:1;padding:0}
+.qc-b:disabled{opacity:.3}
+.qc-tog{flex:0 0 auto;padding:0 9px}
+.qc-tog.on{border-color:var(--accent);background:var(--accent-soft)}
+.qc-tog.on .qc-v,.qc-tog.on .qc-ic{color:var(--accent)}
 /* «Коробка выполненного» — спокойная, не соревнуется за внимание с несделанным. */
 .done-box{width:100%;display:flex;align-items:center;gap:8px;margin-top:12px;padding:9px 12px;
   border-radius:11px;border:1px solid var(--line);background:var(--surface-1);color:var(--text-3)}
@@ -487,10 +500,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .life-fill{height:100%;border-radius:3px;background:linear-gradient(90deg,#818CF8,#FBBF24);transition:width .6s ease;position:relative;overflow:hidden}
 @keyframes goldBreathe{0%,100%{opacity:.35}50%{opacity:.9}}
 .life-fill::after{content:"";position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,223,140,.6),transparent);animation:goldBreathe 3.6s ease-in-out infinite}
-.life-cap{font-size:10.5px;color:#6B6B75;margin-top:6px;text-align:center}
+.life-cap{font-size:11px;color:var(--text-4);margin-top:6px;text-align:center;line-height:1.5}
+.life-pct{font-family:ui-monospace,Menlo,monospace;font-size:14px;color:#FBBF24;letter-spacing:.3px}
 .life-targets{display:flex;gap:6px;margin-top:11px}
 .dash{background:linear-gradient(180deg,#14141D,#0D0D14);border:1px solid #1B1B26;border-radius:var(--r-4);
-  padding:11px 13px 10px;margin:2px 0 10px;box-shadow:inset 0 1px 0 rgba(255,255,255,.055)}
+  padding:10px 12px 9px;margin:2px 0 8px;box-shadow:inset 0 1px 0 rgba(255,255,255,.055)}
 .dash-datebar{display:flex;align-items:center;justify-content:center;gap:16px}
 .dash-dline{display:flex;align-items:baseline;justify-content:center;gap:9px;min-width:0}
 .dash-dow{font-size:var(--fs-3);letter-spacing:1.5px;color:#A1A1AA;text-transform:uppercase}
@@ -506,7 +520,22 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .wx-t{flex:0 0 44px;color:#F5F5F7;font-weight:800;font-size:14px}
 .wx-c{flex:1;color:#A1A1AA;font-size:12.5px}
 .wx-det{padding-left:56px;margin-top:2px;font-size:11.5px;color:#8B8B95;line-height:1.5}
-.dash-hero{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:10px}
+/* Шапка: кольцо по центру — единственный крупный элемент, всё остальное мелкой строкой под ним.
+   Раньше три колонки (баланс | кольцо | серии) спорили за внимание одинаковым весом. */
+.dash-hero{display:flex;flex-direction:column;align-items:center;gap:7px;margin-top:8px}
+.dash-under{display:flex;align-items:center;justify-content:center;gap:7px;flex-wrap:wrap;font-size:12px;line-height:1}
+.du-bal{font-family:ui-monospace,Menlo,monospace;font-weight:800;color:var(--text);font-size:13.5px}
+.du-u{font-size:10.5px;color:var(--text-4);margin-left:1px}
+.du-earn{color:var(--warn);font-weight:700;margin-left:5px;font-size:12px}
+.du-shield{color:var(--accent);font-weight:700}
+.du-dot{color:var(--line-2)}
+.dash-under .dash-mark{margin:0;max-width:none;text-align:left;font-size:12px}
+/* Дата, хиджра и луна — одной строкой, без переносов. */
+.dash-dline1{display:flex;align-items:baseline;justify-content:center;gap:6px;min-width:0;
+  font-size:12.5px;color:var(--text-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dash-dline1 b{font-size:16px;font-weight:800;color:var(--text);letter-spacing:.2px}
+.dd-sep{color:var(--line-2)}
+.dd-lunar{color:var(--text-4);overflow:hidden;text-overflow:ellipsis}
 .dash-stat-block{flex:1;display:flex;flex-direction:column;gap:3px;min-width:0}
 .dash-stat-block.right{align-items:flex-end;text-align:right}
 .dash-stat-n{font-size:var(--fs-5);font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
@@ -518,12 +547,24 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .db-ring-pct{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:var(--fs-6);font-weight:800;color:#F5F5F7;font-family:ui-monospace,Menlo,monospace;line-height:1}
 .db-ring-pct-u{font-size:var(--fs-3);color:#6B6B75;font-weight:700;margin-left:1px}
 .db-ring-cap{font-size:var(--fs-1);letter-spacing:1.5px;text-transform:uppercase;color:#6B6B75;margin-top:4px;font-weight:700}
-.dash-namaz-status{width:100%;margin-top:10px;padding:8px 9px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
+.dash-namaz-status{width:100%;margin-top:8px;padding:7px 8px;border-radius:12px;background:#16161C;border:1px solid #1B1B26;text-align:left;display:flex;flex-direction:column;gap:6px}
 .np-top{display:flex;align-items:center;gap:9px;width:100%}
 .np-ic{font-size:17px;flex:0 0 auto;line-height:1}
 .np-dots{display:flex;gap:7px;width:100%}
 /* Намаз отмечается прямо отсюда: были пять точек по 9px «для красоты», стало пять кнопок по 52px.
    Раньше тап по этому блоку лишь прокручивал к свёрнутому блоку «Дин» — отметить было нельзя. */
+.np-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.np-cnt{font-family:ui-monospace,Menlo,monospace;font-weight:800;font-size:13px}
+.np-cnt-u{font-size:10.5px;color:var(--text-4)}
+.np-pills{display:flex;gap:4px}
+.np-pill{flex:1;min-height:36px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;
+  border:1px solid transparent;border-radius:9px;background:rgba(255,255,255,.028);color:var(--text-3);padding:0 1px}
+.npp-n{font-size:10.5px;font-weight:700;line-height:1.05}
+.npp-t{font-size:9.5px;font-family:ui-monospace,Menlo,monospace;color:var(--text-4);line-height:1}
+.np-pill.on{background:var(--accent-soft);color:var(--accent);border-color:rgba(129,140,248,.35)}
+.np-pill.on .npp-t{color:var(--accent)}
+.np-pill.next{border-color:rgba(251,146,60,.55);color:var(--next)}
+.np-pill.next .npp-t{color:var(--next)}
 .np-hit{flex:1;min-height:42px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
   border:1px solid var(--line);border-radius:var(--r-2);background:var(--surface-1);color:var(--text-2);padding:0 2px}
 .np-hit .np-dot{width:12px;height:12px}
@@ -676,7 +717,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.22.0";
+const VERSION="1.23.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1401,7 +1442,10 @@ let sel=todayKey(),detailsOpen=true,modalOpen=false,exportText="",addingTask="",
 const UI_KEY="journal_block3_ui";
 // Объявлено ДО чтения сохранённого состояния: иначе `let` ниже перезатирал бы восстановленное значение.
 let doneOpen=false;  // раскрыта ли «коробка выполненного» (состояние экрана, не данные)
-let catOpen={now:1,din:1,regime:1,health:0,delo:0,home:0,state:0,reflect:0};
+// По умолчанию раскрыт ТОЛЬКО актуальный блок «Сейчас». Раньше вместе с ним открывались Дин и
+// Ритуалы, и экран начинался с трёх развёрнутых списков — приходилось прокручивать мимо них.
+// Остальные показывают счётчик в заголовке и раскрываются одним касанием.
+let catOpen={now:1,din:0,regime:0,health:0,delo:0,home:0,state:0,reflect:0};
 let taOpen={};
 // Состояние полугодового архива. Живёт здесь (а не в meta), потому что НЕ должно синхронизироваться:
 // «файл скачан и проверен» — свойство конкретного устройства, на котором лежит файл.
@@ -1412,13 +1456,16 @@ try{
   const u=localStorage.getItem(UI_KEY);
   if(u){const p=JSON.parse(u);
     if(p&&typeof p==="object"){
-      if(p.catOpen&&typeof p.catOpen==="object")catOpen={...catOpen,...p.catOpen};
+      // Раскладка блоков менялась (v1.23): у кого сохранено старое состояние — один раз
+      // приводим к новому виду, иначе изменение просто не увидят. Это состояние ЭКРАНА,
+      // не данные: сбрасывать его безопасно.
+      if(p.uiV===2&&p.catOpen&&typeof p.catOpen==="object")catOpen={...catOpen,...p.catOpen};
       if(p.taOpen&&typeof p.taOpen==="object")taOpen={...p.taOpen};
       if(p.doneOpen!==undefined)doneOpen=!!p.doneOpen;
       if(p.archState&&typeof p.archState==="object")archState={fp:p.archState.fp||null,verifiedAt:Number(p.archState.verifiedAt)||0};
     }}
 }catch(e){/* битое значение не должно ронять приложение — просто остаёмся на умолчаниях */}
-function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({catOpen,taOpen,doneOpen,archState}));}catch(e){}}
+function saveUI(){try{localStorage.setItem(UI_KEY,JSON.stringify({uiV:2,catOpen,taOpen,doneOpen,archState}));}catch(e){}}
 let animBlock="";
 let settingsOpen=false,settingsTab=1,justCompletedCat=null,confirmDelId="",pendingImport=null,justChecked="",diagOpen=false,logOpen=false,editTimeId="",unlockedDay="",lockTaps=0,importErr="",snapArm="",wxManual=false,supsOpen=1,supsArchOpen=0,restoreOpen=false,fbCfgOpen=false;
 let qSheetOpen=""; // "" | "more" | "stool" — лист быстрых отметок
@@ -1644,6 +1691,10 @@ function moonPhase(k){
   const idx=Math.floor(age/syn*8+0.5)%8;
   return {emoji:MOON_PH[idx][0],name:MOON_PH[idx][1],age:Math.round(age)};
 }
+// Короткая версия для шапки: год хиджры и словесная фаза не влезают в одну строку на телефоне.
+function lunarShort(k){const h=hijriStr(k),mp=moonPhase(k);
+  const hs=h?String(h).replace(/\s*\d{4}\s*$/,""):"";
+  return (hs?("☪ "+hs):"")+(hs&&mp?" ":"")+(mp?mp.emoji:"");}
 function lunarLine(k){const h=hijriStr(k),mp=moonPhase(k);return (h?("☪ "+h):"")+(h&&mp?" · ":"")+(mp?(mp.emoji+" "+mp.name):"");}
 function weatherRefresh(k){delete weatherFailed[k];delete weatherPending[k];delete weatherTried[k];if(days[k]&&days[k].weather){const d={...days[k]};delete d.weather;days[k]=d;save();}ensureWeather(k);render();}
 function weatherTxt(k){const w=getWeather(k);if(!w)return null;return w.h.map((hh,i)=>hh+" "+(w.t[i]!=null?w.t[i]+"°":"—")+" "+wmoLabel(w.c[i])).join(" · ");}
@@ -1747,22 +1798,28 @@ function markRowHTML(day){
   const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";
   const bad=!!day.badLogging;
   const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом">≈ Неточно</button>`;
-  return `<div class="mark-row" style="margin-top:8px">${b}${badBtn}${clr}</div>`;
+  return `<div class="mark-row mark-row-sm" style="margin-top:7px">${b}${badBtn}${clr}</div>`;
 }
 function lifeHTML(){
-  const target=40;
+  const target=Number(meta.lifeTarget)||40;
   const ageYears=(Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000);
   const pct=Math.max(0,Math.min(100,ageYears/target*100));
-  return `<div class="life-card"><div class="life-head"><span class="life-title">Жизнь</span><span class="life-nums">${ageYears.toFixed(1)} / ${target} лет</span></div><div class="life-track"><div class="life-fill" style="width:${pct}%"></div></div><div class="life-cap"><b style="color:#FBBF24;font-family:ui-monospace,Menlo,monospace">${pct.toFixed(1)}%</b> прожито · каждый день важен</div></div>`;
+  // ЧЕТЫРЕ ЗНАКА ПОСЛЕ ЗАПЯТОЙ — намеренно. При цели в 40 лет один день это ≈0.0068%,
+  // то есть с двумя знаками полоса выглядела бы застывшей и не напоминала ни о чём.
+  // С четырьмя видно, что число меняется КАЖДЫЙ день — в этом весь смысл этого блока.
+  const left=Math.max(0,target-ageYears);
+  const daysLeft=Math.round(left*365.2425);
+  return `<div class="life-card"><div class="life-head"><span class="life-title">Жизнь</span>
+    <span class="life-nums">${ageYears.toFixed(2)} / ${target} лет</span></div>
+    <div class="life-track"><div class="life-fill" style="width:${pct}%"></div></div>
+    <div class="life-cap"><b class="life-pct">${pct.toFixed(4)}%</b> прожито · осталось ${daysLeft.toLocaleString("ru-RU")} дн. · каждый день важен</div></div>`;
 }
-// Понедельный прогресс: явные столбики + буквы дня недели снизу — раньше был текст-спарклайн
-// из символов ▁▂▃…, непонятно что означал. Теперь видно буквально: выше столбик — больше сделано.
 function weekBarsHTML(r){
   const t=todayKey();let bars="",lbls="";
   for(let i=6;i>=0;i--){
     const k=addDays(t,-i);const d=days[k];
     const pct=d?computeRing(d,k).obPct:0;
-    const h=pct<=0?0:Math.max(3,Math.round(pct/100*22));
+    const h=pct<=0?0:Math.max(2,Math.round(pct/100*14));
     // Тот же «травяной» цвет, что и у дней в календаре: хороший день — зелёный.
     const col=pct<=0?"#26301F":dayColor(k);
     bars+=`<div class="wk-bar" title="${k}: ${pct}%"><div class="wk-fill" style="height:${h}px;background:${col}"></div></div>`;
@@ -1778,23 +1835,24 @@ function weekBarsHTML(r){
 // метриками (нет пустоты), плюс компактный статус намаза (точки, без дублей кнопок из блока «Дин»)
 // и понятный недельный прогресс. Намаз отмечается прямо из шапки — тапом по нужной кнопке.
 function namazStatusHTML(day){
+  // Лента-таблетки вместо пяти крупных плашек: раньше блок занимал высоту в две строки с
+  // большими зазорами и спорил за внимание с кольцом дня. Теперь заголовок несёт смысл
+  // («что следующее и сколько сделано»), а сами намазы — компактный ряд с временами.
   const pt=ptFor(sel),nx=nextPrayerId(pt);
   const pn=PRAYERS.filter(([id])=>day.prayers?.[id]).length;
   let sub;
-  if(pn===5)sub="Все 5 совершены ✓ ماشاء الله";
-  else if(nx){const nm=(PRAYERS.find(([id])=>id===nx)||[])[1];const tm=pt[PT_MAP[nx]]||"";sub=`Следующий: ${nm}${tm?" "+tm:""}`;}
-  else sub=`Отметь совершённые намазы`;
-  const cnt=pn===5?"#4ADE80":pn>0?"#818CF8":"#6B6B75";
-  // ВАЖНО: внешний элемент — div, а не button. Кнопка внутри кнопки невалидна, браузер её
-  // «распутывает» и вёрстка ломается. jumpToDin переехал на отдельную стрелку «→».
-  const hits=PRAYERS.map(([id,nm])=>{
+  if(pn===5)sub="Все 5 совершены ✓";
+  else if(nx){const nm=(PRAYERS.find(([id])=>id===nx)||[])[1];const tm=pt[PT_MAP[nx]]||"";sub=`Следующий: <b>${nm}${tm?" "+tm:""}</b>`;}
+  else sub="Отметь совершённые намазы";
+  const cnt=pn===5?"var(--ok)":pn>0?"var(--accent)":"var(--text-4)";
+  const pills=PRAYERS.map(([id,nm])=>{
     const on=!!day.prayers?.[id];const tm=pt[PT_MAP[id]]||"";
-    return `<button class="np-hit${on?" on":""}${(!on&&id===nx)?" next":""}" onclick="event.stopPropagation();togglePrayer('${id}')" title="${nm}${tm?" · "+tm:""}">
-      <span class="np-dot${on?" on":""}"></span><span class="np-nm">${nm}</span><span class="np-tm">${tm}</span></button>`;
+    const cls="np-pill"+(on?" on":"")+((!on&&id===nx)?" next":"");
+    return `<button class="${cls}" onclick="event.stopPropagation();togglePrayer('${id}')" title="${nm}${tm?" · "+tm:""}"><span class="npp-n">${nm}</span><span class="npp-t">${tm||"—"}</span></button>`;
   }).join("");
   return `<div class="dash-namaz-status">
-    <div class="np-top"><span class="np-ic">🕌</span><span class="np-sub" style="flex:1">${sub}</span><span class="np-count" style="color:${cnt}">${pn}<span class="np-count-u">/5</span></span><button class="np-jump" onclick="jumpToDin()" title="Открыть блок Дин">→</button></div>
-    <div class="np-dots">${hits}</div>
+    <div class="np-head"><span class="np-sub">${sub}</span><span class="np-cnt" style="color:${cnt}">${pn}<span class="np-cnt-u">/5</span></span></div>
+    <div class="np-pills">${pills}</div>
   </div>`;
 }
 function jumpToDin(){catOpen.din=true;animBlock="din";saveUI();render();setTimeout(()=>{const el=document.getElementById("blk-din");if(el)el.scrollIntoView({behavior:"smooth",block:"start"});},30);}
@@ -2027,25 +2085,13 @@ function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
   return `<div class="dash">
     <div class="dash-datebar">
       <button class="nav-btn" onclick="navDay(-1)">‹</button>
-      <div style="text-align:center;min-width:0">
-        <div class="dash-dline"><span class="dash-dow">${sl.dow}</span><span class="dash-date-txt">${sl.txt}</span></div>
-        <div class="dash-lunar">${lunarLine(sel)}</div>
-      </div>
+      <div class="dash-dline1">${sl.dow}<span class="dd-sep">·</span><b>${sl.txt}</b><span class="dd-sep">·</span><span class="dd-lunar">${lunarShort(sel)}</span></div>
       <button class="nav-btn" ${isToday?"disabled":""} onclick="navDay(1)">›</button>
     </div>
     ${!isToday?`<button class="today-btn" onclick="goToday()">↩ Сегодня</button>`:""}
     <div class="dash-hero">
-      <div class="dash-stat-block">
-        <div class="dash-stat-n">${bal}<span class="dash-stat-u">б</span></div>
-        <div class="dash-earn-sm">${earned!==0?fmtPts(earned):""}</div>
-      </div>
       <div class="db-ring db-ring-big ${ringGlow}">
-        <!-- Размер берём от контейнера (.db-ring-big), а не жёстким числом: при уменьшении кольца
-             прошитые 108px вылезали за рамку 76px, и круг выглядел обрезанным-«неровным». -->
         <svg viewBox="0 0 100 100" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
-          <!-- Градиент вместо ровной заливки: дуга «наливается» цветом от индиго к фиолетовому,
-               и кольцо перестаёт читаться как нарисованная палочка. Координаты в userSpaceOnUse,
-               иначе градиент считался бы от рамки обводки, а не от круга. -->
           <defs>
             <linearGradient id="ringOb" gradientUnits="userSpaceOnUse" x1="8" y1="8" x2="92" y2="92">
               <stop offset="0" stop-color="#A5B4FC"/><stop offset=".55" stop-color="#818CF8"/><stop offset="1" stop-color="#6366F1"/>
@@ -2063,8 +2109,11 @@ function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
           ? `<span style="font-size:22px;line-height:1">📝</span><span class="db-ring-cap">рассказан</span>`
           : `<span>${r.obPct}<span class="db-ring-pct-u">%</span></span><span class="db-ring-cap">день</span>`}</div>
       </div>
-      <div class="dash-stat-block right">
-        <div class="dash-streak-line">🛡 <b class="${streakTier(clean)}" style="color:${clean>0?"#818CF8":"#6B6B75"}">${clean}</b></div>
+      <div class="dash-under">
+        <span class="du-bal">${bal}<span class="du-u">б</span>${earned!==0?`<span class="du-earn">${fmtPts(earned)}</span>`:""}</span>
+        <span class="du-dot">·</span>
+        <span class="du-shield">🛡 ${clean}</span>
+        <span class="du-dot">·</span>
         ${dashMarkHTML(day)}
       </div>
     </div>
@@ -2086,21 +2135,18 @@ function quickRowHTML(day){
   const wl=day.water||0,tgt=waterTarget(day,sel);
   const isS=!!day.items?.istinja_s;
   const poop=Number(day.poop)||0;
-  // Состав выбран по реальным данным пользователя за неделю: срыв отмечался 7 дней из 10 —
-  // чаще всего остального, но был спрятан в блоке «Состояние». Вода отмечается регулярно.
-  // Туалет он сам называл тем, что «почему-то не отмечал» — раньше это стоило 8 касаний.
-  // Кнопка «Ещё» убрана: всё её содержимое доступно в блоках ниже, а место она занимала.
-  // Подписи — по-арабски, как просил.
+  // Один компактный ряд вместо трёх массивных коробок: значок, значение, мелкие −/+.
   return `<div class="qrow">
-    <div class="qcell"><span class="qcell-t">Вода</span>
-      <div class="qstep"><button class="qmin" onclick="qWater(-250)" ${wl<=0?"disabled":""}>−</button>
-        <span class="qcell-v">${(wl/1000).toFixed(1)}<span class="qbtn-u">/${(tgt/1000).toFixed(1)}</span></span>
-        <button class="qplus" onclick="qWater(250)">+</button></div></div>
-    <div class="qcell"><span class="qcell-t qcell-ar" dir="rtl">غائط</span>
-      <div class="qstep"><button class="qmin" onclick="qStool(-1)" ${poop<=0?"disabled":""}>−</button>
-        <span class="qcell-v">${poop}</span>
-        <button class="qplus" onclick="qStool(1)">+</button></div></div>
-    <button class="qbtn${isS?" on":""}" onclick="qToilet()"><span class="qbtn-t qcell-ar" dir="rtl">استنجاء</span><span class="qbtn-v">${isS?"✓":"—"}</span></button>
+    <div class="qc"><span class="qc-ic">💧</span>
+      <button class="qc-b" onclick="qWater(-250)" ${wl<=0?"disabled":""}>−</button>
+      <span class="qc-v">${(wl/1000).toFixed(1)}<span class="qc-u">/${(tgt/1000).toFixed(1)}</span></span>
+      <button class="qc-b" onclick="qWater(250)">+</button></div>
+    <div class="qc"><span class="qc-ic qc-ar" dir="rtl">غائط</span>
+      <button class="qc-b" onclick="qStool(-1)" ${poop<=0?"disabled":""}>−</button>
+      <span class="qc-v">${poop}</span>
+      <button class="qc-b" onclick="qStool(1)">+</button></div>
+    <button class="qc qc-tog${isS?" on":""}" onclick="qToilet()" title="استنجاء">
+      <span class="qc-ic qc-ar" dir="rtl">استنجاء</span></button>
   </div>`;
 }
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#16161C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
@@ -2728,7 +2774,9 @@ function collapTa(f,label,ph,day){
   return `<div><button class="ta-toggle${filled?" filled":""}" onclick="toggleTa('${f}')"><span>✍️ ${label}</span><span style="color:#6B6B75">▾</span></button>${taLockNote()}<textarea class="field-ta ta-grow" placeholder="${ph}"${taLockedAttrs(f)} onfocus="startWriting('${f}')" oninput="growTa(this);taInput('${f}',this.value)" onchange="setField('${f}',this.value)">${val.replace(/</g,"&lt;")}</textarea></div>`;
 }
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
-const BLOCK_ACCENT={now:"#FB923C",din:"#4ADE80",regime:"#FB923C",health:"#F472B6",delo:"#60A5FA",home:"#2DD4BF",state:"#C084FC",weather:"#38BDF8",guard:"#F87171",reflect:"#86EFAC"};
+// Приглушённая единая палитра: раньше восемь насыщенных цветов конкурировали между собой и
+// выглядели пёстро. Теперь — сдержанные оттенки одной плотности, различимые, но не кричащие.
+const BLOCK_ACCENT={now:"#C2803F",din:"#2F9E6B",regime:"#C2803F",health:"#A85C74",delo:"#4A72A8",home:"#3E8C86",state:"#7A6BA8",weather:"#3E7C99",guard:"#A85454",reflect:"#4E8C5E"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
   const ac=(id==="now"?nowAccent():BLOCK_ACCENT[id])||"#1B1B26";
@@ -2963,6 +3011,7 @@ function render(){
         ${storyHTML(day)}
         <div style="font-size:11px;color:#6B6B75;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
         <div class="col-full">
+          ${lifeHTML()}
           <div class="section-label">${MON[Number(periodStart.split("-")[1])-1]} — ${MON[Number(periodEnd.split("-")[1])-1]}</div>
           ${histHTML}
           <div class="auto-save">v${VERSION} · ${BUILD} · Данные живут в этом браузере.</div>
@@ -3080,7 +3129,7 @@ function settingsTab1HTML(day){
     <div style="font-size:11px;color:#6B6B75;margin-top:6px;line-height:1.5">Текущая версия: <b style="color:#A1A1AA">v${VERSION}</b>. Нажми, если сайт показывает старое — принудительно загрузит свежую версию мимо кэша.</div>
     ${((meta.view==="mobile"||meta.view==="desktop")?`<div style="font-size:11px;color:#FB923C;margin-top:12px;line-height:1.5">Вид зафиксирован вручную: <b>${meta.view==="mobile"?"телефон":"компьютер"}</b>. <button class="backup-btn" style="display:inline-block;width:auto;padding:3px 8px;font-size:11px;margin-left:4px" onclick="setView('auto')">вернуть автоопределение</button></div>`:`<div style="font-size:11px;color:#6B6B75;margin-top:12px;line-height:1.5">Вид определяется сам по ширине экрана. <button class="backup-btn" style="display:inline-block;width:auto;padding:3px 8px;font-size:11px" onclick="setView('mobile')">телефон</button> <button class="backup-btn" style="display:inline-block;width:auto;padding:3px 8px;font-size:11px" onclick="setView('desktop')">компьютер</button></div>`)}
     <div style="margin-top:14px">${spendHTML(day)}</div>
-    <div style="margin-top:14px">${lifeHTML()}</div>`;
+`;
 }
 // Минималистичная облачная авторизация (Firebase). Никаких Client ID, токенов и ручной синхронизации.
 function cloudAuthHTML(){
