@@ -219,6 +219,11 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .slider-row{display:flex;flex-direction:column;gap:6px}
 .slider-header{display:flex;justify-content:space-between}
 .slider-val{font-size:14.5px;font-weight:700;color:#818CF8}
+.done-row{width:100%;display:flex;align-items:center;gap:8px;background:none;border:none;padding:9px 4px;text-align:left;border-radius:10px}
+.done-row:active{background:rgba(255,255,255,.05)}
+.done-undo{margin-left:auto;color:#6B6B75;font-size:13px;flex:0 0 auto}
+.done-hint{font-size:11px;color:#6B6B75;padding:2px 4px 6px}
+.dash-mark-box{margin-top:10px;padding-top:10px;border-top:1px solid var(--line)}
 .dash-mark{font-size:11.5px;font-weight:700;line-height:1.25;text-align:right;margin-top:3px;max-width:96px;margin-left:auto}
 .dash-mark.muted{color:#6B6B75;font-weight:600}
 .slider-val.muted{color:#6B6B75;font-weight:600;font-size:12px}
@@ -631,7 +636,7 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.16.0";
+const VERSION="1.17.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -733,7 +738,7 @@ const CATEGORIES=[
    {id:"repair",label:"🔧 Ремонт машины (+6)",type:"fact",pts:6},
  ]},
  {id:"body",name:"Тело",items:[
-   {id:"workout",label:"ММА / тренировка (+5)",type:"ob",sched:[1,3,5],pts:5,pen:1},
+   {id:"workout",label:"ММА / тренировка (+5)",type:"ob",sched:[1,3,5],pts:5,pen:1,part:"evening"},
    {id:"cold",label:"Холодные процедуры (+3)",type:"ob",pts:3,opts:[{k:"type",o:[["shower","душ"],["bath","ванна"]]}]},
    {id:"neck",label:"Шея",type:"ob",pen:1,pts:1},
    {id:"stretch",label:"Растяжка",type:"des",pts:1},
@@ -1690,13 +1695,14 @@ function recoHTML(day){
   return `<div style="display:flex;align-items:center;gap:10px;margin-top:8px;padding:9px 12px;border-radius:12px;background:#101017;border:1px solid #1B1B26">
     <div style="flex:1;min-width:0"><div style="font-size:12.5px;font-weight:700;color:${tc}">Автооценка: ${q.label}</div><div style="font-size:11px;color:#6B6B75;margin-top:2px">${q.reason}</div></div>${right}</div>`;
 }
-function markHTML(day){
-  // Самооценку дня (идеальный/провал) для СЕГОДНЯ показываем только после 20:00 — раньше рано
-  // судить, день ещё идёт и всё может измениться. Прошлые дни — всегда открыты (они уже закончились).
-  if(sel===todayKey()&&tzParts(nowMs()).h<20){
-    return `<div class="section-label" style="margin-top:16px">Самооценка дня</div><div class="muted-note" style="padding:9px 2px;color:#6B6B75;font-size:12.5px;line-height:1.55">Появится после <b>20:00</b> — день ещё идёт, рано ставить оценку. Вечером сам увидишь, каким он вышел.</div>`;
-  }
-  const opts=[["crown","👑 Идеальный","#A5B4FC"],["fail","🔴 Провал","#F87171"]];const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";const bad=!!day.badLogging;const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом — в анализе считать неточными, времена не фиксируются">≈ Неточно</button>`;return `<div class="section-label" style="margin-top:16px">Самооценка дня</div>${recoHTML(day)}<div class="mark-row" style="margin-top:8px">${b}${badBtn}${clr}</div>`;}
+function markRowHTML(day){
+  const opts=[["crown","👑 Идеальный","#A5B4FC"],["fail","🔴 Провал","#F87171"]];
+  const b=opts.map(([v,lbl,c])=>`<button class="mark-btn${day.mark===v?" on":""}" style="${day.mark===v?`border-color:${c};color:${c};background:${c}22`:""}" onclick="setMark('${v}')">${lbl}${day.mark===v&&day.markTime?` <span style="opacity:.6;font-size:11px">${day.markTime}</span>`:""}</button>`).join("");
+  const clr=day.mark?`<button class="mark-btn" onclick="setMark('')" style="flex:0 0 44px;min-width:44px">✕</button>`:"";
+  const bad=!!day.badLogging;
+  const badBtn=`<button class="mark-btn${bad?" on":""}" style="${bad?"border-color:#FBBF24;color:#FBBF24;background:rgba(203,164,92,.14)":""}" onclick="toggleBadLogging()" title="Данные дня внесены приблизительно / задним числом">≈ Неточно</button>`;
+  return `<div class="mark-row" style="margin-top:8px">${b}${badBtn}${clr}</div>`;
+}
 function lifeHTML(){
   const target=40;
   const ageYears=(Date.now()-LIFE_BIRTH.getTime())/(365.2425*86400000);
@@ -1916,19 +1922,25 @@ function doneBoxHTML(day,wd){
     if(it.type==="fact")continue;
     if(day.items?.[it.id])done.push([it,(day.itemTimes||{})[it.id]||(day.itemRecTimes||{})[it.id]||""]);
   }
-  const pr=PRAYERS.filter(([id])=>day.prayers?.[id]).map(([id,nm])=>[nm,(day.prayerTimes||{})[id]||(day.prayerRecTimes||{})[id]||""]);
+  const pr=PRAYERS.filter(([id])=>day.prayers?.[id]).map(([id,nm])=>[id,nm,(day.prayerTimes||{})[id]||(day.prayerRecTimes||{})[id]||""]);
   const n=done.length+pr.length;
   if(!n)return "";
   if(!doneOpen){
     return `<button class="done-box" onclick="doneOpen=true;saveUI();render()">
       <span class="done-ic">✓</span><span class="done-t">Сделано сегодня</span><span class="done-n">${n}</span><span class="done-car">▸</span></button>`;
   }
-  const rows=[...pr.map(([nm,t])=>[`🕌 ${nm}`,t]),...done.map(([it,t])=>[String(it.label).replace(/\s*\(\+[\d.]+\)\s*$/,""),t])]
-    .map(([lbl,t])=>`<div class="done-row"><span class="done-lbl">${escH(lbl)}</span><span class="done-tm">${t||""}</span></div>`).join("");
+  // Строки СНИМАЮТСЯ одним касанием. Раньше это был просто текст: отметил пункт по ошибке — и он
+  // пропадал из «Сейчас» (там показывается только несделанное), а снять его можно было лишь найдя
+  // в родном блоке. Человек честно не понимал, как забрать отметку обратно. Теперь — здесь же.
+  const rows=[
+    ...pr.map(([id,nm,t])=>[`🕌 ${nm}`,t,`togglePrayer('${id}')`]),
+    ...done.map(([it,t])=>[String(it.label).replace(/\s*\(\+[\d.]+\)\s*$/,""),t,`toggleItem('${it.id}')`])
+  ].map(([lbl,t,act])=>`<button class="done-row" onclick="${act}"><span class="done-lbl">${escH(lbl)}</span><span class="done-tm">${t||""}</span><span class="done-undo">✕</span></button>`).join("");
   return `<div class="done-card">
     <button class="done-box done-box-open" onclick="doneOpen=false;saveUI();render()">
       <span class="done-ic">✓</span><span class="done-t">Сделано сегодня</span><span class="done-n">${n}</span><span class="done-car">▾</span></button>
-    <div class="done-list">${rows}</div></div>`;
+    <div class="done-list">${rows}</div>
+    <div class="done-hint">Нажми на строку, чтобы снять отметку</div></div>`;
 }
 function guardWidgetHTML(){
   const list=meta.blockers||[];
@@ -1952,6 +1964,12 @@ function dashMarkHTML(day){
   if(!q||q.tier==="none")return `<div class="dash-mark muted">нет данных</div>`;
   const tc={ideal:"#A5B4FC",good:"#4ADE80",mid:"#FBBF24",weak:"#FB923C",fail:"#F87171",narrated:"#A1A1AA"}[q.tier]||"#A1A1AA";
   return `<div class="dash-mark" style="color:${tc}">${q.label}</div>`;
+}
+// Самооценка дня в шапке, а не в подвале: раньше за ней надо было прокручивать весь экран.
+// Днём её нет вовсе — судить рано, и в углу уже написано «оценка вечером».
+function dashSelfMarkHTML(day){
+  if(sel===todayKey()&&tzParts(nowMs()).h<20)return "";
+  return `<div class="dash-mark-box">${recoHTML(day)}${markRowHTML(day)}</div>`;
 }
 function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
   // Два концентрических кольца: внешнее — % обязательного (главная метрика, крупная
@@ -2005,6 +2023,7 @@ function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
     </div>
     ${namazStatusHTML(day)}
     ${quickRowHTML(day)}
+    ${dashSelfMarkHTML(day)}
     ${weekBarsHTML(r)}
   </div>`;
 }
@@ -2533,8 +2552,11 @@ function nowItems(day,wd){
   const part=h<16?["bed","warmwater","lymph","charge"]:["phone","groin","teeth","facemassage","expander"];
   part.forEach(id=>add(reg.find(i=>i.id===id)));
   // Обязательные дела, запланированные именно на сегодня.
+  // part:"evening"/"morning" — дело, которое бывает только в свою половину дня (ММА всегда вечером).
+  // Без этого тренировка висела в «Сейчас» с самого утра и создавала ложное «я не успеваю».
+  const _part=nowPart();
   for(const c of CATEGORIES)for(const it of c.items)
-    if(it.type==="ob"&&it.sched&&isDue(it,wd))add(it);
+    if(it.type==="ob"&&it.sched&&isDue(it,wd)&&(!it.part||it.part===_part))add(it);
   return out.slice(0,6);
 }
 // Сколько дел этого часа уже закрыто — нужно, чтобы отличить «ты всё сделал» от
@@ -2764,7 +2786,8 @@ function blocksHTML(day,wd){
         +collapTa("seq","Что произошло (прямой и обратный порядок)","утро → вечер, потом вечер → утро",day)
         +collapTa("analysis","Анализ (мысли, эмоции, наблюдения)","что чувствовал и заметил",day)
         +collapTa("extract","Выводы (что извлёк из дня)","вывод",day)
-        +collapTa("block","Помеха дня","что сбило",day);
+        +collapTa("block","Помеха дня","что сбило",day)
+        +collapTa("complaints","🐞 Жалобы на приложение / баги","что бесит, что сломалось, что добавить — по этому дню. Я это увижу в отчёте и выкачу обновление.",day);
     }));
   }
   push("offsched",offSchedHTML(day,wd));
@@ -2886,9 +2909,7 @@ function render(){
         ${nowCardHTML(day,wd)}
         ${cats}
         ${doneBoxHTML(day,wd)}
-        ${markHTML(day)}
         ${storyHTML(day)}
-        <div style="margin-top:16px;opacity:.85">${collapTa("complaints","🐞 Жалобы на приложение / баги","что бесит, что сломалось, что добавить — по этому дню. Я это увижу в отчёте и выкачу обновление.",day)}</div>
         <div style="font-size:11px;color:#6B6B75;margin-top:18px;text-align:center;line-height:1.6">Отчёт для Claude, бэкапы, синхронизация, БАДы, хронология и диагностика — в ⚙ настройках.</div>
         <div class="col-full">
           <div class="section-label">${MON[Number(periodStart.split("-")[1])-1]} — ${MON[Number(periodEnd.split("-")[1])-1]}</div>
