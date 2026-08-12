@@ -636,7 +636,38 @@ function logError(where,e,extra){
   return rec;
 }
 function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){}render();}
-const VERSION="1.17.0";
+/* ═════════════════════════════════════════════════════════════════════════════
+   КАРТА ФАЙЛА  —  всё приложение живёт в одном index.html намеренно:
+   GitHub Pages отдаёт статику без сборки, поэтому «одна страница = одна поставка».
+   Цена этого — 4000+ строк, поэтому ориентируемся по ЯКОРЯМ, а не по номерам строк
+   (номера уезжают после каждой правки, якоря — нет).
+
+   Ищи в файле @@ИМЯ@@ — попадёшь в начало раздела:
+
+     @@ДАННЫЕ@@       структура дня (blankDay), категории привычек, время по Киеву
+     @@ХРАНЕНИЕ@@     save/safeWrite/слияние вкладок, снимки, очистка, повреждения
+     @@АРХИВ@@        отпечаток выгрузки, полугодовой архив, три контура копий
+     @@ОТЧЁТ@@        buildExport и выбор периода (5/10/14/30 дн.)
+     @@РАСЧЁТЫ@@      кольца, баллы, серии, квалификация дня
+     @@ШАПКА@@        дашборд: дата, кольца, намаз, быстрая строка, самооценка
+     @@БЛОКИ@@        блоки дня: Дин, Ритуалы, Здоровье, Дело и быт, Состояние, Дневник
+     @@ВВОД@@         setDay/setField/taInput — ЕДИНСТВЕННЫЕ пути записи в данные
+     @@ОБЛАКО@@       firebase: вход, синхронизация, облачный архив
+     @@НАСТРОЙКИ@@    экран настроек, импорт/экспорт, конструктор привычек
+
+   ПРАВИЛА, КОТОРЫЕ ЛЕГКО НАРУШИТЬ ПО НЕВНИМАТЕЛЬНОСТИ:
+     • Писать в данные — только через setDay/setField/taInput. Прямое days[k]=… мимо них
+       теряет метки времени, из-за которых работает слияние устройств.
+     • Всё, что ввёл человек, выводить через escH() — иначе «<» в названии становится
+       разметкой (эта дыра была реальной, см. dispLabel/supRow).
+     • Время — только nowMs()/todayKey()/tzParts(), никогда Date.now() напрямую:
+       приложение живёт по Киеву независимо от часов устройства.
+     • render() при курсоре в поле ОТКЛАДЫВАЕТСЯ — на это опирается защита набранного
+       текста. Не «чинить» это, добавляя render(true) в обработчики ввода.
+     • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
+       цифру, сколько именно потеряется.
+   ═════════════════════════════════════════════════════════════════════════════ */
+const VERSION="1.18.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -798,6 +829,7 @@ const CATEGORIES=[
  ]},
 ];
 
+// @@ДАННЫЕ@@ — структура дня и категории
 function blankDay(){return{lastUpdated:0,t:{},badLogging:false,weather:null,items:{},itemTimes:{},itemRecTimes:{},prayers:{},prayerTimes:{},prayerRecTimes:{},quality:{},opts:{},log:[],del:[],waterLog:[],supsLog:[],measLog:[],meals:[],spends:[],workLog:[],charge:{},procLog:[],income:0,bonus:0,weight:"",weightTime:"",height:"",pulse:"",pulseTime:"",bpSys:"",bpDia:"",bpTime:"",temp:"",tempTime:"",measTime:"",sups:{},water:0,sleepDown:"",sleepUp:"",onTime:false,slip:false,slipCount:0,slipTime:"",slipTrigger:"",slipType:"",slipFirst:"",bounced:false,drift:"",energy:"",focus:"",spirit:"",control:"",sliderTime:"",urge:false,main:"",mainTime:"",block:"",blockTime:"",seq:"",seqTime:"",extract:"",extractTime:"",analysis:"",analysisTime:"",complaints:"",complaintsTime:"",story:"",storyTime:"",healthComplaints:"",healthComplaintsTime:"",poop:"",mark:"",markTime:"",phoneOut:"",phoneBack:""};}
 // ВСЁ ВРЕМЯ В ПРИЛОЖЕНИИ — ПО КИЕВУ, а не по часам устройства.
 // Причина: на ноутбуке иногда сбивается часовой пояс/время. Пользователь живёт в одном поясе
@@ -839,6 +871,7 @@ function tzParts(ms){
 const _z2=n=>String(n).padStart(2,"0");
 function todayKey(){const p=tzParts(nowMs());return p.y+"-"+_z2(p.mo)+"-"+_z2(p.d);}
 function nowHM(){const p=tzParts(nowMs());return _z2(p.h)+":"+_z2(p.mi);}
+// @@АРХИВ@@
 /* ═══ ОТПЕЧАТОК ДАННЫХ ДЛЯ АРХИВА ═══
    Чтобы стереть историю, мало «нажать кнопку скачивания» — нужно ДОКАЗАТЬ, что файл на диске
    читается и содержит ровно то, что было в приложении. Для этого при выгрузке запоминаем
@@ -1057,6 +1090,7 @@ function reportSlice(n){
 }
 function reportSize(n){try{return buildExport(reportSlice(n)).length;}catch(e){return 0;}}
 function fmtK(n){return n>=1000?(n/1000).toFixed(n>=10000?0:1)+" тыс.":String(n);}
+// @@ОТЧЁТ@@ — сборка отчёта для Claude
 function buildExport(days,_rw){
   const keys=Object.keys(days).sort();
   if(!keys.length)return "Журнал пуст.";
@@ -1175,6 +1209,7 @@ let lastWritten="";
 let loadState={ok:true,corrupt:false,raw:"",restoredFrom:"",repaired:0,issues:[]};
 function storageBytes(){let n=0;try{for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);n+=(k||"").length+((localStorage.getItem(k)||"").length);}}catch(e){}return n*2;}
 
+// @@ХРАНЕНИЕ@@ — запись на диск, слияние, снимки
 function safeWrite(key,obj){
   let json;
   try{json=JSON.stringify(obj);}catch(e){return{ok:false,err:"не сериализуется: "+e.message,quota:false};}
@@ -1478,6 +1513,7 @@ function lockHTML(){
   if(unlockedDay===sel)return `<div class="banner" style="background:rgba(203,164,92,.1);border-color:#4A3821;color:#FBBF24"><b>⚠ ТЫ ПРАВИШЬ ПРОШЛОЕ: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#D4D4D8">Не сегодня. Всё, что отметишь, ляжет на этот день.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="relock()">🔒 Закрыть обратно</button></div></div>`;
   return `<div class="banner" style="background:#101017;border-color:#1B1B26"><b>🔒 День закрыт: ${dayLabel(sel).txt} (${dayLabel(sel).dow})</b><div style="font-size:12px;margin-top:4px;color:#A1A1AA">Чтобы случайно не записать сегодняшнее во вчерашнее. Можно просто начать отмечать — спросит подтверждение. Или открой заранее кнопкой ниже.</div><div class="backup-row" style="margin-top:8px"><button class="backup-btn" onclick="tapLock()">✏️ Править этот день</button></div></div>`;
 }
+// @@ВВОД@@ — единственные пути записи в данные
 function setDay(patch){
   // САМОЛЕЧЕНИЕ ОТ ПОТЕРИ ДАННЫХ: если выбранный день вдруг оказался «в будущем» (сбой часов на
   // устройстве, задетая будущая клетка календаря, полуночная граница) — НЕ отказываем и НЕ теряем
@@ -1661,6 +1697,7 @@ function toggleBadLogging(){const d=getDay();setDay({badLogging:!d.badLogging});
 // Гибридная оценка дня: приложение объективно рассчитывает квалификацию по % обязательного
 // минимума, числу намазов и наличию срывов. Пользователь может согласиться в один тап или
 // поставить свою отметку вручную. Никаких лишних кликов — но объективность сохраняется.
+// @@РАСЧЁТЫ@@ — квалификация дня
 function dayQualification(day,k){
   if(!dayTouched(day))return {mark:"",tier:"none",label:"нет данных",reason:""};
   const r=computeRing(day,k);
@@ -1971,6 +2008,7 @@ function dashSelfMarkHTML(day){
   if(sel===todayKey()&&tzParts(nowMs()).h<20)return "";
   return `<div class="dash-mark-box">${recoHTML(day)}${markRowHTML(day)}</div>`;
 }
+// @@ШАПКА@@
 function dashHTML(day,r,bal,earned,streak,clean,sl,isToday,ringGlow){
   // Два концентрических кольца: внешнее — % обязательного (главная метрика, крупная
   // цифра в центре), внутреннее — % желательного. Раньше было одно кольцо с декоративным
@@ -2059,9 +2097,12 @@ function quickRowHTML(day){
 function checkSVG(){return `<svg width="16" height="16" viewBox="0 0 17 17" fill="none"><polyline points="3,9 7,13 14,5" stroke="#16161C" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>`;}
 
 // Динамическая подпись: чекины показывают выбранные пользователем времена.
-function dispLabel(it){return it.label;}
+// Возвращает название ДЛЯ ВЫВОДА — всегда экранированное. Свои привычки называет человек,
+// и «<» в названии не должен превращаться в разметку (а вставленный код — оживать).
+// Отчёт экранирует «<» точно так же, поэтому поведение согласовано.
+function dispLabel(it){return escH(it.label);}
 function rowHTML(it,day,offSched,plain){
-  if(it.id==="istinja_b"&&!(Number(day.poop)>0)){return `<button class="row" style="opacity:.45" onclick="toast('Сначала укажи «Стул (раз)» в Поведении внизу')"><span style="display:flex;align-items:center;gap:8px"><span class="tag tag-fact">после стула</span><span class="row-label">${it.label}</span></span><span class="check-box"></span></button>`;}
+  if(it.id==="istinja_b"&&!(Number(day.poop)>0)){return `<button class="row" style="opacity:.45" onclick="toast('Сначала укажи «Стул (раз)» в Поведении внизу')"><span style="display:flex;align-items:center;gap:8px"><span class="tag tag-fact">после стула</span><span class="row-label">${escH(it.label)}</span></span><span class="check-box"></span></button>`;}
   const on=!!day.items?.[it.id];
   const col=it.type==="ob"?"#818CF8":it.type==="des"?"#4ADE80":"#A8A29E";
   const DW=["Вс","Пн","Вт","Ср","Чт","Пт","Сб"];
@@ -2132,7 +2173,7 @@ function measurementsHTML(day){
   }).join("");
   return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Замеры</div><button class="task-add" onclick="addMeas()">+</button></div>${L.length?rows:`<div class="muted-note" style="padding:4px 0">Пока нет замеров</div>`}</div>`;
 }
-function supRow(day,id,label,step,unit,sub){const v=(day.sups||{})[id]||0;const course=supCourse(id);return `<div style="margin-top:11px"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="min-width:0"><span class="row-label${v>0?" on":""}" style="font-size:14px;display:block">${label}</span>${sub?`<span style="font-size:10.5px;color:#6B6B75">${sub}</span>`:""}${course?`<span class="sup-course">${course}</span>`:""}</span><div style="display:flex;align-items:center;gap:7px;flex-shrink:0"><button class="step-btn" onclick="changeSup('${id}',-${step})">−</button><span style="min-width:72px;text-align:center;font-weight:700;font-size:14px;color:${v>0?"#818CF8":"#6B6B75"}">${v} ${unit}</span><button class="step-btn" onclick="changeSup('${id}',${step})">+</button><button class="task-del" style="flex:0 0 38px;height:34px;border-color:#3A3A45;color:#A1A1AA" title="Поставить курс на паузу" onclick="supStop('${id}')">⏸</button></div></div>${supTimesHTML(day,id,unit)}<div class="field-row" style="margin-top:5px"><div class="field-item"><input type="number" inputmode="decimal" value="${(day.supsLog||[]).some(x=>x.id===id&&x.t)?"":(v||"")}" placeholder="итог за день" onchange="setSupTotal('${id}',this.value,${step})"></div></div></div>`;}
+function supRow(day,id,label,step,unit,sub){const v=(day.sups||{})[id]||0;const course=supCourse(id);return `<div style="margin-top:11px"><div style="display:flex;align-items:center;justify-content:space-between;gap:8px"><span style="min-width:0"><span class="row-label${v>0?" on":""}" style="font-size:14px;display:block">${escH(label)}</span>${sub?`<span style="font-size:10.5px;color:#6B6B75">${escH(sub)}</span>`:""}${course?`<span class="sup-course">${course}</span>`:""}</span><div style="display:flex;align-items:center;gap:7px;flex-shrink:0"><button class="step-btn" onclick="changeSup('${id}',-${step})">−</button><span style="min-width:72px;text-align:center;font-weight:700;font-size:14px;color:${v>0?"#818CF8":"#6B6B75"}">${v} ${unit}</span><button class="step-btn" onclick="changeSup('${id}',${step})">+</button><button class="task-del" style="flex:0 0 38px;height:34px;border-color:#3A3A45;color:#A1A1AA" title="Поставить курс на паузу" onclick="supStop('${id}')">⏸</button></div></div>${supTimesHTML(day,id,unit)}<div class="field-row" style="margin-top:5px"><div class="field-item"><input type="number" inputmode="decimal" value="${(day.supsLog||[]).some(x=>x.id===id&&x.t)?"":(v||"")}" placeholder="итог за день" onchange="setSupTotal('${id}',this.value,${step})"></div></div></div>`;}
 // Курсы БАДов: активен по умолчанию; пауза с датой начала/конца хранится в meta.supPeriods.
 function isSupActive(id){const s=meta.supPeriods&&meta.supPeriods[id];return s?s.active!==false:true;}
 function supEnsure(id){if(!meta.supPeriods)meta.supPeriods={};if(!meta.supPeriods[id])meta.supPeriods[id]={active:true,periods:[]};return meta.supPeriods[id];}
@@ -2693,6 +2734,7 @@ function blockShell(id,title,cnt,innerFn,warn){
   return `<div class="cat-block" id="blk-${id}" style="border-left:3px solid ${ac}"><button class="cat-header" style="${hStyle}" onclick="toggleCat('${id}')"><span class="cat-name" style="display:flex;align-items:center">${dot}${title}</span><span style="display:flex;align-items:center;gap:10px">${cnt||""}<span style="color:#6B6B75;font-size:13px">${open?"▾":"▸"}</span></span></button>${open?`<div class="cat-body${anim}">${innerFn()}</div>`:""}</div>`;
 }
 function cntChip(done,total,warn){if(!total)return "";const full=done>=total;return `<span class="cat-count${full?" done":""}" style="${(warn&&!full)?"color:#FB923C":""}">${done}/${total}</span>`;}
+// @@БЛОКИ@@ — блоки дня
 function blocksHTML(day,wd){
   const B=[];const push=(id,html)=>{if(html)B.push([id,html]);};
   // 1) 🕌 Дин — намаз, обязательное/желательное, уход по сунне (день-специфично).
@@ -2972,6 +3014,7 @@ function viewSwitchHTML(){
   const btns=opts.map(([v,l])=>`<button class="state-btn${cur===v?" on":""}" style="flex:1;padding:10px 4px" onclick="setView('${v}')">${l}</button>`).join("");
   return `<div style="display:flex;gap:6px">${btns}</div><div style="font-size:11px;color:#6B6B75;margin-top:5px">Сейчас показывается: <b style="color:#A1A1AA">${now==="mobile"?"телефонный":"компьютерный"}</b> вид.</div>`;
 }
+// @@НАСТРОЙКИ@@
 function settingsHTML(){
   const day=getDay();
   const tab=(n,lbl)=>`<button class="state-btn${settingsTab===n?" on":""}" style="flex:1;text-align:center;line-height:1.25;padding:9px 4px;font-size:11.5px" onclick="setSettingsTab(${n})">${lbl}</button>`;
@@ -3906,6 +3949,7 @@ cloud=(function(){
 
   // ── КОНТУР 2: облачный автоархив. Живёт в отдельной коллекции, поэтому стирание дней
   //    (в том числе полугодовое) до него НЕ дотягивается.
+// @@ОБЛАКО@@ — firebase и облачный архив
   async function pushArchiveNow(force){
       try{
         if(!S.ready||!S.user||!online())return {ok:false,why:"нет связи"};
