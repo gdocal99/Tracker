@@ -676,7 +676,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.19.0";
+const VERSION="1.20.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -4279,10 +4279,23 @@ function showUpdateBanner(v){
 }
 // Жёсткая перезагрузка мимо кэша: уникальный параметр гарантирует свежую загрузку.
 function doUpdateNow(v){
+  // Сначала стираем кэш service worker и снимаем его с регистрации — иначе кнопка
+  // «сбросить кэш» перестала бы быть правдой и человек остался бы на старой версии.
+  const go=()=>{
+    try{
+      const base=location.href.split("#")[0].split("?")[0];
+      window.location.href=base+"?v="+encodeURIComponent(v||VERSION)+"_"+Date.now();
+    }catch(e){try{location.reload();}catch(_){}}
+  };
+  let done=false;const once=()=>{if(!done){done=true;go();}};
+  setTimeout(once,1500);                       // что бы ни случилось, обновление произойдёт
   try{
-    const base=location.href.split("#")[0].split("?")[0];
-    window.location.href=base+"?v="+encodeURIComponent(v||VERSION)+"_"+Date.now();
-  }catch(e){try{location.reload();}catch(_){}}
+    const tasks=[];
+    if(window.caches&&caches.keys)tasks.push(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))));
+    if(navigator.serviceWorker&&navigator.serviceWorker.getRegistrations)
+      tasks.push(navigator.serviceWorker.getRegistrations().then(rs=>Promise.all(rs.map(r=>r.unregister()))));
+    if(tasks.length)Promise.all(tasks).then(once,once);else once();
+  }catch(e){once();}
 }
 function forceReload(){doUpdateNow("r");}
 // После обновления (в адресе есть ?v=…) — показываем подтверждение и чистим адрес.
@@ -4290,6 +4303,15 @@ try{
   if(/[?&]v=/.test(location.search)){
     setTimeout(()=>{try{toast("✓ Обновлено · v"+VERSION);}catch(e){}},500);
     try{history.replaceState(null,"",location.pathname);}catch(e){}
+  }
+}catch(e){}
+// Service worker: даёт офлайн-доступ к самой странице и делает трекер устанавливаемым
+// отдельным значком. Стратегия «сеть вперёд» — на старой версии застрять нельзя.
+try{
+  if("serviceWorker" in navigator&&location.protocol!=="file:"){
+    window.addEventListener("load",()=>{
+      navigator.serviceWorker.register("sw.js").catch(e=>{try{logError("sw",e&&e.message||e);}catch(_){}});
+    });
   }
 }catch(e){}
 setTimeout(()=>{checkForUpdate();},30000);
