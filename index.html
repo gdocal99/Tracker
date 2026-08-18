@@ -717,7 +717,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.24.0";
+const VERSION="1.24.1";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1588,7 +1588,14 @@ function setDay(patch){
   const before=getDay();const after={...before,...patch};
   after.t=stampDayTimes(before,after,ts);
   const ev=logDiff(before,after);if(ev.length){after.log=[...(before.log||[]),...ev];after.t={...after.t,log:ts};}
-  days[sel]=after;save();render(true);}
+  days[sel]=after;save();
+  // ВАЖНО: перерисовку откладываем на такт. Раньше здесь стоял render(true) — он пересобирал
+  // весь экран прямо в момент перехода пальцем из одного поля в другое, уничтожал новое поле
+  // вместе с фокусом (клавиатура закрывалась) и цифра просто не вводилась. Проверять «печатает
+  // ли пользователь» СРАЗУ нельзя: старое поле фокус уже отдало, а новое ещё не получило —
+  // поэтому ждём такт, и только потом решаем. Если фокус ушёл в другое поле, render() сам
+  // отложится до focusout; если нет — перерисуемся немедленно и незаметно.
+  setTimeout(()=>{try{render();}catch(e){}},0);}
 // Группы полей, которые обязаны переезжать при слиянии вместе (иначе рассинхрон производных
 // значений, напр. water и waterLog). Ключ группы — единица времени в day.t.
 const MERGE_GROUPS={
@@ -2222,7 +2229,9 @@ function measScalars(L){
   return o;
 }
 function addMeas(){const d=getDay();const now=nowHM();setDay({measLog:[...(d.measLog||[]),{rid:newRid(),t:now,rt:now,type:"weight",v:""}]});}
-function setMeas(i,f,v){const d=getDay();const L=[...(d.measLog||[])];if(!L[i])return;L[i]={...L[i],[f]:v};setDay({measLog:L,...measScalars(L)});}
+// Значение замера принимаем и с точкой, и с ЗАПЯТОЙ (мобильная клавиатура часто даёт запятую).
+// Раньше поле было type=number и молча выкидывало запятую: «70,5» превращалось в «705».
+function setMeas(i,f,v){const d=getDay();const L=[...(d.measLog||[])];if(!L[i])return;if(f==="v"&&L[i].type!=="bp")v=String(v==null?"":v).replace(",",".").trim();L[i]={...L[i],[f]:v};setDay({measLog:L,...measScalars(L)});}
 function delMeas(i){const d=getDay();const L=[...(d.measLog||[])];const row=L[i];L.splice(i,1);setDay({measLog:L,...measScalars(L),...tomb(d,row)});}
 function addMeal(){const d=getDay();const now=nowHM();setDay({meals:[...(d.meals||[]),{rid:newRid(),t:now,rt:now,what:""}]});}
 function setMeal(i,what){const d=getDay();const L=[...(d.meals||[])];if(!L[i])return;L[i]={...L[i],what};setDay({meals:L});}
@@ -2242,7 +2251,7 @@ function measurementsHTML(day){
     const unit=MEAS_UNIT[x.type]||"";
     const isBp=x.type==="bp";
     const selOpt=MEAS_TYPES.map(([id,ru])=>`<option value="${id}"${x.type===id?" selected":""}>${ru}</option>`).join("");
-    return `<div class="mrow"><select class="msel" onchange="setMeas(${i},'type',this.value)">${selOpt}</select><input class="mval" type="${isBp?"text":"number"}" ${isBp?'placeholder="120/80"':'inputmode="decimal" step="0.1" placeholder="—"'} value="${String(x.v||"").replace(/"/g,"&quot;")}" onchange="setMeas(${i},'v',this.value)"><span class="munit">${unit}</span><input class="mtime" type="time" value="${x.t||""}" onchange="setMeas(${i},'t',this.value)"><button class="mlog-x" onclick="delMeas(${i})">✕</button></div>`;
+    return `<div class="mrow"><select class="msel" onchange="setMeas(${i},'type',this.value)">${selOpt}</select><input class="mval" type="text" ${isBp?'placeholder="120/80"':'inputmode="decimal" placeholder="—"'} value="${String(x.v||"").replace(/"/g,"&quot;")}" onchange="setMeas(${i},'v',this.value)"><span class="munit">${unit}</span><input class="mtime" type="time" value="${x.t||""}" onchange="setMeas(${i},'t',this.value)"><button class="mlog-x" onclick="delMeas(${i})">✕</button></div>`;
   }).join("");
   return `<div class="meas-card"><div style="display:flex;justify-content:space-between;align-items:center"><div class="side-title" style="display:block;margin:0">Замеры</div><button class="task-add" onclick="addMeas()">+</button></div>${L.length?rows:`<div class="muted-note" style="padding:4px 0">Пока нет замеров</div>`}</div>`;
 }
