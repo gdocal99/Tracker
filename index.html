@@ -614,30 +614,40 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .wk-lbl.today{color:#818CF8;font-weight:800}
 .dash-perc{font-size:var(--fs-3);color:#A1A1AA;white-space:nowrap}
 .spk-label{font-size:11px;color:#6B6B75;letter-spacing:.5px;text-transform:uppercase;font-weight:700}
-/* 📿 Зикр: крупная зона тапа (СДВГ — легко попасть, не глядя), спокойные цвета. */
-.zk-row{background:#101017;border:1px solid #1B1B26;border-radius:14px;padding:11px 12px;margin-top:9px;transition:border-color .3s}
-.zk-row.zk-done{border-color:rgba(74,222,128,.45)}
-.zk-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.zk-lbl{display:flex;flex-direction:column;gap:2px;min-width:0}
-.zk-ar{font-size:17px;color:#F5F5F7;font-family:"Traditional Arabic","Scheherazade New",serif;line-height:1.3}
-.zk-name{font-size:12.5px;color:#A1A1AA;font-weight:600}
-.zk-time{font-size:10.5px;color:#6B6B75;font-family:ui-monospace,Menlo,monospace}
-.zk-reset{padding:5px 10px;border-radius:9px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:11px;font-weight:700;flex:0 0 auto}
-.zk-reset.armed{background:#F87171;border-color:#F87171;color:#fff}
-.zk-track{height:5px;border-radius:3px;background:#1B1B26;overflow:hidden;margin-bottom:9px}
-.zk-bar{height:100%;border-radius:3px;transition:width .25s ease}
-.zk-ctl{display:flex;align-items:stretch;gap:8px}
-.zk-minus{flex:0 0 52px;border-radius:12px;border:1px solid #1B1B26;background:#16161C;color:#6B6B75;font-size:22px;font-weight:700}
-.zk-tap{flex:1;min-height:66px;border-radius:14px;border:1.5px solid #1B1B26;background:#16161C;display:flex;align-items:center;justify-content:center;gap:3px;position:relative;overflow:hidden}
-.zk-tap:active{transform:scale(.97)}
-.zk-n{font-size:30px;font-weight:800;font-family:ui-monospace,Menlo,monospace;line-height:1}
-.zk-tgt{font-size:15px;color:#6B6B75;font-weight:700;align-self:flex-end;margin-bottom:3px}
-.zk-hint{position:absolute;bottom:5px;font-size:9.5px;letter-spacing:1px;text-transform:uppercase;color:#3A3A45;font-weight:700}
-.zk-tf{margin-top:12px;padding-top:2px;border-top:1px solid #1B1B26}
-.zk-tf-h{font-size:11.5px;font-weight:700;color:#A1A1AA;padding:8px 2px 2px;letter-spacing:.3px}
+/* 📿 Азкары: плотный список. Строка = название + формула мелким + счётчик справа.
+   Без иконок и вложенных блоков — максимум пунктов на экран. */
+.az-h{font-size:10px;letter-spacing:1.1px;text-transform:uppercase;color:#6B6B75;font-weight:700;padding:7px 2px 2px;display:flex;align-items:baseline;gap:7px}
+.az-h:first-child{padding-top:2px}
+.az-h-w{font-size:9.5px;letter-spacing:.3px;text-transform:none;color:#3A3A45;font-weight:600}
+.az-row{display:flex;align-items:center;gap:6px;padding:4px 0;border-top:1px solid #16161C}
+.az-row:first-of-type{border-top:none}
+.az-left{flex:1;min-width:0;background:none;border:none;padding:1px 0;text-align:left;display:flex;flex-direction:column;gap:1px}
+.az-name{font-size:12.5px;color:#D4D4D8;font-weight:600;line-height:1.2;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
+.az-goal{font-size:10px;color:#6B6B75;font-weight:700}
+.az-tm{font-size:9.5px;color:#4E4E58;font-family:ui-monospace,Menlo,monospace}
+.az-tx{font-size:10px;color:#7A7A85;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.az-tx-open{-webkit-line-clamp:unset;display:block}
+.az-cnt{flex:0 0 42px;min-height:34px;border-radius:10px;border:1px solid #1B1B26;background:#16161C;display:flex;align-items:center;justify-content:center}
+.az-cnt:active{transform:scale(.94)}
+.az-n{font-size:17px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#A1A1AA;line-height:1}
+.az-row.az-done .az-n{color:#4ADE80}
+.az-row.az-done .az-cnt{border-color:rgba(74,222,128,.4)}
+.az-row.az-done .az-name{color:#F5F5F7}
+.az-minus{flex:0 0 26px;border-radius:9px;border:1px solid #16161C;background:none;color:#4E4E58;font-size:16px;font-weight:700}
+/* Тасбих Фатимы — три счётчика в одну строку. */
+.az-tf-row{flex-direction:column;gap:5px}
+.az-tf-h{font-size:12.5px;color:#D4D4D8;font-weight:600}
+.az-tf-g{display:flex;gap:6px}
+.az-tf-c{flex:1;min-width:0;border-radius:10px;border:1px solid #1B1B26;background:#16161C;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.az-tf-c:active{transform:scale(.96)}
+.az-tf-l{font-size:9.5px;color:#7A7A85;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.az-tf-n{font-size:12px;color:#6B6B75;font-family:ui-monospace,Menlo,monospace;font-weight:700}
+.az-tf-n b{font-size:15px;color:#A1A1AA}
+.az-tf-c.az-done{border-color:rgba(74,222,128,.4)}
+.az-tf-c.az-done .az-tf-n b{color:#4ADE80}
 @media (prefers-reduced-motion:reduce){
 .check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-flash,.fx-p,.cat-body-anim{animation:none!important}
-.row,.task-check,.db-ring,.life-fill,.dcell,.hist-cell,.zk-bar,.zk-row{transition:none!important}
+.row,.task-check,.db-ring,.life-fill,.dcell,.hist-cell,.az-row,.az-cnt{transition:none!important}
 }
 </style>
 </head>
@@ -738,7 +748,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.25.0";
+const VERSION="1.26.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -814,7 +824,6 @@ function allSups(){return SUPS.concat((meta.userSups||[]).map(u=>[u.id,u.name,Nu
 function activeSups(){return allSups().filter(s=>isSupActive(s[0]));}
 const CATEGORIES=[
  {id:"din",name:"Дин",items:[
-   {id:"askar",label:"Аскары днём",type:"ob"},
    {id:"istinja_s",label:"Истинджа малая · استنجاء после урина",type:"ob",pts:0.5},
    {id:"istinja_b",label:"Истинджа большая · استنجاء после стула",type:"ob",pts:0.5},
    {id:"quran",label:"Чтение Корана (тилява)",type:"des",pts:3},
@@ -1228,11 +1237,11 @@ function buildExport(days,_rw){
     if(supsLine)s+="  БАДы: "+supsLine+"\n";
     const chargeLine=CHARGE_EX.filter(([k])=>Number(d.charge?.[k])>0).map(([k,l])=>l+" "+d.charge[k]).join(", ");
     if(chargeLine)s+="  Зарядка (повторения): "+chargeLine+"\n";
-    const zkLine=ZIKRS.filter(z=>Number((d.zikr||{})[z.id])>0).map(z=>{
+    const zkLine=AZKARS.filter(z=>Number((d.zikr||{})[z.id])>0).map(z=>{
       const n=Number(d.zikr[z.id])||0,t=(d.zikrT||{})[z.id];
       return z.label+" "+n+(z.target?"/"+z.target:"")+(n>=(z.target||1e9)?" ✓":"")+(bad?"":(t&&t.first?" ("+t.first+(t.last&&t.last!==t.first?"–"+t.last:"")+")":""));
     }).join(", ");
-    if(zkLine)s+="  📿 Зикр: "+zkLine+"\n";
+    if(zkLine)s+="  📿 Азкары: "+zkLine+"\n";
     const tt=f=>d[f+"Time"]?" [в "+d[f+"Time"]+"]":"";
     if(d.healthComplaints)s+="  🩺 Жалобы по здоровью"+tt("healthComplaints")+": "+String(d.healthComplaints).replace(/</g,"&lt;")+"\n";
     if(d.seq)s+="  События (пр/обр)"+tt("seq")+": "+String(d.seq).replace(/</g,"&lt;")+"\n";
@@ -1472,7 +1481,7 @@ let doneOpen=false;  // раскрыта ли «коробка выполнен�
 // По умолчанию раскрыт ТОЛЬКО актуальный блок «Сейчас». Раньше вместе с ним открывались Дин и
 // Ритуалы, и экран начинался с трёх развёрнутых списков — приходилось прокручивать мимо них.
 // Остальные показывают счётчик в заголовке и раскрываются одним касанием.
-let catOpen={now:1,din:0,regime:0,health:0,delo:0,home:0,state:0,reflect:0};
+let catOpen={now:1,din:0,azkar:0,regime:0,health:0,delo:0,home:0,state:0,reflect:0};
 let taOpen={};
 // Состояние полугодового архива. Живёт здесь (а не в meta), потому что НЕ должно синхронизироваться:
 // «файл скачан и проверен» — свойство конкретного устройства, на котором лежит файл.
@@ -2800,14 +2809,28 @@ function regimeInner(day,wd){
    попадают только начало и завершение — иначе 100 тапов засорили бы ленту дня.
    Тап НЕ пересобирает экран (иначе на сотом тапе всё бы тормозило): цифру и полосу
    обновляем прямо в DOM, данные пишем тихо. Полная перерисовка — только на сбросе. */
-const ZIKRS=[
-  {id:"bismillah",part:"morning",label:"Бисмилля",ar:"بِسْمِ اللَّهِ",target:0,c:"#FBBF24"},
-  {id:"subhan",   part:"evening",label:"Субханаллах",ar:"سُبْحَانَ اللَّهِ",target:100,c:"#A5B4FC"},
-  {id:"tf_subhan",part:"evening",tf:1,label:"СубханАллах",ar:"سُبْحَانَ اللَّهِ",target:33,c:"#34D399"},
-  {id:"tf_hamd",  part:"evening",tf:1,label:"Альхамдулиллях",ar:"الْحَمْدُ لِلَّهِ",target:33,c:"#2DD4BF"},
-  {id:"tf_akbar", part:"evening",tf:1,label:"Аллаху Акбар",ar:"اللَّهُ أَكْبَرُ",target:34,c:"#38BDF8"}
+const AZKARS=[
+  // Блок А — пробуждение и сон.
+  {id:"wake",       grp:"wake",  label:"Дуа при пробуждении", tx:"Аль-хамду ли-Лляхи ллязи ахйана ба'да ма аматана ва иляйхи-н-нушур"},
+  {id:"sleep_dua",  grp:"sleep", label:"Дуа перед сном",      tx:"Би-сми-кя Ллахумма амуту ва ахйа"},
+  {id:"three_suras",grp:"sleep", label:"Три суры + обтирание",tx:"аль-Ихляс, аль-Фаляк, ан-Нас", target:3},
+  {id:"tf_subhan",  grp:"tf",    label:"Субхана-Ллах",        tx:"", target:33},
+  {id:"tf_hamd",    grp:"tf",    label:"Аль-хамду ли-Ллях",   tx:"", target:33},
+  {id:"tf_akbar",   grp:"tf",    label:"Аллаху акбар",        tx:"", target:34},
+  // Блок Б — ситуативные, видны всегда.
+  {id:"eat_start",  grp:"sit", label:"Начало еды",       tx:"Бисми-Ллях"},
+  {id:"eat_end",    grp:"sit", label:"Конец еды",        tx:"Аль-хамду ли-Лляхи ллязи ат'амани хаза ва разаканихи мин гайри хаулин минни ва ля кувва"},
+  {id:"dress_on",   grp:"sit", label:"Надевание одежды", tx:"Аль-хамду ли-Лляхи ллязи кясани хаза с-сауба ва разаканихи мин гайри хаулин минни ва ля кувва"},
+  {id:"dress_off",  grp:"sit", label:"Снятие одежды",    tx:"Бисми-Ллях"},
+  {id:"wc_in",      grp:"sit", label:"Вход в туалет",    tx:"Бисми-Ллях. Аллахумма инни а'узу би-кя мина-ль-хубуси ва-ль-хабаис"},
+  {id:"wc_out",     grp:"sit", label:"Выход из туалета", tx:"Гуфрана-кя"},
+  {id:"home_out",   grp:"sit", label:"Выход из дома",    tx:"Бисми-Лляхи, таваккальту 'аля-Ллахи, ва ля хауля ва ля куввата илля би-Ллях"},
+  {id:"home_in",    grp:"sit", label:"Вход в дом",       tx:"Бисми-Ллях"}
 ];
-function zikrDef(id){return ZIKRS.find(z=>z.id===id);}
+// Окно отхода ко сну: 20:00–05:00, переходит через полночь. Счётчики обнуляются сами —
+// они живут внутри дня, а день сменяется в полночь.
+function sleepWindowOpen(){const p=tzParts(nowMs());const h=p.h+p.mi/60;return h>=20||h<5;}
+function zikrDef(id){return AZKARS.find(z=>z.id===id);}
 function zikrCount(day,id){return Number((day.zikr||{})[id])||0;}
 // Тихая запись дня без перерисовки экрана — чтобы счёт на 100 тапов оставался мгновенным.
 function setDayQuiet(patch){
@@ -2850,9 +2873,9 @@ function tapZikr(id,delta){
   }else vib(4);
   zikrPaint(id,now);
   // Тасбих Фатимы целиком (33+33+34) — отдельная веха.
-  if(delta>0&&z.tf){
+  if(delta>0&&z.grp==="tf"){
     const dd=getDay();
-    if(ZIKRS.filter(x=>x.tf).every(x=>zikrCount(dd,x.id)>=x.target)){
+    if(AZKARS.filter(x=>x.grp==="tf").every(x=>zikrCount(dd,x.id)>=x.target)){
       const done=dd.zikrT&&dd.zikrT[id]?dd.zikrT[id].last:nowHM();
       if(!dd.items?.tasbih_fatima){
         setDayQuiet({items:{...(dd.items||{}),tasbih_fatima:true},log:[...(dd.log||[]),{t:done,ts:nowMs(),e:"📿 Тасбих Фатимы завершён (33/33/34) ✓"}]});
@@ -2866,10 +2889,8 @@ function zikrPaint(id,n){
   try{
     const z=zikrDef(id);
     const el=document.getElementById("zk-n-"+id);if(el)el.textContent=String(n);
-    const bar=document.getElementById("zk-bar-"+id);
-    if(bar&&z&&z.target)bar.style.width=Math.min(100,n/z.target*100)+"%";
     const wrap=document.getElementById("zk-"+id);
-    if(wrap&&z&&z.target)wrap.classList.toggle("zk-done",n>=z.target);
+    if(wrap){const done=z&&z.target?n>=z.target:n>0;wrap.classList.toggle("az-done",done);}
   }catch(e){}
 }
 function zikrReset(id){
@@ -2884,43 +2905,57 @@ function zikrReset(id){
   if(z.tf&&d.items?.tasbih_fatima)patch.items={...(d.items||{}),tasbih_fatima:false};
   setDay(patch);vib(10);
 }
-function zikrRowHTML(day,z){
+// Одна строка = один азкар: слева название и формула мелким шрифтом, справа счётчик.
+// Длинная формула зажата в две строки; тап по названию разворачивает её целиком.
+let azkarOpen={};
+function azkarToggle(id){azkarOpen[id]=!azkarOpen[id];render();}
+function azkarRowHTML(day,z){
   const n=zikrCount(day,z.id),t=day.zikrT?.[z.id];
-  const done=z.target&&n>=z.target;
-  const pct=z.target?Math.min(100,n/z.target*100):0;
-  const tm=t&&t.first?`<span class="zk-time">${t.first}${t.last&&t.last!==t.first?"–"+t.last:""}</span>`:"";
-  const armed=confirmDelId==="zk_"+z.id;
-  return `<div class="zk-row${done?" zk-done":""}" id="zk-${z.id}">
-    <div class="zk-head">
-      <span class="zk-lbl"><span class="zk-ar" dir="rtl">${z.ar}</span><span class="zk-name">${z.label}</span>${tm}</span>
-      <button class="zk-reset${armed?" armed":""}" onclick="zikrReset('${z.id}')">${armed?"точно?":"сброс"}</button>
-    </div>
-    ${z.target?`<div class="zk-track"><div class="zk-bar" id="zk-bar-${z.id}" style="width:${pct}%;background:${z.c}"></div></div>`:""}
-    <div class="zk-ctl">
-      <button class="zk-minus" onclick="tapZikr('${z.id}',-1)">−</button>
-      <button class="zk-tap" style="border-color:${z.c}44" onclick="tapZikr('${z.id}',1)">
-        <span class="zk-n" id="zk-n-${z.id}" style="color:${z.c}">${n}</span>${z.target?`<span class="zk-tgt">/${z.target}</span>`:""}
-        <span class="zk-hint">нажимай</span>
-      </button>
-    </div>
+  const done=z.target?n>=z.target:n>0;
+  const open=!!azkarOpen[z.id];
+  const tm=(t&&t.first)?`<span class="az-tm">${t.first}${t.last&&t.last!==t.first?"–"+t.last:""}</span>`:"";
+  const tx=z.tx?`<div class="az-tx${open?" az-tx-open":""}">${escH(z.tx)}</div>`:"";
+  return `<div class="az-row${done?" az-done":""}" id="zk-${z.id}">
+    <button class="az-left" onclick="azkarToggle('${z.id}')">
+      <div class="az-name">${escH(z.label)}${z.target?`<span class="az-goal">×${z.target}</span>`:""}${tm}</div>
+      ${tx}
+    </button>
+    <button class="az-cnt" onclick="tapZikr('${z.id}',1)" oncontextmenu="event.preventDefault();tapZikr('${z.id}',-1)">
+      <span class="az-n" id="zk-n-${z.id}">${n}</span>
+    </button>
+    <button class="az-minus" onclick="tapZikr('${z.id}',-1)">−</button>
   </div>`;
 }
-function zikrHTML(day){
-  const mo=ritualVisible("morning"),ev=ritualVisible("evening");
+// Тасбих Фатимы — три счётчика в ОДНУ строку.
+function tasbihRowHTML(day){
+  const tf=AZKARS.filter(z=>z.grp==="tf");
+  const all=tf.every(z=>zikrCount(day,z.id)>=z.target);
+  const cells=tf.map(z=>{
+    const n=zikrCount(day,z.id),done=n>=z.target;
+    return `<button class="az-tf-c${done?" az-done":""}" id="zk-${z.id}" onclick="tapZikr('${z.id}',1)" oncontextmenu="event.preventDefault();tapZikr('${z.id}',-1)">
+      <span class="az-tf-l">${escH(z.label)}</span>
+      <span class="az-tf-n"><b id="zk-n-${z.id}">${n}</b>/${z.target}</span>
+    </button>`;
+  }).join("");
+  return `<div class="az-row az-tf-row${all?" az-done":""}">
+    <div class="az-tf-h">Тасбих Фатимы${all?' <span style="color:#4ADE80">✓</span>':""}</div>
+    <div class="az-tf-g">${cells}</div>
+  </div>`;
+}
+function azkarHTML(day){
   let h="";
-  if(mo){
-    h+=`<div class="daypart morning"><span class="daypart-ic">☀️</span><span>Утро</span></div>`;
-    h+=ZIKRS.filter(z=>z.part==="morning").map(z=>zikrRowHTML(day,z)).join("");
+  h+=`<div class="az-h">Пробуждение</div>`;
+  h+=AZKARS.filter(z=>z.grp==="wake").map(z=>azkarRowHTML(day,z)).join("");
+  if(sleepWindowOpen()||sel!==todayKey()){
+    h+=`<div class="az-h">Отход ко сну<span class="az-h-w">20:00–05:00</span></div>`;
+    h+=AZKARS.filter(z=>z.grp==="sleep").map(z=>azkarRowHTML(day,z)).join("");
+    h+=tasbihRowHTML(day);
   }
-  if(ev){
-    h+=`<div class="daypart evening"><span class="daypart-ic">🌙</span><span>Вечер</span></div>`;
-    h+=ZIKRS.filter(z=>z.part==="evening"&&!z.tf).map(z=>zikrRowHTML(day,z)).join("");
-    const tf=ZIKRS.filter(z=>z.tf);
-    const allDone=tf.every(z=>zikrCount(day,z.id)>=z.target);
-    h+=`<div class="zk-tf"><div class="zk-tf-h">🌙 Тасбих Фатимы — перед сном ${allDone?'<span style="color:#4ADE80">✓ завершён</span>':'<span style="color:#6B6B75">33 · 33 · 34</span>'}</div>${tf.map(z=>zikrRowHTML(day,z)).join("")}</div>`;
-  }
+  h+=`<div class="az-h">Ситуативные</div>`;
+  h+=AZKARS.filter(z=>z.grp==="sit").map(z=>azkarRowHTML(day,z)).join("");
   return h;
 }
+function azkarCount(day){return AZKARS.filter(z=>zikrCount(day,z.id)>0).length;}
 function subHTML(icon,title,inner){if(!inner)return "";return `<div class="subblock"><div class="sb-head">${icon?icon+" ":""}${title}</div>${inner}</div>`;}
 // Свёртываемое поле дневника: закрыто → кнопка; открыто → textarea, растущая по мере ввода.
 function toggleTa(f){taOpen[f]=!taOpen[f];saveUI();render();}
@@ -2958,7 +2993,7 @@ function collapTa(f,label,ph,day){
 // Тихий цветовой акцент на каждый крупный блок — чтобы глаз мгновенно находил нужный раздел.
 // Приглушённая единая палитра: раньше восемь насыщенных цветов конкурировали между собой и
 // выглядели пёстро. Теперь — сдержанные оттенки одной плотности, различимые, но не кричащие.
-const BLOCK_ACCENT={now:"#C2803F",din:"#2F9E6B",regime:"#C2803F",health:"#A85C74",delo:"#4A72A8",home:"#3E8C86",state:"#7A6BA8",weather:"#3E7C99",guard:"#A85454",reflect:"#4E8C5E"};
+const BLOCK_ACCENT={now:"#C2803F",din:"#2F9E6B",azkar:"#8C7A3F",regime:"#C2803F",health:"#A85C74",delo:"#4A72A8",home:"#3E8C86",state:"#7A6BA8",weather:"#3E7C99",guard:"#A85454",reflect:"#4E8C5E"};
 function blockShell(id,title,cnt,innerFn,warn){
   const open=!!catOpen[id];
   const ac=(id==="now"?nowAccent():BLOCK_ACCENT[id])||"#1B1B26";
@@ -2984,12 +3019,13 @@ function blocksHTML(day,wd){
       // Ряд кнопок намаза НЕ дублируем: он уже есть в шапке, где его и отмечают.
       // Здесь остаются только времена отметок (их можно поправить) — это не дубль, а другая функция.
       let h=prayerTimesHTML(day)+`<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>`+itemsBlock(dinItems,day,wd);
-      h+=subHTML("📿","Зикр (чётки)",zikrHTML(day));
       h+=subHTML("🤲","Иман (состояние веры)",sliderHTML("Иман","spirit",day.spirit));
       if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`);
       return h;
     }));
   }
+  // 1b) 📿 Азкары — независимый раздел: счётчики поминаний, обнуляются в полночь вместе с днём.
+  push("azkar",blockShell("azkar","📿 Азкары",cntChip(azkarCount(day),AZKARS.length),()=>azkarHTML(day)));
   // 2) ☀️ Ритуалы дня — утро / вечер.
   if(ritualVisible("morning")||ritualVisible("evening")){
     const ri=regimeInner(day,wd);
