@@ -627,10 +627,10 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .az-tm{font-size:9.5px;color:#4E4E58;font-family:ui-monospace,Menlo,monospace}
 .az-tx{font-size:10px;color:#7A7A85;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .az-tx-open{-webkit-line-clamp:unset;display:block}
-.az-ru{font-size:10px;color:#5E6B5E;line-height:1.3;font-style:italic;margin-top:2px}
-.az-cnt{flex:0 0 42px;min-height:34px;border-radius:10px;border:1px solid #1B1B26;background:#16161C;display:flex;align-items:center;justify-content:center}
+.az-ru{font-size:10px;color:#5E6B5E;line-height:1.3;font-style:italic;margin-top:1px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.az-cnt{flex:0 0 34px;min-height:30px;border-radius:10px;border:1px solid #1B1B26;background:#16161C;display:flex;align-items:center;justify-content:center}
 .az-cnt:active{transform:scale(.94)}
-.az-n{font-size:17px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#A1A1AA;line-height:1}
+.az-n{font-size:13px;font-weight:700;font-family:ui-monospace,Menlo,monospace;color:#A1A1AA;line-height:1}
 .az-row.az-done .az-n{color:#4ADE80}
 .az-row.az-done .az-cnt{border-color:rgba(74,222,128,.4)}
 .az-row.az-done .az-name{color:#F5F5F7}
@@ -639,11 +639,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .az-tf-row{flex-direction:column;gap:5px}
 .az-tf-h{font-size:12.5px;color:#D4D4D8;font-weight:600}
 .az-tf-g{display:flex;gap:6px}
-.az-tf-c{flex:1;min-width:0;border-radius:10px;border:1px solid #1B1B26;background:#16161C;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.az-tf-w{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.az-tf-m{border-radius:8px;border:1px solid #16161C;background:none;color:#4E4E58;font-size:14px;font-weight:700;padding:1px 0}
+.az-tf-c{width:100%;min-width:0;border-radius:10px;border:1px solid #1B1B26;background:#16161C;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .az-tf-c:active{transform:scale(.96)}
 .az-tf-l{font-size:9.5px;color:#7A7A85;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
-.az-tf-n{font-size:12px;color:#6B6B75;font-family:ui-monospace,Menlo,monospace;font-weight:700}
-.az-tf-n b{font-size:15px;color:#A1A1AA}
+.az-tf-n{font-size:10px;color:#6B6B75;font-family:ui-monospace,Menlo,monospace;font-weight:700}
+.az-tf-n b{font-size:12px;color:#A1A1AA}
 .az-tf-c.az-done{border-color:rgba(74,222,128,.4)}
 .az-tf-c.az-done .az-tf-n b{color:#4ADE80}
 @media (prefers-reduced-motion:reduce){
@@ -749,7 +751,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.29.0";
+const VERSION="1.30.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1242,9 +1244,17 @@ function buildExport(days,_rw){
     if(supsLine)s+="  БАДы: "+supsLine+"\n";
     const chargeLine=CHARGE_EX.filter(([k])=>Number(d.charge?.[k])>0).map(([k,l])=>l+" "+d.charge[k]).join(", ");
     if(chargeLine)s+="  Зарядка (повторения): "+chargeLine+"\n";
+    // Времена берём из лога КАЖДОГО тапа. Раньше писался диапазон «первый–последний»,
+    // из-за чего выглядело так, будто зикр читался непрерывно всё это время. Теперь —
+    // список реальных отметок (длинные списки подрезаем, чтобы отчёт не распухал).
+    const zkTimes=id=>{
+      const ts=(d.zikrLog||[]).filter(x=>x.id===id&&x.t).map(x=>x.t);
+      if(!ts.length||bad)return "";
+      return " ["+(ts.length<=8?ts.join(", "):ts.slice(0,8).join(", ")+" …+"+(ts.length-8))+"]";
+    };
     const zkLine=AZKARS.filter(z=>Number((d.zikr||{})[z.id])>0).map(z=>{
-      const n=Number(d.zikr[z.id])||0,t=(d.zikrT||{})[z.id];
-      return z.label+" "+n+(z.target?"/"+z.target:"")+(n>=(z.target||1e9)?" ✓":"")+(bad?"":(t&&t.first?" ("+t.first+(t.last&&t.last!==t.first?"–"+t.last:"")+")":""));
+      const n=Number(d.zikr[z.id])||0;
+      return z.label+" "+n+(z.target?"/"+z.target:"")+(n>=(z.target||1e9)?" ✓":"")+zkTimes(z.id);
     }).join(", ");
     if(zkLine)s+="  📿 Азкары: "+zkLine+" · "+fmtPts(zikrMoney(d))+(zikrMoney(d)>=ZIKR_CAP?" (потолок)":"")+"\n";
     const tt=f=>d[f+"Time"]?" [в "+d[f+"Time"]+"]":"";
@@ -2916,21 +2926,14 @@ function tapZikr(id,delta){
 // Точечное обновление строки без пересборки экрана: цифра, отметка «выполнено» И ВРЕМЯ.
 // Раньше время рисовалось только при полной перерисовке — из-за этого казалось, что
 // фиксируется лишь первый азкар, а остальные «не записываются» (на деле писались все).
+// Точечное обновление строки без пересборки экрана. Время на экран НЕ выводим —
+// оно нужно только в отчёте, а на экране это был лишний шум.
 function zikrPaint(id,n){
   try{
     const z=zikrDef(id);
     const el=document.getElementById("zk-n-"+id);if(el)el.textContent=String(n);
     const wrap=document.getElementById("zk-"+id);
     if(wrap){const done=z&&z.target?n>=z.target:n>0;wrap.classList.toggle("az-done",done);}
-    const t=(getDay().zikrT||{})[id];
-    const nameEl=wrap?wrap.querySelector(".az-name"):null;
-    if(nameEl){
-      let chip=nameEl.querySelector(".az-tm");
-      if(t&&t.first){
-        if(!chip){chip=document.createElement("span");chip.className="az-tm";nameEl.appendChild(chip);}
-        chip.textContent=t.first+((t.last&&t.last!==t.first)?"–"+t.last:"");
-      }else if(chip)chip.remove();
-    }
   }catch(e){}
 }
 function zikrReset(id){
@@ -2950,16 +2953,18 @@ function zikrReset(id){
 let azkarOpen={};
 function azkarToggle(id){azkarOpen[id]=!azkarOpen[id];render();}
 function azkarRowHTML(day,z){
-  const n=zikrCount(day,z.id),t=day.zikrT?.[z.id];
+  const n=zikrCount(day,z.id);
   const done=z.target?n>=z.target:n>0;
   const open=!!azkarOpen[z.id];
-  const tm=(t&&t.first)?`<span class="az-tm">${t.first}${t.last&&t.last!==t.first?"–"+t.last:""}</span>`:"";
-  const tx=z.tx?`<div class="az-tx${open?" az-tx-open":""}">${escH(z.tx)}</div>`:"";
-  // Перевод — по тапу на название, чтобы список по умолчанию оставался плотным.
-  const ru=(open&&z.ru)?`<div class="az-ru">${escH(z.ru)}</div>`:"";
+  // Название и транскрипция часто СОВПАДАЮТ («Бисми-Ллях» / «Бисми-Ллях») — вторую копию
+  // не рисуем. Остаётся ровно одна транскрипция и одна строка перевода, как и просили.
+  const sameName=z.tx&&z.tx.trim()===z.label.trim();
+  const head=sameName?z.tx:z.label;
+  const tx=(z.tx&&!sameName)?`<div class="az-tx${open?" az-tx-open":""}">${escH(z.tx)}</div>`:"";
+  const ru=z.ru?`<div class="az-ru${open?" az-tx-open":""}">${escH(z.ru)}</div>`:"";
   return `<div class="az-row${done?" az-done":""}" id="zk-${z.id}">
     <button class="az-left" onclick="azkarToggle('${z.id}')">
-      <div class="az-name">${escH(z.label)}${z.target?`<span class="az-goal">×${z.target}</span>`:""}${tm}</div>
+      <div class="az-name">${escH(head)}${z.target?`<span class="az-goal">×${z.target}</span>`:""}</div>
       ${tx}${ru}
     </button>
     <button class="az-cnt" onclick="tapZikr('${z.id}',1)" oncontextmenu="event.preventDefault();tapZikr('${z.id}',-1)">
@@ -2974,10 +2979,13 @@ function tasbihRowHTML(day){
   const all=tf.every(z=>zikrCount(day,z.id)>=z.target);
   const cells=tf.map(z=>{
     const n=zikrCount(day,z.id),done=n>=z.target;
-    return `<button class="az-tf-c${done?" az-done":""}" id="zk-${z.id}" onclick="tapZikr('${z.id}',1)" oncontextmenu="event.preventDefault();tapZikr('${z.id}',-1)">
-      <span class="az-tf-l">${escH(z.label)}</span>
-      <span class="az-tf-n"><b id="zk-n-${z.id}">${n}</b>/${z.target}</span>
-    </button>`;
+    return `<div class="az-tf-w">
+      <button class="az-tf-c${done?" az-done":""}" id="zk-${z.id}" onclick="tapZikr('${z.id}',1)" oncontextmenu="event.preventDefault();tapZikr('${z.id}',-1)">
+        <span class="az-tf-l">${escH(z.label)}</span>
+        <span class="az-tf-n"><b id="zk-n-${z.id}">${n}</b>/${z.target}</span>
+      </button>
+      <button class="az-tf-m" onclick="tapZikr('${z.id}',-1)">−</button>
+    </div>`;
   }).join("");
   return `<div class="az-row az-tf-row${all?" az-done":""}">
     <div class="az-tf-h">Тасбих Фатимы${all?' <span style="color:#4ADE80">✓</span>':""}</div>
@@ -3380,6 +3388,8 @@ function settingsTab1HTML(day){
       <div style="font-size:11px;color:#6B6B75;margin-bottom:6px">Выйдет примерно <b style="color:#A1A1AA">${fmtK(sz)}</b> символов${n?"":" — весь журнал целиком"}.</div>${warn}`;})()}
     <button class="export-btn" onclick="copyReport()">📋 Копировать отчёт для Claude</button>
     <button class="export-btn" style="margin-top:8px;background:#16161C;border-color:#1B1B26;color:#A1A1AA" onclick="saveBackup()">💾 Скачать резервную копию (JSON)</button>
+    <div style="font-size:11px;color:#6B6B75;line-height:1.5;margin-top:14px">Обнулить журнал и начать новый отрезок с чистого листа. Копия скачается автоматически ПЕРЕД стиранием. Настройки, привычки и БАДы останутся.</div>
+    <button class="backup-btn" style="width:100%;margin-top:6px;border-color:${wipeArmed?"#F87171":"#1B1B26"};color:${wipeArmed?"#F87171":"#6B6B75"}" onclick="freshStart()">${wipeArmed?"⚠️ Стереть весь журнал? Жми ещё раз":"🧹 Чистый лист — обнулить журнал"}</button>
     ${archiveOpen?archiveHTML():`<button class="backup-btn" style="width:100%;margin-top:8px" onclick="openArchive()">🗄 Полугодовой архив (выгрузить и начать заново)</button>`}
     <button class="sup-arch-head" style="margin-top:10px" onclick="restoreOpen=!restoreOpen;render()">
       <span>↩︎ Восстановить из копии</span><span>${restoreOpen?"▲":"▼"}</span></button>
@@ -3923,6 +3933,32 @@ function archiveBannerHTML(){
   return `<div class="banner banner-warn"><b>🗄 Пора сделать полугодовой архив</b>
     <div style="font-size:12px;margin-top:4px;color:#D4D4D8;line-height:1.5">Выгрузи историю в файл и начни с чистого листа — чтобы память браузера не переполнилась и записи не начали теряться.</div>
     <div class="backup-row" style="margin-top:8px"><button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="openArchive()">🗄 Сделать архив</button></div></div>`;
+}
+/* 🧹 ЧИСТЫЙ ЛИСТ — осознанное обнуление журнала перед новым отрезком.
+   Порядок жёсткий и неслучайный: СНАЧАЛА скачивается резервная копия, и только если
+   она реально сохранилась — стираются дни. Настройки, привычки, БАДы и блокировки
+   НЕ трогаем: обнуляется журнал, а не приложение. Стираем и в облаке, иначе
+   синхронизация вернёт всё обратно через несколько секунд. */
+let wipeArmed=0;
+async function freshStart(){
+  if(!wipeArmed){
+    wipeArmed=1;vib(10);render();
+    setTimeout(()=>{if(wipeArmed){wipeArmed=0;render();}},8000);
+    return;
+  }
+  wipeArmed=0;
+  const n=Object.keys(days).length;
+  if(!confirm("ЧИСТЫЙ ЛИСТ\n\nБудет стёрт весь журнал: "+n+" дн.\nСначала скачается резервная копия.\n\nНастройки, привычки и БАДы останутся.\n\nПродолжить?")){render();return;}
+  try{saveBackup();}catch(e){logError("wipe-backup",e);}
+  if(!confirm("Копия скачана?\n\nПроверь папку «Загрузки». Если копии нет — жми ОТМЕНА, стирать не будем.")){toast("Отменено — данные целы");render();return;}
+  try{if(cloud&&cloud.wipeDays)await cloud.wipeDays();}catch(e){logError("wipe-cloud",e);}
+  days={};
+  try{for(const k of snapKeys())localStorage.removeItem(k);}catch(e){}
+  const r=safeWrite(KEY,days);
+  if(r.ok)lastWritten=JSON.stringify(days);
+  sel=todayKey();unlockedDay="";
+  meta.lastBackup=Date.now();saveMeta();
+  vibNice();toast("🧹 Чистый лист — начали заново");render();
 }
 function togglePaste(){pasteOpen=!pasteOpen;pasteText="";render();}
 function importPaste(){let obj;try{obj=JSON.parse(pasteText);}catch(e){importErr="Это не JSON. Скопируй копию целиком.";render();return;}if(!obj||obj._app!=="block3"||!obj.days){importErr="Формат не совпал.";render();return;}const s=sanitizeImportDays(obj.days);if(Object.keys(s.out).length===0){importErr="В копии нет дней с датами.";render();return;}pendingImport={days:s.out,meta:obj.meta&&typeof obj.meta==="object"?obj.meta:null,dropped:s.dropped,from:s.from,to:s.to,source:"paste"};render();}
@@ -4472,6 +4508,19 @@ cloud=(function(){
         save();
         return {ok:true,...r};
       }catch(e){logError("arch-restore",e);return {ok:false,why:(e&&e.message)||String(e)};}
+    },
+    // Полная очистка дней в облаке. Без неё «чистый лист» бесполезен: onSnapshot вернул бы
+    // всё обратно через несколько секунд.
+    async wipeDays(){
+      if(!S.ready||!S.user)return false;
+      try{
+        const {getDocs,writeBatch}=S.api;
+        const snap=await getDocs(daysCol());
+        let batch=writeBatch(S.db),n=0;
+        snap.forEach(dc=>{batch.delete(dc.ref);n++;if(n>=400){batch.commit();batch=writeBatch(S.db);n=0;}});
+        if(n>0)await batch.commit();
+        return true;
+      }catch(e){logError("cloud-wipe",e);return false;}
     },
     isConfigured(){return !!effectiveFirebaseConfig();},
     usingDefault(){return !meta.firebaseConfig;},
