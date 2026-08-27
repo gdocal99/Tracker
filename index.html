@@ -748,7 +748,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.26.0";
+const VERSION="1.27.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1962,12 +1962,20 @@ function closeQSheet(){qSheetOpen="";render();}
 function qSheetHTML(day){
   if(!qSheetOpen)return "";
   const stool=qSheetOpen==="stool";
-  const isB=!!day.items?.istinja_b;
+  const isS=!!day.items?.istinja_s,isB=!!day.items?.istinja_b;
   const AS=(typeof activeSups==="function")?activeSups():[];
   const supBtns=AS.slice(0,4).map(([id,l,st,u])=>`<button class="wbtn" onclick="changeSup('${id}',${st})">${l} +${st}${u}</button>`).join("");
+  const bBtn=`<button class="wbtn" style="min-height:56px;border-color:${isB?"#818CF8":"#4A3821"};color:${isB?"#818CF8":"#FBBF24"};font-size:15px" onclick="toggleItem('istinja_b');${stool?"closeQSheet()":"render()"}">${isB?"✓ Истинджа большая":"Истинджа большая"}</button>`;
+  // После отметки стула — короткий лист с одним вопросом, без лишнего шума на экране.
+  if(stool)return `<div class="modal-overlay" onclick="closeQSheet()"><div class="modal-box" onclick="event.stopPropagation()">
+    <div class="modal-header"><span class="modal-title">Стул отмечен</span><button class="nav-btn" onclick="closeQSheet()">✕</button></div>
+    ${bBtn}
+  </div></div>`;
+  const sBtn=`<button class="wbtn" style="border-color:${isS?"#818CF8":"#1B1B26"};color:${isS?"#818CF8":"#A1A1AA"}" onclick="toggleItem('istinja_s');render()">${isS?"✓ Истинджа малая":"Истинджа малая"}</button>`;
   return `<div class="modal-overlay" onclick="closeQSheet()"><div class="modal-box" onclick="event.stopPropagation()">
-    <div class="modal-header"><span class="modal-title">${stool?"Стул отмечен":"Быстрые отметки"}</span><button class="nav-btn" onclick="closeQSheet()">✕</button></div>
-    ${stool?`<button class="wbtn" style="min-height:56px;border-color:${isB?"#818CF8":"#4A3821"};color:${isB?"#818CF8":"#FBBF24"};font-size:15px" onclick="toggleItem('istinja_b');closeQSheet()">${isB?"✓ Истинджа большая отмечена":"✓ Отметить истинджу большую"}</button>`:""}
+    <div class="modal-header"><span class="modal-title">Быстрые отметки</span><button class="nav-btn" onclick="closeQSheet()">✕</button></div>
+    <div class="section-label" style="margin-top:2px">Очищение</div>
+    <div style="display:flex;gap:8px">${sBtn}${bBtn.replace('min-height:56px;','')}</div>
     <div class="section-label" style="margin-top:14px">Вода</div>
     <div style="display:flex;gap:8px"><button class="wbtn" onclick="changeWater(-250)">−250</button><button class="wbtn" onclick="changeWater(500)">+500</button><button class="wbtn" onclick="changeWater(1000)">+1л</button></div>
     <div class="section-label" style="margin-top:14px">Отметить</div>
@@ -2810,14 +2818,22 @@ function regimeInner(day,wd){
    Тап НЕ пересобирает экран (иначе на сотом тапе всё бы тормозило): цифру и полосу
    обновляем прямо в DOM, данные пишем тихо. Полная перерисовка — только на сбросе. */
 const AZKARS=[
-  // Блок А — пробуждение и сон.
+  // Пробуждение — доступно всегда: дневной сон тоже сон.
   {id:"wake",       grp:"wake",  label:"Дуа при пробуждении", tx:"Аль-хамду ли-Лляхи ллязи ахйана ба'да ма аматана ва иляйхи-н-нушур"},
+  // Сунна перед сном — одно целое.
   {id:"sleep_dua",  grp:"sleep", label:"Дуа перед сном",      tx:"Би-сми-кя Ллахумма амуту ва ахйа"},
   {id:"three_suras",grp:"sleep", label:"Три суры + обтирание",tx:"аль-Ихляс, аль-Фаляк, ан-Нас", target:3},
   {id:"tf_subhan",  grp:"tf",    label:"Субхана-Ллах",        tx:"", target:33},
   {id:"tf_hamd",    grp:"tf",    label:"Аль-хамду ли-Ллях",   tx:"", target:33},
   {id:"tf_akbar",   grp:"tf",    label:"Аллаху акбар",        tx:"", target:34},
-  // Блок Б — ситуативные, видны всегда.
+  // Постоянные — считаются в любое время, без цели.
+  {id:"salawat",    grp:"any", label:"Салават Пророку ﷺ", tx:"Аллахумма салли 'аля Мухаммадин ва 'аля али Мухаммад"},
+  {id:"subhan",     grp:"any", label:"Субхана-Ллах",      tx:"Субхана-Ллахи ва би-хамдих"},
+  {id:"hamd",       grp:"any", label:"Аль-хамду ли-Ллях", tx:"Аль-хамду ли-Ллях"},
+  {id:"istighfar",  grp:"any", label:"Астагфиру-Ллах",    tx:"Астагфиру-Ллаха ва атубу иляйхи"},
+  {id:"akbar",      grp:"any", label:"Аллаху акбар",      tx:"Аллаху акбар"},
+  {id:"hawqala",    grp:"any", label:"Ля хауля ва ля куввата",tx:"Ля хауля ва ля куввата илля би-Ллях"},
+  // Ситуативные — при ситуации.
   {id:"eat_start",  grp:"sit", label:"Начало еды",       tx:"Бисми-Ллях"},
   {id:"eat_end",    grp:"sit", label:"Конец еды",        tx:"Аль-хамду ли-Лляхи ллязи ат'амани хаза ва разаканихи мин гайри хаулин минни ва ля кувва"},
   {id:"dress_on",   grp:"sit", label:"Надевание одежды", tx:"Аль-хамду ли-Лляхи ллязи кясани хаза с-сауба ва разаканихи мин гайри хаулин минни ва ля кувва"},
@@ -2827,9 +2843,6 @@ const AZKARS=[
   {id:"home_out",   grp:"sit", label:"Выход из дома",    tx:"Бисми-Лляхи, таваккальту 'аля-Ллахи, ва ля хауля ва ля куввата илля би-Ллях"},
   {id:"home_in",    grp:"sit", label:"Вход в дом",       tx:"Бисми-Ллях"}
 ];
-// Окно отхода ко сну: 20:00–05:00, переходит через полночь. Счётчики обнуляются сами —
-// они живут внутри дня, а день сменяется в полночь.
-function sleepWindowOpen(){const p=tzParts(nowMs());const h=p.h+p.mi/60;return h>=20||h<5;}
 function zikrDef(id){return AZKARS.find(z=>z.id===id);}
 function zikrCount(day,id){return Number((day.zikr||{})[id])||0;}
 // Тихая запись дня без перерисовки экрана — чтобы счёт на 100 тапов оставался мгновенным.
@@ -2885,12 +2898,24 @@ function tapZikr(id,delta){
   }
 }
 // Точечное обновление цифры/полосы без пересборки экрана.
+// Точечное обновление строки без пересборки экрана: цифра, отметка «выполнено» И ВРЕМЯ.
+// Раньше время рисовалось только при полной перерисовке — из-за этого казалось, что
+// фиксируется лишь первый азкар, а остальные «не записываются» (на деле писались все).
 function zikrPaint(id,n){
   try{
     const z=zikrDef(id);
     const el=document.getElementById("zk-n-"+id);if(el)el.textContent=String(n);
     const wrap=document.getElementById("zk-"+id);
     if(wrap){const done=z&&z.target?n>=z.target:n>0;wrap.classList.toggle("az-done",done);}
+    const t=(getDay().zikrT||{})[id];
+    const nameEl=wrap?wrap.querySelector(".az-name"):null;
+    if(nameEl){
+      let chip=nameEl.querySelector(".az-tm");
+      if(t&&t.first){
+        if(!chip){chip=document.createElement("span");chip.className="az-tm";nameEl.appendChild(chip);}
+        chip.textContent=t.first+((t.last&&t.last!==t.first)?"–"+t.last:"");
+      }else if(chip)chip.remove();
+    }
   }catch(e){}
 }
 function zikrReset(id){
@@ -2943,16 +2968,13 @@ function tasbihRowHTML(day){
   </div>`;
 }
 function azkarHTML(day){
+  const sec=(t,list)=>list.length?`<div class="az-h">${t}</div>`+list.map(z=>azkarRowHTML(day,z)).join(""):"";
+  const g=n=>AZKARS.filter(z=>z.grp===n);
   let h="";
-  h+=`<div class="az-h">Пробуждение</div>`;
-  h+=AZKARS.filter(z=>z.grp==="wake").map(z=>azkarRowHTML(day,z)).join("");
-  if(sleepWindowOpen()||sel!==todayKey()){
-    h+=`<div class="az-h">Отход ко сну<span class="az-h-w">20:00–05:00</span></div>`;
-    h+=AZKARS.filter(z=>z.grp==="sleep").map(z=>azkarRowHTML(day,z)).join("");
-    h+=tasbihRowHTML(day);
-  }
-  h+=`<div class="az-h">Ситуативные</div>`;
-  h+=AZKARS.filter(z=>z.grp==="sit").map(z=>azkarRowHTML(day,z)).join("");
+  h+=sec("Пробуждение",g("wake"));
+  h+=`<div class="az-h">Перед сном</div>`+g("sleep").map(z=>azkarRowHTML(day,z)).join("")+tasbihRowHTML(day);
+  h+=sec("Постоянные",g("any"));
+  h+=sec("Ситуативные",g("sit"));
   return h;
 }
 function azkarCount(day){return AZKARS.filter(z=>zikrCount(day,z.id)>0).length;}
@@ -3018,7 +3040,10 @@ function blocksHTML(day,wd){
     push("din",blockShell("din","🕌 Дин (вера)",cntChip(pd,5),()=>{
       // Ряд кнопок намаза НЕ дублируем: он уже есть в шапке, где его и отмечают.
       // Здесь остаются только времена отметок (их можно поправить) — это не дубль, а другая функция.
-      let h=prayerTimesHTML(day)+`<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>`+itemsBlock(dinItems,day,wd);
+      // Истинджа отмечается В МОМЕНТ события — она живёт в шапке (кнопка «туалет» и лист
+      // после отметки стула). Здесь её НЕ дублируем: раздел остаётся под осознанное поклонение.
+      const dinShown=dinItems.filter(it=>it.id!=="istinja_s"&&it.id!=="istinja_b");
+      let h=prayerTimesHTML(day)+`<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>`+itemsBlock(dinShown,day,wd);
       h+=subHTML("🤲","Иман (состояние веры)",sliderHTML("Иман","spirit",day.spirit));
       if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`);
       return h;
