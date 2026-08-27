@@ -751,7 +751,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.30.0";
+const VERSION="1.31.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -910,8 +910,10 @@ const CATEGORIES=[
  ]},
  {id:"sunnah",name:"Уход по сунне",items:[
    {id:"nails",label:"Ногти",type:"ob",pts:0.5,sched:[0,2,5]},
-   {id:"hair",label:"Волосы: пах + подмышки",type:"ob",pts:0.5,sched:[5]},
-   {id:"ears",label:"Чистка ушей",type:"des",pts:0.5},
+   {id:"shave_beard",label:"Борода",type:"ob",pts:0.5,sched:[2,5]},
+   {id:"shave_groin",label:"Пах",type:"ob",pts:0.5,sched:[2,5]},
+   {id:"shave_armpits",label:"Подмышки",type:"ob",pts:0.5,sched:[2,5]},
+   {id:"ears",label:"Чистка ушей",type:"ob",pts:0.5,sched:[2,5]},
  ]},
 ];
 
@@ -2686,7 +2688,7 @@ function catItemsHTML(cat,day,wd){
   offDone.forEach(it=>{inner+=catRowHTML(it,day,wd);});
   if(factV.length){inner+=`<div class="sub-label sub-fact">по факту · не входит в счёт</div>`;factV.forEach(it=>{inner+=catRowHTML(it,day,wd);});}
   if(cat.id==="body")inner+=waterHTML(day);
-  if(cat.id==="sunnah")inner+=`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`;
+  if(cat.id==="sunnah")inner+=`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Борода, пах, подмышки, уши: Вт · Пт</div>`;
   return inner;
 }
 // Есть ли что показать в блоке СЕГОДНЯ (иначе блок не рисуем — не мозолит глаза).
@@ -3071,7 +3073,7 @@ function blocksHTML(day,wd){
       const dinShown=dinItems.filter(it=>it.id!=="istinja_s"&&it.id!=="istinja_b");
       let h=prayerTimesHTML(day)+`<div class="pt-cap">Умм аль-Кура · Минай · Фаджр летом приближённо</div>`+itemsBlock(dinShown,day,wd);
       h+=subHTML("🤲","Иман (состояние веры)",sliderHTML("Иман","spirit",day.spirit));
-      if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Волосы: Пт</div>`);
+      if(hasVisible(sunnah,day,wd))h+=subHTML("🌙","Уход по сунне",itemsBlock(sunnah,day,wd)+`<div class="sched-cap">Ногти: Вс · Вт · Пт &nbsp;|&nbsp; Борода, пах, подмышки, уши: Вт · Пт</div>`);
       return h;
     }));
   }
