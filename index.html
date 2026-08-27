@@ -627,6 +627,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .az-tm{font-size:9.5px;color:#4E4E58;font-family:ui-monospace,Menlo,monospace}
 .az-tx{font-size:10px;color:#7A7A85;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .az-tx-open{-webkit-line-clamp:unset;display:block}
+.az-ru{font-size:10px;color:#5E6B5E;line-height:1.3;font-style:italic;margin-top:2px}
 .az-cnt{flex:0 0 42px;min-height:34px;border-radius:10px;border:1px solid #1B1B26;background:#16161C;display:flex;align-items:center;justify-content:center}
 .az-cnt:active{transform:scale(.94)}
 .az-n{font-size:17px;font-weight:800;font-family:ui-monospace,Menlo,monospace;color:#A1A1AA;line-height:1}
@@ -748,7 +749,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.27.0";
+const VERSION="1.28.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2819,29 +2820,30 @@ function regimeInner(day,wd){
    обновляем прямо в DOM, данные пишем тихо. Полная перерисовка — только на сбросе. */
 const AZKARS=[
   // Пробуждение — доступно всегда: дневной сон тоже сон.
-  {id:"wake",       grp:"wake",  label:"Дуа при пробуждении", tx:"Аль-хамду ли-Лляхи ллязи ахйана ба'да ма аматана ва иляйхи-н-нушур"},
+  {id:"wake",       grp:"wake",  label:"Дуа при пробуждении", tx:"Аль-хамду ли-Лляхи ллязи ахйана ба'да ма аматана ва иляйхи-н-нушур", ru:"Хвала Аллаху, Который оживил нас после того, как умертвил, и к Нему возвращение"},
   // Сунна перед сном — одно целое.
-  {id:"sleep_dua",  grp:"sleep", label:"Дуа перед сном",      tx:"Би-сми-кя Ллахумма амуту ва ахйа"},
-  {id:"three_suras",grp:"sleep", label:"Три суры + обтирание",tx:"аль-Ихляс, аль-Фаляк, ан-Нас", target:3},
-  {id:"tf_subhan",  grp:"tf",    label:"Субхана-Ллах",        tx:"", target:33},
-  {id:"tf_hamd",    grp:"tf",    label:"Аль-хамду ли-Ллях",   tx:"", target:33},
-  {id:"tf_akbar",   grp:"tf",    label:"Аллаху акбар",        tx:"", target:34},
-  // Постоянные — считаются в любое время, без цели.
-  {id:"salawat",    grp:"any", label:"Салават Пророку ﷺ", tx:"Аллахумма салли 'аля Мухаммадин ва 'аля али Мухаммад"},
-  {id:"subhan",     grp:"any", label:"Субхана-Ллах",      tx:"Субхана-Ллахи ва би-хамдих"},
-  {id:"hamd",       grp:"any", label:"Аль-хамду ли-Ллях", tx:"Аль-хамду ли-Ллях"},
-  {id:"istighfar",  grp:"any", label:"Астагфиру-Ллах",    tx:"Астагфиру-Ллаха ва атубу иляйхи"},
-  {id:"akbar",      grp:"any", label:"Аллаху акбар",      tx:"Аллаху акбар"},
-  {id:"hawqala",    grp:"any", label:"Ля хауля ва ля куввата",tx:"Ля хауля ва ля куввата илля би-Ллях"},
+  {id:"sleep_dua",  grp:"sleep", label:"Дуа перед сном",      tx:"Би-сми-кя Ллахумма амуту ва ахйа", ru:"С именем Твоим, о Аллах, я умираю и оживаю"},
+  {id:"three_suras",grp:"sleep", label:"Три суры + обтирание",tx:"аль-Ихляс, аль-Фаляк, ан-Нас", ru:"Прочитать, подуть в ладони и обтереть тело — трижды", target:3},
+  {id:"tf_subhan",  grp:"tf",    label:"Субхана-Ллах",        tx:"", ru:"Пречист Аллах", target:33},
+  {id:"tf_hamd",    grp:"tf",    label:"Аль-хамду ли-Ллях",   tx:"", ru:"Хвала Аллаху", target:33},
+  {id:"tf_akbar",   grp:"tf",    label:"Аллаху акбар",        tx:"", ru:"Аллах Велик", target:34},
+  // Постоянные — считаются в любое время, без цели и без привязки к ситуации.
+  {id:"salawat",    grp:"any", label:"Салават Пророку ﷺ", tx:"Аллахумма салли 'аля Мухаммадин ва 'аля али Мухаммад", ru:"О Аллах, благослови Мухаммада и род Мухаммада"},
+  {id:"bismillah",  grp:"any", label:"Бисми-Ллях",        tx:"Бисми-Ллях", ru:"С именем Аллаха"},
+  {id:"subhan",     grp:"any", label:"Субхана-Ллах",      tx:"Субхана-Ллахи ва би-хамдих", ru:"Пречист Аллах и хвала Ему"},
+  {id:"hamd",       grp:"any", label:"Аль-хамду ли-Ллях", tx:"Аль-хамду ли-Ллях", ru:"Хвала Аллаху"},
+  {id:"istighfar",  grp:"any", label:"Астагфиру-Ллах",    tx:"Астагфиру-Ллаха ва атубу иляйхи", ru:"Прошу прощения у Аллаха и приношу Ему покаяние"},
+  {id:"akbar",      grp:"any", label:"Аллаху акбар",      tx:"Аллаху акбар", ru:"Аллах Велик"},
+  {id:"hawqala",    grp:"any", label:"Ля хауля ва ля куввата", tx:"Ля хауля ва ля куввата илля би-Ллях", ru:"Нет мощи и силы ни у кого, кроме Аллаха"},
   // Ситуативные — при ситуации.
-  {id:"eat_start",  grp:"sit", label:"Начало еды",       tx:"Бисми-Ллях"},
-  {id:"eat_end",    grp:"sit", label:"Конец еды",        tx:"Аль-хамду ли-Лляхи ллязи ат'амани хаза ва разаканихи мин гайри хаулин минни ва ля кувва"},
-  {id:"dress_on",   grp:"sit", label:"Надевание одежды", tx:"Аль-хамду ли-Лляхи ллязи кясани хаза с-сауба ва разаканихи мин гайри хаулин минни ва ля кувва"},
-  {id:"dress_off",  grp:"sit", label:"Снятие одежды",    tx:"Бисми-Ллях"},
-  {id:"wc_in",      grp:"sit", label:"Вход в туалет",    tx:"Бисми-Ллях. Аллахумма инни а'узу би-кя мина-ль-хубуси ва-ль-хабаис"},
-  {id:"wc_out",     grp:"sit", label:"Выход из туалета", tx:"Гуфрана-кя"},
-  {id:"home_out",   grp:"sit", label:"Выход из дома",    tx:"Бисми-Лляхи, таваккальту 'аля-Ллахи, ва ля хауля ва ля куввата илля би-Ллях"},
-  {id:"home_in",    grp:"sit", label:"Вход в дом",       tx:"Бисми-Ллях"}
+  {id:"eat_start",  grp:"sit", label:"Начало еды",       tx:"Бисми-Ллях", ru:"С именем Аллаха"},
+  {id:"eat_end",    grp:"sit", label:"Конец еды",        tx:"Аль-хамду ли-Лляхи ллязи ат'амани хаза ва разаканихи мин гайри хаулин минни ва ля кувва", ru:"Хвала Аллаху, Который накормил меня этим и наделил этим без усилия и мощи с моей стороны"},
+  {id:"dress_on",   grp:"sit", label:"Надевание одежды", tx:"Аль-хамду ли-Лляхи ллязи кясани хаза с-сауба ва разаканихи мин гайри хаулин минни ва ля кувва", ru:"Хвала Аллаху, Который одел меня в эту одежду и наделил меня ею без усилия и мощи с моей стороны"},
+  {id:"dress_off",  grp:"sit", label:"Снятие одежды",    tx:"Бисми-Ллях", ru:"С именем Аллаха"},
+  {id:"wc_in",      grp:"sit", label:"Вход в туалет",    tx:"Бисми-Ллях. Аллахумма инни а'узу би-кя мина-ль-хубуси ва-ль-хабаис", ru:"С именем Аллаха. О Аллах, я прибегаю к Твоей защите от нечистых мужского и женского пола"},
+  {id:"wc_out",     grp:"sit", label:"Выход из туалета", tx:"Гуфрана-кя", ru:"Прошу прощения у Тебя"},
+  {id:"home_out",   grp:"sit", label:"Выход из дома",    tx:"Бисми-Лляхи, таваккальту 'аля-Ллахи, ва ля хауля ва ля куввата илля би-Ллях", ru:"С именем Аллаха, я уповаю на Аллаха, и нет мощи и силы ни у кого, кроме Аллаха"},
+  {id:"home_in",    grp:"sit", label:"Вход в дом",       tx:"Бисми-Ллях", ru:"С именем Аллаха"}
 ];
 function zikrDef(id){return AZKARS.find(z=>z.id===id);}
 function zikrCount(day,id){return Number((day.zikr||{})[id])||0;}
@@ -2940,10 +2942,12 @@ function azkarRowHTML(day,z){
   const open=!!azkarOpen[z.id];
   const tm=(t&&t.first)?`<span class="az-tm">${t.first}${t.last&&t.last!==t.first?"–"+t.last:""}</span>`:"";
   const tx=z.tx?`<div class="az-tx${open?" az-tx-open":""}">${escH(z.tx)}</div>`:"";
+  // Перевод — по тапу на название, чтобы список по умолчанию оставался плотным.
+  const ru=(open&&z.ru)?`<div class="az-ru">${escH(z.ru)}</div>`:"";
   return `<div class="az-row${done?" az-done":""}" id="zk-${z.id}">
     <button class="az-left" onclick="azkarToggle('${z.id}')">
       <div class="az-name">${escH(z.label)}${z.target?`<span class="az-goal">×${z.target}</span>`:""}${tm}</div>
-      ${tx}
+      ${tx}${ru}
     </button>
     <button class="az-cnt" onclick="tapZikr('${z.id}',1)" oncontextmenu="event.preventDefault();tapZikr('${z.id}',-1)">
       <span class="az-n" id="zk-n-${z.id}">${n}</span>
@@ -2964,6 +2968,7 @@ function tasbihRowHTML(day){
   }).join("");
   return `<div class="az-row az-tf-row${all?" az-done":""}">
     <div class="az-tf-h">Тасбих Фатимы${all?' <span style="color:#4ADE80">✓</span>':""}</div>
+    <div class="az-ru" style="margin:-2px 0 1px">Пречист Аллах · Хвала Аллаху · Аллах Велик</div>
     <div class="az-tf-g">${cells}</div>
   </div>`;
 }
