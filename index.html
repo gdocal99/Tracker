@@ -624,7 +624,6 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .az-left{flex:1;min-width:0;background:none;border:none;padding:1px 0;text-align:left;display:flex;flex-direction:column;gap:1px}
 .az-name{font-size:12.5px;color:#D4D4D8;font-weight:600;line-height:1.2;display:flex;align-items:baseline;gap:6px;flex-wrap:wrap}
 .az-goal{font-size:10px;color:#6B6B75;font-weight:700}
-.az-tm{font-size:9.5px;color:#4E4E58;font-family:ui-monospace,Menlo,monospace}
 .az-tx{font-size:10px;color:#7A7A85;line-height:1.25;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .az-tx-open{-webkit-line-clamp:unset;display:block}
 .az-ru{font-size:10px;color:#5E6B5E;line-height:1.3;font-style:italic;margin-top:1px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -639,14 +638,15 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border:none;border-ra
 .az-tf-row{flex-direction:column;gap:5px}
 .az-tf-h{font-size:12.5px;color:#D4D4D8;font-weight:600}
 .az-tf-g{display:flex;gap:6px}
-.az-tf-w{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
-.az-tf-m{border-radius:8px;border:1px solid #16161C;background:none;color:#4E4E58;font-size:14px;font-weight:700;padding:1px 0}
-.az-tf-c{width:100%;min-width:0;border-radius:10px;border:1px solid #1B1B26;background:#16161C;padding:7px 4px;display:flex;flex-direction:column;align-items:center;gap:2px}
+.az-tf-w{flex:1;min-width:0;display:flex;flex-direction:column;gap:0}
+.az-tf-m{border-radius:0 0 10px 10px;border:1px solid #1B1B26;border-top:1px solid #1B1B26;background:#101017;color:#5E5E68;font-size:13px;font-weight:700;padding:2px 0;line-height:1}
+.az-tf-c{width:100%;min-width:0;border-radius:10px 10px 0 0;border:1px solid #1B1B26;border-bottom:none;background:#16161C;padding:6px 4px 5px;display:flex;flex-direction:column;align-items:center;gap:2px}
 .az-tf-c:active{transform:scale(.96)}
-.az-tf-l{font-size:9.5px;color:#7A7A85;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.az-tf-l{font-size:9px;color:#7A7A85;font-weight:600;line-height:1.2;text-align:center;min-height:22px;display:flex;align-items:center;justify-content:center}
 .az-tf-n{font-size:10px;color:#6B6B75;font-family:ui-monospace,Menlo,monospace;font-weight:700}
 .az-tf-n b{font-size:12px;color:#A1A1AA}
 .az-tf-c.az-done{border-color:rgba(74,222,128,.4)}
+.az-tf-w:has(.az-done) .az-tf-m{border-color:rgba(74,222,128,.4)}
 .az-tf-c.az-done .az-tf-n b{color:#4ADE80}
 @media (prefers-reduced-motion:reduce){
 .check-box.just,.task-box.just,.prayer-btn.just,.hist-cell.crown-cell,.streak-tag.tier1,.streak-tag.tier2,.life-fill::after,.cat-pulse,.cf,.fx-wave,.fx-flash,.fx-p,.cat-body-anim{animation:none!important}
@@ -751,7 +751,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.31.0";
+const VERSION="1.31.1";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -2844,7 +2844,7 @@ const AZKARS=[
   {id:"tf_hamd",    grp:"tf",    pts:0.02, label:"Аль-хамду ли-Ллях",   tx:"", ru:"Хвала Аллаху", target:33},
   {id:"tf_akbar",   grp:"tf",    pts:0.02, label:"Аллаху акбар",        tx:"", ru:"Аллах Велик", target:34},
   // Постоянные — считаются в любое время, без цели и без привязки к ситуации.
-  {id:"salawat",    grp:"any", pts:0.02, label:"Салават Пророку ﷺ", tx:"Аллахумма салли 'аля Мухаммадин ва 'аля али Мухаммад", ru:"О Аллах, благослови Мухаммада и род Мухаммада"},
+  {id:"salawat",    grp:"any", pts:0.02, label:"Салават Пророку",  tx:"Аллахумма салли 'аля Мухаммадин ва 'аля али Мухаммад", ru:"О Аллах, благослови Мухаммада и род Мухаммада"},
   {id:"bismillah",  grp:"any", pts:0.01, label:"Бисми-Ллях",        tx:"Бисми-Ллях", ru:"С именем Аллаха"},
   {id:"subhan",     grp:"any", pts:0.01, label:"Субхана-Ллах",      tx:"Субхана-Ллахи ва би-хамдих", ru:"Пречист Аллах и хвала Ему"},
   {id:"hamd",       grp:"any", pts:0.01, label:"Аль-хамду ли-Ллях", tx:"Аль-хамду ли-Ллях", ru:"Хвала Аллаху"},
