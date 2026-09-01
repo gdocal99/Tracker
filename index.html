@@ -753,7 +753,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.32.0";
+const VERSION="1.33.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -1029,13 +1029,20 @@ function dayComplete(day){if(!day)return false;for(const p of PRAYERS){if(!day.p
 function dayTouched(d){if(!d)return false;if(d.items&&Object.values(d.items).some(Boolean))return true;if(d.prayers&&Object.values(d.prayers).some(Boolean))return true;if(d.water>0)return true;if(d.slip||d.onTime||d.bounced||d.urge)return true;if(d.energy!==""&&d.energy!=null)return true;if(d.drift!==""&&d.drift!=null)return true;if(d.story||d.main||d.block||d.seq||d.extract||d.analysis||d.mark||d.poop||d.income||d.weight||d.pulse||d.bpSys||d.sleepDown||d.sleepUp)return true;if(d.sups&&Object.values(d.sups).some(v=>v>0))return true;if((d.workLog&&d.workLog.length)||(d.meals&&d.meals.length))return true;return false;}
 const PENALTY_FROM="2026-07-09";
 const HIST_FLOOR="2026-06-01";
-const TRACK_START="2026-07-26";
+const TRACK_START="2026-07-26"; // историческое начало, осталось для старых журналов
+function trackStart(){
+  try{
+    if(meta.trackStart&&isDayKey(meta.trackStart))return meta.trackStart;
+    const ks=Object.keys(days).filter(isDayKey).sort();
+    return ks.length?ks[0]:todayKey();
+  }catch(e){return TRACK_START;}
+}
 // Пропущенный день = ПРОШЛЫЙ день (строго до сегодня) в диапазоне ведения, где заполнено
 // МЕНЬШЕ 5 ОТДЕЛЬНЫХ ОТВЕТОВ (галочки, намазы, ползунки, поля, записи логов — поштучно).
 // Текущий и будущие дни НИКОГДА не помечаются — чтобы не ломать ввод за сегодня.
 function isSkippedDay(dk){
   if(dayNarrated(days[dk]))return false;   // день рассказан словами — это не пропуск
-  return dk<todayKey()&&dk>=TRACK_START&&answersCount(days[dk])<5;
+  return dk<todayKey()&&dk>=trackStart()&&answersCount(days[dk])<5;
 }
 // Поштучный счёт ответов за день. Именно он решает, ставить ли крестик:
 // один заполненный день легко набирает десятки ответов, крестик — только на почти пустых.
@@ -3242,10 +3249,10 @@ function render(){
   let topBanner="";
   if(Object.keys(days).length===0){topBanner=`<div class="banner banner-empty">Данных нет. Если это не первый запуск — сначала загрузи последнюю копию.<div class="backup-row" style="margin-top:10px"><button class="backup-btn" onclick="loadBackup()">📂 Загрузить копию</button></div></div>`;}
 
-  // Календарь начинается РОВНО с начала отслеживания (TRACK_START = 26 июля 2026), а не с самых
+  // Календарь начинается РОВНО с начала отслеживания (см. trackStart), а не с самых
   // ранних старых данных и не «сегодня−60». Старые дни до этой даты в сетке не показываются.
   // (Если сегодня почему-то раньше TRACK_START — включаем и сегодня, чтобы оно не пропало.)
-  const periodStart=[TRACK_START,todayKey()].sort()[0];
+  const periodStart=[trackStart(),todayKey()].sort()[0];
   const periodEnd=addDays(todayKey(),45);
   let histHTML="",curMonth=-1,kk=periodStart;
   while(kk<=periodEnd){
@@ -3963,18 +3970,31 @@ async function freshStart(){
     return;
   }
   wipeArmed=0;
+  // ЗАЩИТА ДОСТУПА: если облако подключено, но вход не выполнен, стирать локально нельзя —
+  // облако при следующем входе вернёт всё обратно, а «чистый лист» окажется обманом.
+  // Про такое лучше честно предупредить, чем молча сделать наполовину.
+  if(cloud&&cloud.isConfigured&&cloud.isConfigured()&&!(cloud.isSignedIn&&cloud.isSignedIn())){
+    toast("Сначала войди в аккаунт — иначе облако вернёт данные обратно");
+    vib(12);render();return;
+  }
   const n=Object.keys(days).length;
   if(!confirm("ЧИСТЫЙ ЛИСТ\n\nБудет стёрт весь журнал: "+n+" дн.\nСначала скачается резервная копия.\n\nНастройки, привычки и БАДы останутся.\n\nПродолжить?")){render();return;}
   try{saveBackup();}catch(e){logError("wipe-backup",e);}
   if(!confirm("Копия скачана?\n\nПроверь папку «Загрузки». Если копии нет — жми ОТМЕНА, стирать не будем.")){toast("Отменено — данные целы");render();return;}
-  try{if(cloud&&cloud.wipeDays)await cloud.wipeDays();}catch(e){logError("wipe-cloud",e);}
+  let cloudOk=true;
+  try{if(cloud&&cloud.wipeDays)cloudOk=await cloud.wipeDays();}catch(e){logError("wipe-cloud",e);cloudOk=false;}
   days={};
   try{for(const k of snapKeys())localStorage.removeItem(k);}catch(e){}
   const r=safeWrite(KEY,days);
   if(r.ok)lastWritten=JSON.stringify(days);
   sel=todayKey();unlockedDay="";
+  // Новая точка отсчёта: календарь начинается с сегодняшнего дня, а не тянется пустым
+  // с прежней даты. Без этого после обнуления висели бы пустые недели «до начала».
+  meta.trackStart=todayKey();
   meta.lastBackup=Date.now();saveMeta();
-  vibNice();toast("🧹 Чистый лист — начали заново");render();
+  vibNice();
+  toast(cloudOk?"🧹 Чистый лист — отсчёт с сегодня":"🧹 Локально чисто, облако не ответило");
+  render();
 }
 function togglePaste(){pasteOpen=!pasteOpen;pasteText="";render();}
 function importPaste(){let obj;try{obj=JSON.parse(pasteText);}catch(e){importErr="Это не JSON. Скопируй копию целиком.";render();return;}if(!obj||obj._app!=="block3"||!obj.days){importErr="Формат не совпал.";render();return;}const s=sanitizeImportDays(obj.days);if(Object.keys(s.out).length===0){importErr="В копии нет дней с датами.";render();return;}pendingImport={days:s.out,meta:obj.meta&&typeof obj.meta==="object"?obj.meta:null,dropped:s.dropped,from:s.from,to:s.to,source:"paste"};render();}
@@ -4162,6 +4182,7 @@ function mergeMetaIn(im,replace){
       if(Array.isArray(meta[f]))meta[f]=meta[f].filter(x=>!(x&&T.has(x.id)));
   }
   if(im.lifeTarget)meta.lifeTarget=im.lifeTarget;
+  if(im.trackStart)meta.trackStart=im.trackStart;
   saveMeta();applyCustomItems();
 }
 // «Заменить всё» — единственная кнопка в приложении, которая стирает историю целиком. Раньше она
