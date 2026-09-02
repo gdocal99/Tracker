@@ -753,7 +753,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.33.0";
+const VERSION="1.34.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -980,9 +980,13 @@ function _hash(str){
   for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
   return h.toString(36);
 }
-function daysFingerprint(D){
-  const keys=Object.keys(D||{}).filter(isDayKey).sort();
-  const body=keys.map(k=>k+":"+_stableStr(D[k])).join("|");
+function daysFingerprint(D,before){
+  const lim=before||seasonStart();
+  const keys=Object.keys(D||{}).filter(isDayKey).filter(k=>k<lim).sort();
+  // Погоду из отпечатка исключаем: она догружается фоном сама и раньше ломала сверку,
+  // отбрасывая пользователя на «скачай архив заново» бесконечно.
+  const strip=d=>{const o={...(d||{})};delete o.weather;return o;};
+  const body=keys.map(k=>k+":"+_stableStr(strip(D[k]))).join("|");
   return {n:keys.length,from:keys[0]||"",to:keys[keys.length-1]||"",sum:_hash(body)};
 }
 function fpEqual(a,b){return !!a&&!!b&&a.n===b.n&&a.from===b.from&&a.to===b.to&&a.sum===b.sum;}
@@ -3823,10 +3827,18 @@ async function saveBackup(auto){
      3) и только потом чистится локальная база и облако.
    НАСТРОЙКИ (цели, блокировки, кастомные пункты, БАДы) НЕ стираются — это не история. */
 let archiveOpen=false,archiveSaved=false,archiveWord="";
-const ARCH_HOLD_MS=15*60*1000;   // окно на проверку файла: 15 минут, БЕЗ автостирания
+const ARCH_HOLD_MS=0;   // ожидания нет: оно ничего не охраняло, а сверка файла и слово СТЕРЕТЬ — охраняют
 let _archTick=null;
 // Полугодие, к которому относится текущий момент. Сентябрьское полугодие тянется через Новый
 // год, поэтому январь и февраль принадлежат сентябрю ПРОШЛОГО года, а не текущего.
+// Начало текущего полугодия датой-ключом: 1 сентября или 1 марта.
+// Именно с неё начинается новый период — и до неё стирается история.
+function seasonStart(){
+  const p=tzParts(nowMs());
+  if(p.mo>=9)return p.y+"-09-01";
+  if(p.mo<3)return (p.y-1)+"-09-01";
+  return p.y+"-03-01";
+}
 function archiveSeason(){
   const p=tzParts(nowMs());
   if(p.mo>=9)return p.y+"-09";        // сен–дек
@@ -3898,7 +3910,6 @@ function archiveWordInput(v){archiveWord=String(v||"").trim().toUpperCase();rend
 async function archiveWipe(){
   if(!archiveSaved||!archState.fp){toast("Сначала скачай архив");return;}
   if(!archState.verifiedAt){toast("Сначала проверь файл — загрузи его обратно");return;}
-  if(archHoldLeft()>0){toast("Ещё "+fmtLeft(archHoldLeft())+" на проверку файла");return;}
   if(archiveWord!=="СТЕРЕТЬ"){toast("Введи слово СТЕРЕТЬ");return;}
   const nowFp=daysFingerprint(days);
   if(!fpEqual(nowFp,archState.fp)){
@@ -3906,18 +3917,23 @@ async function archiveWipe(){
                archState.fp.n+" дн.). Их в архиве нет — скачай архив заново и проверь снова.";
     archiveSaved=false;archState={fp:null,verifiedAt:0};archiveWord="";saveUI();render();return;
   }
-  const n=Object.keys(days).length;
-  if(!confirm("Стереть все "+n+" дней из приложения и облака?\n\nФайл проверен и содержит все "+n+" дн.\nНастройки (цели, блокировки, БАДы) останутся.\nБез файла историю не вернуть."))return;
-  try{if(cloud&&cloud.wipeDays)await cloud.wipeDays();}catch(e){logError("archive-cloud",e);}
+  const cut=seasonStart();
+  const doomed=Object.keys(days).filter(k=>isDayKey(k)&&k<cut);
+  const n=doomed.length;
+  if(!n){toast("До "+cut+" стирать нечего — период уже чистый");return;}
+  if(!confirm("Стереть "+n+" дн. ДО "+cut+" из приложения и облака?\nВсё с "+cut+" остаётся на месте.\n\nФайл проверен и содержит все "+n+" дн.\nНастройки (цели, блокировки, БАДы) останутся.\nБез файла историю не вернуть."))return;
+  try{if(cloud&&cloud.wipeDays)await cloud.wipeDays(doomed);}catch(e){logError("archive-cloud",e);}
   try{
-    days={};
+    for(const k of doomed)delete days[k];
     safeWrite(KEY,days);
     for(const k of snapKeys()){try{localStorage.removeItem(k);}catch(e){}}
   }catch(e){logError("archive-local",e);}
+  // Новый период начинается с 1 сентября / 1 марта — пустые квадратики за прошлое полугодие уходят.
+  meta.trackStart=cut;
   meta.lastArchive=archiveSeason();saveMeta();
   archiveOpen=false;archiveSaved=false;archiveWord="";archiveErr="";
   archState={fp:null,verifiedAt:0};saveUI();archTickStop();
-  vibNice();toast("Архив сохранён · начинаем с чистого листа");
+  vibNice();toast("Архив сохранён · период с "+cut);
   render();
 }
 function archiveHTML(){
@@ -4548,13 +4564,14 @@ cloud=(function(){
     },
     // Полная очистка дней в облаке. Без неё «чистый лист» бесполезен: onSnapshot вернул бы
     // всё обратно через несколько секунд.
-    async wipeDays(){
+    async wipeDays(only){
       if(!S.ready||!S.user)return false;
       try{
         const {getDocs,writeBatch}=S.api;
+        const keep=Array.isArray(only)?new Set(only):null;   // null = стереть всё
         const snap=await getDocs(daysCol());
         let batch=writeBatch(S.db),n=0;
-        snap.forEach(dc=>{batch.delete(dc.ref);n++;if(n>=400){batch.commit();batch=writeBatch(S.db);n=0;}});
+        snap.forEach(dc=>{if(keep&&!keep.has(dc.id))return;batch.delete(dc.ref);n++;if(n>=400){batch.commit();batch=writeBatch(S.db);n=0;}});
         if(n>0)await batch.commit();
         return true;
       }catch(e){logError("cloud-wipe",e);return false;}
