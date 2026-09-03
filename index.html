@@ -753,7 +753,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.34.0";
+const VERSION="1.35.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -908,6 +908,7 @@ const CATEGORIES=[
    {id:"speech",label:"Красноречие (дикция / речь / риторика)",type:"des",pts:2},
    {id:"psych",label:"Психология",type:"des",pts:2},
    {id:"chess",label:"Анализ шахмат",type:"des",pts:1},
+   {id:"puzzles",label:"Пазлы",type:"des",pts:1},
    {id:"osint",label:"OSINT",type:"des",pts:2},
    {id:"cyber",label:"Кибербезопасность",type:"des",pts:2},
  ]},
@@ -2721,8 +2722,12 @@ function offSchedItems(day,wd){const out=[];for(const c of CATEGORIES){if(c.id==
 function offSchedHTML(day,wd){
   const list=offSchedItems(day,wd);
   if(!list.length)return "";
+  // Пользователь дважды решал, что пункты «исчезли», хотя они просто не по сегодняшнему
+  // графику и лежат здесь. Поэтому в свёрнутом виде показываем сами названия.
+  const nm=x=>String(x).split(" \u00b7")[0].replace(/\s*\(\+?[\d.]+\)\s*$/,"").trim();
+  const preview=list.map(([c,it])=>nm(it.label)).slice(0,3).join(", ")+(list.length>3?" \u0438 \u0435\u0449\u0451 "+(list.length-3):"");
   const rows=offSchedOpen?list.map(([c,it])=>`<div class="task-row"><button class="task-check" onclick="toggleItem('${it.id}')"><span class="task-box"></span><span class="task-lbl">${it.label.replace(/</g,"&lt;")} <span style="color:#6B6B75;font-size:11px">· ${c.name}</span></span></button></div>`).join(""):"";
-  return `<div class="cat-block"><button class="cat-header" onclick="offSchedOpen=!offSchedOpen;render()"><span class="cat-name">➕ Сделал вне графика</span><span style="display:flex;align-items:center;gap:10px"><span class="cat-count">${list.length}</span><span style="color:#6B6B75;font-size:13px">${offSchedOpen?"▾":"▸"}</span></span></button>${offSchedOpen?`<div class="cat-body"><div style="font-size:11px;color:#D4D4D8;margin:2px 0 6px">Пункты не по сегодняшнему графику. Отметь, если всё-таки сделал сегодня.</div>${rows}</div>`:""}</div>`;
+  return `<div class="cat-block"><button class="cat-header" onclick="offSchedOpen=!offSchedOpen;render()"><span class="cat-name" style="display:flex;flex-direction:column;align-items:flex-start;gap:2px"><span>🗓 Сегодня не по графику</span><span style="font-size:11px;font-weight:400;color:#8B8B95;line-height:1.3">${preview}</span></span><span style="display:flex;align-items:center;gap:10px"><span class="cat-count">${list.length}</span><span style="color:#6B6B75;font-size:13px">${offSchedOpen?"▾":"▸"}</span></span></button>${offSchedOpen?`<div class="cat-body"><div style="font-size:11px;color:#D4D4D8;margin:2px 0 6px">Пункты не по сегодняшнему графику. Отметь, если всё-таки сделал сегодня.</div>${rows}</div>`:""}</div>`;
 }
 // === НОВАЯ КОМПОНОВКА БЛОКОВ (презентация; данные/баллы/экспорт не трогаем) ===
 // Пункты по-прежнему живут в CATEGORIES по своим id — здесь мы только группируем их
