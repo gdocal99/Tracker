@@ -753,7 +753,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.35.0";
+const VERSION="1.36.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -804,15 +804,24 @@ function safeWriteMeta(){
 // Встроенный конфиг проекта (публичный — это норма для web-SDK). Приложение работает «из коробки»:
 // нужно только войти в аккаунт. Можно переопределить своим проектом в настройках (meta.firebaseConfig).
 const DEFAULT_FIREBASE_CONFIG={
-  apiKey:"AIzaSyA4BhjJfvzaihMX6wP3ai30LBm2mMOOsR4",
-  authDomain:"trac-b4f40.firebaseapp.com",
-  projectId:"trac-b4f40",
-  storageBucket:"trac-b4f40.firebasestorage.app",
-  messagingSenderId:"41367344685",
-  appId:"1:41367344685:web:4ff2225ba5a0c109cb8aa4",
-  measurementId:"G-R0GD578GGM"
+  apiKey:"AIzaSyBpiSwUEHhE8E4hBi2nSrt7MNbQfn4pIVM",
+  authDomain:"tracker-48ff6.firebaseapp.com",
+  projectId:"tracker-48ff6",
+  storageBucket:"tracker-48ff6.firebasestorage.app",
+  messagingSenderId:"499313003755",
+  appId:"1:499313003755:web:ff18eac8c2bce00ddf42ae",
+  measurementId:"G-LBZ2GWNK6V"
 };
+// Прежний проект, с которого переехали. Нужен только для одноразовой уборки ниже.
+const OLD_FIREBASE_PROJECT="trac-b4f40";
 meta.firebaseConfig = meta.firebaseConfig || null;
+// ПЕРЕЕЗД НА НОВЫЙ ПРОЕКТ. Если на устройстве остался «свой» конфиг, указывающий на старый
+// проект, он перебил бы новый встроенный — и приложение молча продолжило бы ходить в мёртвое
+// облако. Снимаем его один раз, тогда дальше работает встроенный конфиг нового проекта.
+if(meta.firebaseConfig&&meta.firebaseConfig.projectId===OLD_FIREBASE_PROJECT){
+  meta.firebaseConfig=null;
+  try{saveMeta({noStamp:true});}catch(e){}
+}
 // Действующий конфиг: пользовательский (если задан) → иначе встроенный дефолт.
 function effectiveFirebaseConfig(){return meta.firebaseConfig||DEFAULT_FIREBASE_CONFIG;}
 
