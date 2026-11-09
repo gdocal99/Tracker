@@ -753,7 +753,7 @@ function clearErrors(){errLog=[];try{localStorage.removeItem(ERR_KEY);}catch(e){
      • Кнопки, которые стирают данные, обязаны требовать второго касания И показывать
        цифру, сколько именно потеряется.
    ═════════════════════════════════════════════════════════════════════════════ */
-const VERSION="1.36.0";
+const VERSION="1.37.0";
 const META_KEY="journal_block3_meta";
 let meta={lastBackup:0,lastAutoBackupDate:"",view:"auto",city:"Uzhhorod",country:"Ukraine",madhab:0,method:4,lifeTarget:40,supPeriods:{},metaUpdated:0};
 try{const m=localStorage.getItem(META_KEY);if(m)meta={...meta,...JSON.parse(m)};}catch(e){}
@@ -3460,7 +3460,11 @@ function cloudAuthHTML(){
       <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px">
         <input id="fb-email" type="email" placeholder="e-mail" autocomplete="username" style="width:100%">
         <input id="fb-pass" type="password" placeholder="пароль (≥6 символов)" autocomplete="current-password" style="width:100%" onkeydown="if(event.key==='Enter')cloud.signInEmail(document.getElementById('fb-email').value,document.getElementById('fb-pass').value)">
-        <button class="backup-btn" style="width:100%" onclick="cloud.signInEmail(document.getElementById('fb-email').value,document.getElementById('fb-pass').value)">Войти / зарегистрироваться по e-mail</button>
+        <div class="backup-row" style="margin-top:0">
+          <button class="backup-btn" style="border-color:#6366F1;color:#818CF8" onclick="cloud.signInEmail(document.getElementById('fb-email').value,document.getElementById('fb-pass').value)">Войти</button>
+          <button class="backup-btn" onclick="cloud.signUpEmail(document.getElementById('fb-email').value,document.getElementById('fb-pass').value)">Создать аккаунт</button>
+        </div>
+        <button class="sup-arch-head" style="padding:4px 2px;color:#6B6B75" onclick="cloud.resetPassword(document.getElementById('fb-email').value)">Забыл пароль — прислать письмо</button>
       </div>${ownCfg}`;
   }else{
     body=`<div style="font-size:12.5px;color:#F5F5F7;margin-bottom:8px">Вошли как <b>${String(cloud.email()||"аккаунт").replace(/</g,"&lt;")}</b>${cloud.usingDefault()?"":' <span style="font-size:11px;color:#6B6B75">· свой проект</span>'}</div>
@@ -4622,18 +4626,57 @@ cloud=(function(){
       try{await signInWithPopup(S.auth,new GoogleAuthProvider());}
       catch(e){logError("cloud-google",e);toast("Вход не удался: "+((e&&e.code)||""));}
     },
+    // Человеческие тексты вместо кодов вида auth/invalid-credential.
+    authErr(e){
+      const c=(e&&e.code)||"";
+      const M={
+        "auth/invalid-credential":"Неверный пароль — или аккаунта с такой почтой ещё нет",
+        "auth/wrong-password":"Неверный пароль",
+        "auth/user-not-found":"Аккаунта с такой почтой нет. Нажми «Создать аккаунт»",
+        "auth/invalid-email":"Почта введена с ошибкой",
+        "auth/email-already-in-use":"Такая почта уже зарегистрирована. Нажми «Войти»",
+        "auth/weak-password":"Пароль слишком простой — нужно минимум 6 символов",
+        "auth/too-many-requests":"Слишком много попыток. Подожди пару минут",
+        "auth/network-request-failed":"Нет связи с сервером. Проверь интернет",
+        "auth/user-disabled":"Этот аккаунт отключён",
+        "auth/missing-password":"Введи пароль",
+        "auth/popup-closed-by-user":"Окно входа закрыли"
+      };
+      return M[c]||("Не вышло"+(c?" ("+c+")":""));
+    },
+    // ВХОД. Раньше при ошибке «invalid-credential» здесь молча СОЗДАВАЛСЯ новый аккаунт.
+    // В нынешнем Firebase этот код означает И «нет такого аккаунта», И «неверный пароль» —
+    // поэтому опечатка в пароле создавала second аккаунт с другим uid, а все данные
+    // оказывались «пропавшими». Теперь вход только входит; создание — отдельной кнопкой.
     async signInEmail(email,pass){
-      if(!await ensureInit())return;
-      const {signInWithEmailAndPassword,createUserWithEmailAndPassword}=S.api;
+      if(!await ensureInit())return false;
+      const {signInWithEmailAndPassword}=S.api;
       email=(email||"").trim();pass=(pass||"");
-      if(!email||pass.length<6){toast("Нужны e-mail и пароль (≥6 символов)");return;}
-      try{await signInWithEmailAndPassword(S.auth,email,pass);}
-      catch(e){
-        if(e&&(e.code==="auth/user-not-found"||e.code==="auth/invalid-credential")){
-          try{await createUserWithEmailAndPassword(S.auth,email,pass);toast("Аккаунт создан ✓");return;}
-          catch(e2){logError("cloud-email-signup",e2);toast("Не вышло: "+((e2&&e2.code)||""));}
-        }else{logError("cloud-email",e);toast("Вход не удался: "+((e&&e.code)||""));}
-      }
+      if(!email){toast("Введи e-mail");return false;}
+      if(pass.length<6){toast("Пароль — минимум 6 символов");return false;}
+      try{await signInWithEmailAndPassword(S.auth,email,pass);toast("Вход выполнен ✓");return true;}
+      catch(e){logError("cloud-email",e);toast(this.authErr(e));return false;}
+    },
+    // РЕГИСТРАЦИЯ — только по явному нажатию, с подтверждением.
+    async signUpEmail(email,pass){
+      if(!await ensureInit())return false;
+      const {createUserWithEmailAndPassword}=S.api;
+      email=(email||"").trim();pass=(pass||"");
+      if(!email){toast("Введи e-mail");return false;}
+      if(pass.length<6){toast("Пароль — минимум 6 символов");return false;}
+      if(!confirm("Создать НОВЫЙ аккаунт на "+email+"?\n\nЕсли аккаунт уже есть — нажми Отмена и входи кнопкой «Войти»: новый аккаунт будет пустым, старые записи в него не попадут."))return false;
+      try{await createUserWithEmailAndPassword(S.auth,email,pass);toast("Аккаунт создан ✓");return true;}
+      catch(e){logError("cloud-email-signup",e);toast(this.authErr(e));return false;}
+    },
+    // ВОССТАНОВЛЕНИЕ ПАРОЛЯ. Без него забытый пароль означал потерю доступа к облаку навсегда.
+    async resetPassword(email){
+      if(!await ensureInit())return false;
+      const {sendPasswordResetEmail}=S.api;
+      email=(email||"").trim();
+      if(!email){toast("Введи e-mail, на который придёт письмо");return false;}
+      if(!sendPasswordResetEmail){toast("Сброс пароля недоступен");return false;}
+      try{await sendPasswordResetEmail(S.auth,email);toast("Письмо для сброса отправлено на "+email);return true;}
+      catch(e){logError("cloud-reset",e);toast(this.authErr(e));return false;}
     },
     async signOut(){
       try{const {signOut}=S.api||{};detachListeners();if(S.auth&&signOut)await signOut(S.auth);}catch(e){logError("cloud-signout",e);}
